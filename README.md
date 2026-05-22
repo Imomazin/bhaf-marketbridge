@@ -130,3 +130,77 @@ The first version should demonstrate the following journey:
 
 ```text
 Register → Create Profile → Document Business and ESG Activity → List Products or Services → Complete Readiness Checklist → Become Visible to Funders, Buyers and Partners
+```
+
+## Tech Stack
+
+This MVP is implemented as a modern web application:
+
+- **Next.js 14** with the App Router
+- **TypeScript** for type safety
+- **Tailwind CSS** for styling
+- Clean component-based architecture
+- Mobile-responsive design
+- Mock data only — no database connection yet
+
+## Project Structure
+
+```
+app/                  Next.js App Router pages
+  page.tsx            Landing page
+  directory/          Entrepreneur directory
+  marketplace/        Product and service listings
+  opportunities/      Funding, procurement and certification board
+  impact/             Impact and ESG reporting
+  admin/              BHAF admin dashboard mockup
+components/
+  layout/             Navbar, Footer
+  ui/                 Section header, readiness badge
+  cards/              Entrepreneur, marketplace, opportunity, impact, dashboard cards
+  forms/              (reserved for future form components)
+lib/                  Shared utilities
+data/                 Mock data for entrepreneurs, marketplace, opportunities, impact
+```
+
+## Running Locally
+
+### Prerequisites
+
+- Node.js 18.17+ (Node.js 20 LTS recommended)
+- npm 9+ (or pnpm / yarn)
+
+### Install and run
+
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Start the development server
+npm run dev
+```
+
+The app will be available at [http://localhost:3000](http://localhost:3000).
+
+### Available scripts
+
+| Script          | What it does                                         |
+| --------------- | ---------------------------------------------------- |
+| `npm run dev`   | Start the Next.js dev server on port 3000            |
+| `npm run build` | Build the production bundle                          |
+| `npm run start` | Run the production build locally                     |
+| `npm run lint`  | Run Next.js / ESLint checks                          |
+
+### Pages to visit
+
+- `/` — Landing page (hero, problem, solution, modules, featured entrepreneurs, partners, impact, CTA)
+- `/directory` — Entrepreneur directory with filters
+- `/marketplace` — Product and service listings
+- `/opportunities` — Grants, investment, procurement, programmes and certifications
+- `/impact` — Impact metrics, ESG framework and sector breakdown
+- `/admin` — Admin dashboard mockup for BHAF moderators
+
+### Notes for contributors
+
+- Sample data lives in `data/` — replace with real data sources when the database layer is added.
+- Visual design uses a premium palette (deep forest green, warm gold, off-white cream and charcoal) defined in `tailwind.config.ts`.
+- The MVP is intentionally minimal: no auth, no database, no payment flow. Forms and CTAs are interactive placeholders.
