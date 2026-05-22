@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  body {
+    @apply bg-cream-50 text-charcoal-700;
+  }
+
+  h1, h2, h3, h4 {
+    @apply font-serif text-forest-900;
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer components {
+  .container-edge {
+    @apply mx-auto max-w-7xl px-6 lg:px-10;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-md bg-forest-800 px-5 py-3 text-sm font-medium text-cream-50 transition hover:bg-forest-700 focus:outline-none focus:ring-2 focus:ring-gold-400 focus:ring-offset-2;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-md border border-forest-800/20 bg-transparent px-5 py-3 text-sm font-medium text-forest-900 transition hover:border-forest-800 hover:bg-forest-50;
+  }
+
+  .btn-gold {
+    @apply inline-flex items-center justify-center rounded-md bg-gold-400 px-5 py-3 text-sm font-medium text-forest-900 transition hover:bg-gold-300;
+  }
+
+  .chip {
+    @apply inline-flex items-center rounded-full border border-forest-200 bg-forest-50 px-2.5 py-0.5 text-xs font-medium text-forest-700;
+  }
+
+  .chip-gold {
+    @apply inline-flex items-center rounded-full border border-gold-200 bg-gold-50 px-2.5 py-0.5 text-xs font-medium text-gold-800;
+  }
+
+  .card {
+    @apply rounded-2xl border border-cream-200 bg-white shadow-card;
+  }
+
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.18em] text-gold-700;
+  }
+}
