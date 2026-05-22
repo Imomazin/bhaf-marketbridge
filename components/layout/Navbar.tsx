@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 const navLinks = [
-  { href: "/entrepreneurs", label: "Entrepreneurs" },
+  { href: "/directory", label: "Directory" },
   { href: "/marketplace", label: "Marketplace" },
   { href: "/opportunities", label: "Opportunities" },
   { href: "/impact", label: "Impact & ESG" },

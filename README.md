@@ -148,7 +148,7 @@ This MVP is implemented as a modern web application:
 ```
 app/                  Next.js App Router pages
   page.tsx            Landing page
-  entrepreneurs/      Entrepreneur directory
+  directory/          Entrepreneur directory
   marketplace/        Product and service listings
   opportunities/      Funding, procurement and certification board
   impact/             Impact and ESG reporting
@@ -193,7 +193,7 @@ The app will be available at [http://localhost:3000](http://localhost:3000).
 ### Pages to visit
 
 - `/` — Landing page (hero, problem, solution, modules, featured entrepreneurs, partners, impact, CTA)
-- `/entrepreneurs` — Entrepreneur directory with filters
+- `/directory` — Entrepreneur directory with filters
 - `/marketplace` — Product and service listings
 - `/opportunities` — Grants, investment, procurement, programmes and certifications
 - `/impact` — Impact metrics, ESG framework and sector breakdown

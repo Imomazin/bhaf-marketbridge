@@ -245,7 +245,7 @@ export default function HomePage() {
               eyebrow="Featured entrepreneurs"
               title="Verified women-led businesses ready for buyers, funders and partners."
             />
-            <Link href="/entrepreneurs" className="btn-secondary">
+            <Link href="/directory" className="btn-secondary">
               View directory
             </Link>
           </div>

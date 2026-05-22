@@ -4,7 +4,7 @@ const footerColumns = [
   {
     title: "Platform",
     links: [
-      { href: "/entrepreneurs", label: "Entrepreneur Directory" },
+      { href: "/directory", label: "Entrepreneur Directory" },
       { href: "/marketplace", label: "Marketplace" },
       { href: "/opportunities", label: "Opportunities" },
       { href: "/impact", label: "Impact & ESG" },
