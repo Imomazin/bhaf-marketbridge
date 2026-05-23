@@ -1,23 +1,23 @@
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { PageHero } from "@/components/ui/PageHero";
 import { OpportunityCard } from "@/components/cards/OpportunityCard";
+import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
 import { opportunities } from "@/data/opportunities";
+import { photos } from "@/data/photos";
 
 const types = ["All types", "Grant", "Investment", "Procurement", "Programme", "Certification"];
 
 export default function OpportunitiesPage() {
   return (
     <>
-      <section className="border-b border-cream-200 bg-cream-50 py-16">
-        <div className="container-edge">
-          <SectionHeader
-            eyebrow="Opportunity board"
-            title="Grants, investments, procurement and certification — curated for women entrepreneurs."
-            description="BHAF and partners publish funding, market access and training opportunities here. Eligibility is matched against your MarketBridge profile."
-          />
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Opportunity board"
+        title="Grants, investments, procurement and certification — curated for women entrepreneurs."
+        description="BHAF and partners publish funding, market access and training opportunities here. Eligibility is matched against your MarketBridge profile."
+        photo={photos.drc5}
+        caption="DRC training cohort with completion certificates — every certification opens a new tier of opportunities on MarketBridge."
+      />
 
-      <section className="bg-cream-50 pb-24">
+      <section className="bg-cream-50 py-16">
         <div className="container-edge">
           <div className="card mb-10 flex flex-wrap items-center justify-between gap-4 p-4">
             <div className="flex flex-wrap items-center gap-2">
@@ -43,6 +43,23 @@ export default function OpportunitiesPage() {
             {opportunities.map((o) => (
               <OpportunityCard key={o.id} opportunity={o} />
             ))}
+          </div>
+
+          <div className="mt-16 grid gap-6 md:grid-cols-2">
+            <AnnotatedPhoto
+              photo={photos.nyc3}
+              tag="BHAF NYC Launch"
+              caption="Where global stakeholders meet African women entrepreneurs — and partnership pipelines begin."
+              aspect="auto"
+              className="min-h-[260px]"
+            />
+            <AnnotatedPhoto
+              photo={photos.abuja5}
+              tag="Abuja Accelerator"
+              caption="Speakers framing opportunities for the Cohort 1 entrepreneurs."
+              aspect="auto"
+              className="min-h-[260px]"
+            />
           </div>
         </div>
       </section>

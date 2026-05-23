@@ -1,7 +1,9 @@
 import { DashboardCard } from "@/components/cards/DashboardCard";
 import { ReadinessBadge } from "@/components/ui/ReadinessBadge";
+import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
 import { entrepreneurs } from "@/data/entrepreneurs";
 import { opportunities } from "@/data/opportunities";
+import { photos } from "@/data/photos";
 
 const overviewStats = [
   { label: "Pending approvals", value: "12", trend: "+3 this week", tone: "gold" as const },
@@ -153,6 +155,33 @@ export default function AdminPage() {
               ))}
             </ul>
           </DashboardCard>
+        </div>
+
+        <div className="mt-10 grid gap-4 md:grid-cols-4">
+          <AnnotatedPhoto
+            photo={photos.abuja2}
+            aspect="square"
+            tag="Cohort"
+            caption="Abuja Accelerator — live sessions admins moderate."
+          />
+          <AnnotatedPhoto
+            photo={photos.drc2}
+            aspect="square"
+            tag="DRC"
+            caption="FEMEC training cohort — Kinshasa."
+          />
+          <AnnotatedPhoto
+            photo={photos.baloni5}
+            aspect="square"
+            tag="Site visit"
+            caption="Field verification at Baloni Farm."
+          />
+          <AnnotatedPhoto
+            photo={photos.nyc4}
+            aspect="square"
+            tag="NYC"
+            caption="BHAF Launch — partner pipeline source."
+          />
         </div>
       </div>
     </section>

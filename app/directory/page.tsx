@@ -1,25 +1,25 @@
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { PageHero } from "@/components/ui/PageHero";
 import { EntrepreneurCard } from "@/components/cards/EntrepreneurCard";
+import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
 import { entrepreneurs } from "@/data/entrepreneurs";
+import { photos } from "@/data/photos";
 
 const sectors = ["All sectors", "Circular Economy", "Clean Energy", "Agri-Processing", "Health & Beauty", "Technology", "Education"];
 const countries = ["All countries", "Nigeria", "South Africa", "Senegal", "Kenya", "Zimbabwe", "Ghana"];
 const readiness = ["All levels", "Emerging", "Developing", "Market-Ready", "Funding-Ready"];
 
-export default function EntrepreneursPage() {
+export default function DirectoryPage() {
   return (
     <>
-      <section className="border-b border-cream-200 bg-cream-50 py-16">
-        <div className="container-edge">
-          <SectionHeader
-            eyebrow="Entrepreneur directory"
-            title="A verified directory of African women entrepreneurs."
-            description="Filter by sector, country and readiness level. Profiles surface ESG activity, funding needs and product or service offerings ready for partners."
-          />
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Entrepreneur directory"
+        title="A verified directory of African women entrepreneurs."
+        description="Filter by sector, country and readiness level. Profiles surface ESG activity, funding needs and product or service offerings ready for partners."
+        photo={photos.abuja4}
+        caption="Cohort founders speaking at the Abuja Accelerator launch — the kind of talent the directory makes discoverable."
+      />
 
-      <section className="bg-cream-50 pb-24">
+      <section className="bg-cream-50 py-16">
         <div className="container-edge">
           <div className="card mb-10 grid gap-4 p-5 md:grid-cols-4">
             <div>
@@ -59,6 +59,30 @@ export default function EntrepreneursPage() {
             {entrepreneurs.map((e) => (
               <EntrepreneurCard key={e.id} entrepreneur={e} />
             ))}
+          </div>
+
+          <div className="mt-16 grid gap-6 md:grid-cols-3">
+            <AnnotatedPhoto
+              photo={photos.abuja7}
+              tag="Cohort 1"
+              caption="Group portrait — Abuja Accelerator."
+              aspect="auto"
+              className="min-h-[220px]"
+            />
+            <AnnotatedPhoto
+              photo={photos.drc1}
+              tag="DRC"
+              caption="Working group at the FEMEC RDC training, Kinshasa."
+              aspect="auto"
+              className="min-h-[220px]"
+            />
+            <AnnotatedPhoto
+              photo={photos.baloni7}
+              tag="Field"
+              caption="Entrepreneurs on the Baloni Farm visit."
+              aspect="auto"
+              className="min-h-[220px]"
+            />
           </div>
         </div>
       </section>

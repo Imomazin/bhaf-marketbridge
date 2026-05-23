@@ -1,4 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
+import { bhafLogo } from "@/data/photos";
 
 const navLinks = [
   { href: "/directory", label: "Directory" },
@@ -10,16 +12,22 @@ const navLinks = [
 
 export function Navbar() {
   return (
-    <header className="sticky top-0 z-40 border-b border-cream-200 bg-cream-50/85 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-cream-200 bg-cream-50/90 backdrop-blur">
       <div className="container-edge flex h-16 items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-md bg-forest-800 text-cream-50">
-            <span className="font-serif text-base">B</span>
+          <span className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-white ring-1 ring-cream-200">
+            <Image
+              src={bhafLogo.src}
+              alt={bhafLogo.alt}
+              fill
+              sizes="40px"
+              className="object-contain p-0.5"
+            />
           </span>
           <span className="flex flex-col leading-none">
             <span className="font-serif text-base text-forest-900">BHAF MarketBridge</span>
             <span className="text-[10px] uppercase tracking-[0.22em] text-charcoal-400">
-              Build Her A Future
+              Circular Academy · Consulting · Marketplace
             </span>
           </span>
         </Link>
