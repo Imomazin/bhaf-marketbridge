@@ -1,6 +1,8 @@
-import { SectionHeader } from "@/components/ui/SectionHeader";
+import { PageHero } from "@/components/ui/PageHero";
 import { MarketplaceCard } from "@/components/cards/MarketplaceCard";
+import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
 import { marketplaceListings } from "@/data/marketplace";
+import { photos } from "@/data/photos";
 
 const categories = [
   "All categories",
@@ -15,17 +17,15 @@ const categories = [
 export default function MarketplacePage() {
   return (
     <>
-      <section className="border-b border-cream-200 bg-cream-50 py-16">
-        <div className="container-edge">
-          <SectionHeader
-            eyebrow="Marketplace"
-            title="Products and services from verified women-led enterprises."
-            description="Browse export-ready, ESG-aligned offers from African women entrepreneurs. The MVP supports buyer enquiries; full e-commerce checkout comes later."
-          />
-        </div>
-      </section>
+      <PageHero
+        eyebrow="Marketplace"
+        title="Products and services from verified women-led enterprises."
+        description="Browse export-ready, ESG-aligned offers from African women entrepreneurs. The MVP supports buyer enquiries; full e-commerce checkout comes later."
+        photo={photos.baloni3}
+        caption="Product showcase at the Baloni Farm visit — the kind of real, traceable goods this marketplace exists to surface."
+      />
 
-      <section className="bg-cream-50 pb-24">
+      <section className="bg-cream-50 py-16">
         <div className="container-edge">
           <div className="card mb-10 flex flex-wrap items-center gap-2 p-4">
             {categories.map((cat, idx) => (
@@ -54,6 +54,15 @@ export default function MarketplacePage() {
             {marketplaceListings.map((l) => (
               <MarketplaceCard key={l.id} listing={l} />
             ))}
+          </div>
+
+          <div className="mt-16 overflow-hidden rounded-2xl">
+            <AnnotatedPhoto
+              photo={photos.ihs1}
+              aspect="wide"
+              tag="Networking Lunch & Marketplace · Dublin"
+              caption="BHAF entrepreneurs on the InvestHer Summit marketplace stage — exactly the kind of buyer-meets-supplier moments this directory unlocks every day."
+            />
           </div>
         </div>
       </section>

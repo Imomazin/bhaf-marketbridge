@@ -1,4 +1,6 @@
+import Image from "next/image";
 import Link from "next/link";
+import { bhafLogo } from "@/data/photos";
 
 const footerColumns = [
   {
@@ -37,8 +39,8 @@ export function Footer() {
         <div className="grid gap-12 md:grid-cols-4">
           <div>
             <div className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-md bg-gold-400 text-forest-900">
-                <span className="font-serif text-base">B</span>
+              <span className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-white">
+                <Image src={bhafLogo.src} alt={bhafLogo.alt} fill sizes="40px" className="object-contain p-0.5" />
               </span>
               <span className="font-serif text-base">BHAF MarketBridge</span>
             </div>
