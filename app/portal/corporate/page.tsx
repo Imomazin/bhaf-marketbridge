@@ -2,6 +2,8 @@ import Link from "next/link";
 import { PortalSidebar } from "@/components/layout/PortalSidebar";
 import { PortalWorkflowStrip } from "@/components/layout/PortalWorkflowStrip";
 import { DashboardCard } from "@/components/cards/DashboardCard";
+import { DocumentVault } from "@/components/sections/DocumentVault";
+import { corporateArtefacts } from "@/data/artefacts";
 import { marketplaceListings } from "@/data/marketplace";
 
 const nav = [
@@ -141,6 +143,14 @@ export default function CorporatePortalPage() {
                 ))}
               </ul>
             </DashboardCard>
+          </div>
+
+          <div className="mt-10">
+            <DocumentVault
+              artefacts={corporateArtefacts}
+              title="Procurement & ESG policy vault"
+              intro="Your corporate KYC, supplier diversity policy and ESG disclosure artefacts. BHAF revalidates these before exposing your RFPs to verified suppliers."
+            />
           </div>
         </div>
       </div>

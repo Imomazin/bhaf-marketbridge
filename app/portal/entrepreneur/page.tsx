@@ -3,6 +3,8 @@ import { PortalSidebar } from "@/components/layout/PortalSidebar";
 import { PortalWorkflowStrip } from "@/components/layout/PortalWorkflowStrip";
 import { DashboardCard } from "@/components/cards/DashboardCard";
 import { ReadinessBadge } from "@/components/ui/ReadinessBadge";
+import { DocumentVault } from "@/components/sections/DocumentVault";
+import { entrepreneurArtefacts } from "@/data/artefacts";
 import { entrepreneurs } from "@/data/entrepreneurs";
 import { opportunities } from "@/data/opportunities";
 
@@ -197,6 +199,10 @@ export default function EntrepreneurPortalPage() {
                 ))}
               </ul>
             </DashboardCard>
+          </div>
+
+          <div className="mt-10">
+            <DocumentVault artefacts={entrepreneurArtefacts} />
           </div>
         </div>
       </div>

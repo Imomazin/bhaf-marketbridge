@@ -3,6 +3,8 @@ import { PortalSidebar } from "@/components/layout/PortalSidebar";
 import { PortalWorkflowStrip } from "@/components/layout/PortalWorkflowStrip";
 import { DashboardCard } from "@/components/cards/DashboardCard";
 import { ReadinessBadge } from "@/components/ui/ReadinessBadge";
+import { DocumentVault } from "@/components/sections/DocumentVault";
+import { funderArtefacts } from "@/data/artefacts";
 import { entrepreneurs } from "@/data/entrepreneurs";
 import { impactMetrics } from "@/data/impact";
 
@@ -158,6 +160,14 @@ export default function FunderPortalPage() {
                 ))}
               </ul>
             </DashboardCard>
+          </div>
+
+          <div className="mt-10">
+            <DocumentVault
+              artefacts={funderArtefacts}
+              title="Compliance & mandate vault"
+              intro="Your fund-level KYC, mandate and impact-thesis artefacts. BHAF re-screens these before any introduction or shortlist is shared with entrepreneurs."
+            />
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { PageHero } from "@/components/ui/PageHero";
 import { OpportunityCard } from "@/components/cards/OpportunityCard";
 import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
+import { Reveal } from "@/components/ui/Reveal";
 import { opportunities } from "@/data/opportunities";
 import { photos } from "@/data/photos";
 
@@ -40,8 +41,10 @@ export default function OpportunitiesPage() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {opportunities.map((o) => (
-              <OpportunityCard key={o.id} opportunity={o} />
+            {opportunities.map((o, idx) => (
+              <Reveal key={o.id} delayMs={idx * 80}>
+                <OpportunityCard opportunity={o} />
+              </Reveal>
             ))}
           </div>
 

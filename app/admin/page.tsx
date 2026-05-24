@@ -2,6 +2,9 @@ import { DashboardCard } from "@/components/cards/DashboardCard";
 import { ReadinessBadge } from "@/components/ui/ReadinessBadge";
 import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
 import { PortalWorkflowStrip } from "@/components/layout/PortalWorkflowStrip";
+import { VerificationQueue } from "@/components/sections/VerificationQueue";
+import { AuditLog } from "@/components/sections/AuditLog";
+import { auditTrail, verificationQueue } from "@/data/artefacts";
 import { entrepreneurs } from "@/data/entrepreneurs";
 import { opportunities } from "@/data/opportunities";
 import { photos } from "@/data/photos";
@@ -158,6 +161,16 @@ export default function AdminPage() {
               ))}
             </ul>
           </DashboardCard>
+        </div>
+
+        {/* Quality assurance — verification queue */}
+        <div className="mt-10">
+          <VerificationQueue items={verificationQueue} />
+        </div>
+
+        {/* Tamper-evident audit trail */}
+        <div className="mt-6">
+          <AuditLog entries={auditTrail} />
         </div>
 
         <div className="mt-10 grid gap-4 md:grid-cols-4">
