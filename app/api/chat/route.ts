@@ -21,7 +21,12 @@ interface ChatMessage {
 }
 
 export async function POST(req: Request) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
+  // Accept any of the conventional names so the deployment is resilient to
+  // however the operator chose to label their secret on Vercel.
+  const apiKey =
+    process.env.ANTHROPIC_API_KEY ||
+    process.env.CLAUDE_API_KEY ||
+    process.env.ClaudeAPIKeyMarketBridge;
 
   if (!apiKey) {
     return Response.json(

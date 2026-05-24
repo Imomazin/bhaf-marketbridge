@@ -69,109 +69,103 @@ const galleryPhotos = [
 
 export default function HomePage() {
   const featured = entrepreneurs.slice(0, 3);
-  const heroStats = impactMetrics.slice(0, 3);
 
   return (
     <>
       {/* =========================================================== */}
-      {/* HERO — editorial split, single anchor photo, clean text       */}
+      {/* HERO — full-bleed photo, editorial typography, single column */}
       {/* =========================================================== */}
-      <section className="relative overflow-hidden bg-forest-950">
+      <section className="relative isolate overflow-hidden bg-forest-950">
+        <Image
+          src={photos.abuja1.src}
+          alt={photos.abuja1.alt}
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-center"
+        />
+        {/* Layered overlays for depth + text legibility */}
+        <div className="absolute inset-0 bg-gradient-to-r from-forest-950 via-forest-950/85 to-forest-950/15" />
+        <div className="absolute inset-0 bg-gradient-to-t from-forest-950 via-forest-950/40 to-forest-950/70" />
         <div
-          className="pointer-events-none absolute inset-0 opacity-60"
+          className="pointer-events-none absolute inset-0 opacity-40 mix-blend-overlay"
           style={{
             backgroundImage:
-              "radial-gradient(circle at 0% 10%, rgba(212, 167, 58, 0.18), transparent 45%), radial-gradient(circle at 100% 90%, rgba(36, 70, 56, 0.4), transparent 50%)",
+              "radial-gradient(circle at 80% 60%, rgba(212, 167, 58, 0.35), transparent 45%)",
           }}
         />
-        <div className="container-edge relative grid items-stretch gap-12 py-16 md:grid-cols-[1.05fr_1fr] md:gap-16 md:py-24">
-          <div className="flex flex-col justify-center text-cream-50">
-            <span className="inline-flex w-fit items-center gap-2 rounded-full border border-gold-300/40 bg-gold-400/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-gold-200">
+
+        <div className="container-edge relative flex min-h-[680px] flex-col justify-end py-16 md:min-h-[760px] md:py-24">
+          <div className="max-w-3xl text-cream-50">
+            <span className="inline-flex items-center gap-2 rounded-full border border-gold-300/50 bg-forest-950/40 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-200 backdrop-blur">
               <span className="h-1.5 w-1.5 rounded-full bg-gold-300" />
               BHAF Circular Academy · MarketBridge
             </span>
-            <h1 className="mt-6 font-serif text-[2.7rem] leading-[1.05] tracking-tight md:text-[3.6rem] lg:text-[4.2rem]">
-              The market is moving.
-              <br />
-              <span className="text-gold-300">She</span> belongs in it.
+
+            <h1 className="mt-6 font-serif text-[2.5rem] font-bold leading-[1.04] tracking-tight text-cream-50 md:text-[4rem] lg:text-[4.6rem]">
+              Made by <span className="italic text-gold-300">African women</span>.
+              <br className="hidden md:block" /> Verified by BHAF. Ready for the world.
             </h1>
-            <p className="mt-6 max-w-xl text-base leading-relaxed text-cream-100/85 md:text-lg">
-              MarketBridge is the marketplace and impact infrastructure platform connecting verified African
-              women-led businesses with funders, corporate buyers and global market access.
+
+            <p className="mt-6 max-w-2xl text-base leading-relaxed text-cream-100 md:text-lg">
+              MarketBridge is the verified marketplace connecting Africa's women-led businesses with the
+              funders, corporate buyers and global market access they belong in.
             </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link href="/portal" className="btn-gold">
-                Sign in or register
+
+            <div className="mt-9 flex flex-wrap items-center gap-3">
+              <Link href="/portal/entrepreneur" className="btn-gold !px-6 !py-3.5 text-sm">
+                Register your business
+              </Link>
+              <Link
+                href="/portal"
+                className="inline-flex items-center justify-center rounded-md border border-cream-50/50 bg-forest-950/40 px-6 py-3.5 text-sm font-medium text-cream-50 backdrop-blur transition hover:border-cream-50 hover:bg-cream-50/10"
+              >
+                Sign in
               </Link>
               <Link
                 href="#how"
-                className="inline-flex items-center justify-center rounded-md border border-cream-50/30 px-5 py-3 text-sm font-medium text-cream-50 transition hover:border-cream-50/70"
+                className="ml-2 text-sm font-medium text-cream-50 underline-offset-4 hover:text-gold-200 hover:underline"
               >
-                See how it works
+                See how it works →
               </Link>
             </div>
-
-            <dl className="mt-12 grid max-w-lg grid-cols-3 gap-x-6 gap-y-4 border-t border-cream-50/15 pt-8">
-              {heroStats.map((m) => (
-                <div key={m.id}>
-                  <dt className="text-[10px] uppercase tracking-[0.18em] text-gold-300">{m.label}</dt>
-                  <dd className="mt-1 font-serif text-3xl text-cream-50">{m.value}</dd>
-                  <dd className="mt-0.5 text-[11px] text-cream-100/60">{m.caption.split(",")[0]}</dd>
-                </div>
-              ))}
-            </dl>
           </div>
+        </div>
 
-          {/* Single anchor hero photo — no rotated overlays */}
-          <div className="relative">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-3xl ring-1 ring-cream-50/10 shadow-soft">
-              <Image
-                src={photos.abuja1.src}
-                alt={photos.abuja1.alt}
-                fill
-                priority
-                sizes="(max-width: 768px) 100vw, 600px"
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-forest-950/90 via-forest-950/10 to-transparent" />
-              <figcaption className="absolute inset-x-0 bottom-0 p-6 text-cream-50">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-300">
-                  Abuja Accelerator · Cohort 1
-                </p>
-                <p className="mt-1 text-sm leading-snug text-cream-100/95">
-                  Women entrepreneurs in session — building the documentation, networks and readiness that turn
-                  ambition into deal flow.
-                </p>
-              </figcaption>
-            </div>
-
-            {/* small floating badge — single, controlled */}
-            <div className="absolute -bottom-5 left-6 hidden items-center gap-3 rounded-full bg-cream-50 px-4 py-2 shadow-soft md:flex">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-forest-800 font-serif text-xs text-cream-50">
-                ✓
-              </span>
-              <div className="leading-tight">
-                <p className="text-[10px] uppercase tracking-[0.16em] text-charcoal-400">Verified network</p>
-                <p className="text-xs font-semibold text-forest-900">165+ businesses · 11 countries</p>
+        {/* Stat strip pinned to the bottom of the hero */}
+        <div className="relative border-t border-cream-50/15 bg-forest-950/85 backdrop-blur-md">
+          <dl className="container-edge grid grid-cols-2 gap-x-6 gap-y-4 py-5 md:grid-cols-4 md:py-6">
+            {[
+              { label: "Verified businesses", value: "165+", caption: "Across 11 African countries" },
+              { label: "Women supported", value: "1,782", caption: "Through BHAF programmes" },
+              { label: "Funding mobilised", value: "$3.6M", caption: "Grants, equity, procurement" },
+              { label: "Active opportunities", value: "24", caption: "Live this cycle" },
+            ].map((s, idx) => (
+              <div key={s.label} className={idx > 0 ? "md:border-l md:border-cream-50/10 md:pl-6" : ""}>
+                <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-300">{s.label}</dt>
+                <dd className="mt-1 font-serif text-3xl font-bold text-cream-50 md:text-4xl">{s.value}</dd>
+                <dd className="mt-0.5 text-[11px] text-cream-100/70">{s.caption}</dd>
               </div>
-            </div>
-          </div>
+            ))}
+          </dl>
         </div>
       </section>
 
       {/* =========================================================== */}
       {/* TRUST STRIP — partners in elegant text band                   */}
       {/* =========================================================== */}
-      <section className="border-y border-cream-200 bg-cream-50">
-        <div className="container-edge flex flex-wrap items-center justify-center gap-x-8 gap-y-3 py-6">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-charcoal-500">
-            Convened with
+      <section className="border-b border-cream-200 bg-white">
+        <div className="container-edge py-8">
+          <p className="text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-charcoal-400">
+            In partnership with
           </p>
-          {trustPartners.map((name) => (
-            <span key={name} className="text-xs font-medium text-charcoal-600">
-              {name}
-            </span>
-          ))}
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
+            {trustPartners.map((name) => (
+              <span key={name} className="font-serif text-sm text-forest-900">
+                {name}
+              </span>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -338,7 +332,7 @@ export default function HomePage() {
       </section>
 
       {/* =========================================================== */}
-      {/* BHAF IN ACTION — uniform 6-card gallery, captions BELOW       */}
+      {/* BHAF IN ACTION — magazine layout, one hero + 5 thumbnails    */}
       {/* =========================================================== */}
       <section className="bg-white py-24">
         <div className="container-edge">
@@ -348,9 +342,56 @@ export default function HomePage() {
             description="From Abuja to Kinshasa to Dublin and New York — BHAF is already convening, training and connecting the women entrepreneurs MarketBridge brings online."
           />
 
-          <div className="mt-14 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {galleryPhotos.map((g) => (
-              <figure key={g.photo.src} className="group">
+          <div className="mt-14 grid gap-6 lg:grid-cols-12">
+            {/* Hero feature photo — spans 7 cols on desktop */}
+            <figure className="group lg:col-span-7">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-forest-900 lg:aspect-[16/11]">
+                <Image
+                  src={galleryPhotos[0].photo.src}
+                  alt={galleryPhotos[0].photo.alt}
+                  fill
+                  sizes="(max-width: 1024px) 100vw, 800px"
+                  className="object-cover transition duration-700 group-hover:scale-[1.02]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-forest-950/90 via-forest-950/10 to-transparent" />
+                <figcaption className="absolute inset-x-0 bottom-0 p-6 text-cream-50 md:p-8">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-300">
+                    {galleryPhotos[0].location} · {galleryPhotos[0].event}
+                  </p>
+                  <p className="mt-2 max-w-md font-serif text-xl leading-snug md:text-2xl">
+                    {galleryPhotos[0].caption}
+                  </p>
+                </figcaption>
+              </div>
+            </figure>
+
+            {/* Right column — 2 medium thumbnails stacked */}
+            <div className="grid gap-6 lg:col-span-5 lg:grid-rows-2">
+              {galleryPhotos.slice(1, 3).map((g) => (
+                <figure key={g.photo.src} className="group">
+                  <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-forest-900 lg:aspect-auto lg:h-full">
+                    <Image
+                      src={g.photo.src}
+                      alt={g.photo.alt}
+                      fill
+                      sizes="(max-width: 1024px) 100vw, 500px"
+                      className="object-cover transition duration-500 group-hover:scale-[1.03]"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-forest-950/80 via-forest-950/5 to-transparent" />
+                    <figcaption className="absolute inset-x-0 bottom-0 p-5 text-cream-50">
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-300">
+                        {g.location} · {g.event}
+                      </p>
+                      <p className="mt-1 text-sm leading-snug text-cream-100">{g.caption}</p>
+                    </figcaption>
+                  </div>
+                </figure>
+              ))}
+            </div>
+
+            {/* Bottom row — 3 thumbnails */}
+            {galleryPhotos.slice(3).map((g) => (
+              <figure key={g.photo.src} className="group lg:col-span-4">
                 <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-forest-900">
                   <Image
                     src={g.photo.src}
@@ -359,13 +400,14 @@ export default function HomePage() {
                     sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 400px"
                     className="object-cover transition duration-500 group-hover:scale-[1.03]"
                   />
+                  <div className="absolute inset-0 bg-gradient-to-t from-forest-950/80 via-forest-950/5 to-transparent" />
+                  <figcaption className="absolute inset-x-0 bottom-0 p-5 text-cream-50">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-300">
+                      {g.location} · {g.event}
+                    </p>
+                    <p className="mt-1 text-sm leading-snug text-cream-100">{g.caption}</p>
+                  </figcaption>
                 </div>
-                <figcaption className="mt-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-700">
-                    {g.location} · {g.event}
-                  </p>
-                  <p className="mt-1 text-sm text-charcoal-600">{g.caption}</p>
-                </figcaption>
               </figure>
             ))}
           </div>
