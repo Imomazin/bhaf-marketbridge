@@ -9,6 +9,7 @@ import { MarqueePartners } from "@/components/ui/MarqueePartners";
 import { PhotoCarousel, type PhotoSlide } from "@/components/ui/PhotoCarousel";
 import { EntrepreneurCarousel } from "@/components/ui/EntrepreneurCarousel";
 import { AnimatedBars, type BarRow } from "@/components/ui/AnimatedBars";
+import { RoleFlowTabs } from "@/components/sections/RoleFlowTabs";
 import { entrepreneurs } from "@/data/entrepreneurs";
 import { impactMetrics } from "@/data/impact";
 import { sectorImpact } from "@/data/impact";
@@ -131,14 +132,6 @@ const modules = [
   { title: "Admin Dashboard", body: "BHAF moderation, approvals, opportunity publishing and impact oversight." },
 ];
 
-const howItWorks = [
-  { step: "01", title: "Register", body: "Entrepreneurs create an account and select their sector and country." },
-  { step: "02", title: "Create profile", body: "Structured profile with business details, products and verification documents." },
-  { step: "03", title: "Document ESG", body: "Capture environmental, social and governance activity using guided forms." },
-  { step: "04", title: "List products", body: "Publish marketplace listings for buyers, corporates and partners." },
-  { step: "05", title: "Readiness check", body: "Complete the readiness checklist to unlock visibility tiers." },
-  { step: "06", title: "Get discovered", body: "Become visible to funders, donors, buyers and corporate procurement." },
-];
 
 export default function HomePage() {
 
@@ -150,14 +143,15 @@ export default function HomePage() {
       <section className="relative isolate overflow-hidden bg-forest-950">
         <HeroPhotoCarousel slides={heroSlides} />
 
-        {/* Layered overlays for depth + text legibility */}
-        <div className="absolute inset-0 bg-gradient-to-r from-forest-950 via-forest-950/85 to-forest-950/15" />
-        <div className="absolute inset-0 bg-gradient-to-t from-forest-950 via-forest-950/40 to-forest-950/70" />
+        {/* Layered overlays — lighter so the photos shine through */}
+        <div className="absolute inset-0 bg-gradient-to-r from-forest-950/95 via-forest-950/70 to-forest-950/5" />
+        <div className="absolute inset-0 bg-gradient-to-t from-forest-950/90 via-forest-950/20 to-forest-950/40" />
+        {/* Bolder gold accent streak */}
         <div
-          className="pointer-events-none absolute inset-0 opacity-40 mix-blend-overlay"
+          className="pointer-events-none absolute inset-0 mix-blend-overlay"
           style={{
             backgroundImage:
-              "radial-gradient(circle at 80% 60%, rgba(212, 167, 58, 0.35), transparent 45%)",
+              "radial-gradient(circle at 78% 55%, rgba(219, 161, 40, 0.65), transparent 55%), radial-gradient(circle at 8% 12%, rgba(230, 189, 69, 0.35), transparent 38%)",
           }}
         />
 
@@ -196,7 +190,7 @@ export default function HomePage() {
                   Sign in
                 </Link>
                 <Link
-                  href="#how"
+                  href="#roles"
                   className="ml-2 text-sm font-medium text-cream-50 underline-offset-4 hover:text-gold-200 hover:underline"
                 >
                   See how it works →
@@ -392,30 +386,23 @@ export default function HomePage() {
       </section>
 
       {/* =========================================================== */}
-      {/* HOW IT WORKS — staggered reveal, hover lift                   */}
+      {/* YOUR JOURNEY — tabbed flow per role (1st, 2nd, 3rd...)        */}
       {/* =========================================================== */}
-      <section id="how" className="bg-white py-24">
+      <section className="bg-white py-24">
         <div className="container-edge">
           <Reveal>
             <SectionHeader
-              eyebrow="How it works"
-              title="A clear path from registration to global visibility."
-              description="The MarketBridge journey turns an entrepreneur's existing impact into structured, fundable, market-ready evidence."
+              eyebrow="Your journey"
+              title="What you do, in order — for every role on the platform."
+              description="Each role has a clear sequence of moves on MarketBridge. Pick yours and see exactly what step one looks like, what comes next, and how it leads to the outcome you care about."
             />
           </Reveal>
-          <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {howItWorks.map((step, idx) => (
-              <Reveal key={step.step} delayMs={idx * 80}>
-                <div className="card flex h-full flex-col p-7 transition duration-300 hover:-translate-y-1 hover:shadow-soft">
-                  <span className="font-serif text-3xl text-gold-500">{step.step}</span>
-                  <h3 className="mt-3 font-serif text-lg text-forest-900">{step.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-charcoal-500">{step.body}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+          <Reveal delayMs={150} className="mt-12">
+            <RoleFlowTabs />
+          </Reveal>
         </div>
       </section>
+
 
       {/* =========================================================== */}
       {/* KEY MODULES — pure product grid                               */}

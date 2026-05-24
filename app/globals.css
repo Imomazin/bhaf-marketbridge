@@ -50,6 +50,14 @@
   .eyebrow {
     @apply text-xs font-semibold uppercase tracking-[0.18em] text-gold-700;
   }
+
+  .gold-rule {
+    @apply h-px w-12 rounded-full bg-gradient-to-r from-gold-500 to-transparent;
+  }
+
+  .gold-dot {
+    @apply inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-gold-500 shadow-[0_0_0_3px_rgba(219,161,40,0.18)];
+  }
 }
 
 /* ============================================================ */

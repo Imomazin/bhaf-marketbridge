@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PortalSidebar } from "@/components/layout/PortalSidebar";
+import { PortalWorkflowStrip } from "@/components/layout/PortalWorkflowStrip";
 import { DashboardCard } from "@/components/cards/DashboardCard";
 import { marketplaceListings } from "@/data/marketplace";
 
@@ -47,6 +48,8 @@ export default function CorporatePortalPage() {
             </div>
           </div>
         </header>
+
+        <PortalWorkflowStrip roleId="corporate" currentStep={3} />
 
         <div className="container-edge py-8 lg:px-8">
           <div className="grid gap-4 sm:grid-cols-3">

@@ -1,6 +1,7 @@
 import { DashboardCard } from "@/components/cards/DashboardCard";
 import { ReadinessBadge } from "@/components/ui/ReadinessBadge";
 import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
+import { PortalWorkflowStrip } from "@/components/layout/PortalWorkflowStrip";
 import { entrepreneurs } from "@/data/entrepreneurs";
 import { opportunities } from "@/data/opportunities";
 import { photos } from "@/data/photos";
@@ -23,8 +24,10 @@ const activity = [
 
 export default function AdminPage() {
   return (
-    <section className="bg-cream-50 py-12 md:py-16">
-      <div className="container-edge">
+    <>
+      <PortalWorkflowStrip roleId="admin" currentStep={2} />
+      <section className="bg-cream-50 py-12 md:py-16">
+        <div className="container-edge">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
             <p className="eyebrow">Administrator</p>
@@ -182,8 +185,9 @@ export default function AdminPage() {
             tag="NYC"
             caption="BHAF Launch — partner pipeline source."
           />
+          </div>
         </div>
-      </div>
-    </section>
+      </section>
+    </>
   );
 }

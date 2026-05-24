@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { PortalSidebar } from "@/components/layout/PortalSidebar";
+import { PortalWorkflowStrip } from "@/components/layout/PortalWorkflowStrip";
 import { DashboardCard } from "@/components/cards/DashboardCard";
 import { ReadinessBadge } from "@/components/ui/ReadinessBadge";
 import { entrepreneurs } from "@/data/entrepreneurs";
@@ -63,6 +64,8 @@ export default function EntrepreneurPortalPage() {
             </div>
           </div>
         </header>
+
+        <PortalWorkflowStrip roleId="entrepreneur" currentStep={5} />
 
         <div className="container-edge py-8 lg:px-8">
           {/* Profile completion + readiness */}
