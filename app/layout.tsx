@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
+import { AiChatWidget } from "@/components/ui/AiChatWidget";
 
 export const metadata: Metadata = {
   title: "BHAF MarketBridge — Marketplace & Impact Infrastructure for African Women Entrepreneurs",
@@ -16,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Navbar />
         <main>{children}</main>
         <Footer />
+        <AiChatWidget />
       </body>
     </html>
   );

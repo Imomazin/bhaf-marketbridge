@@ -192,12 +192,36 @@ The app will be available at [http://localhost:3000](http://localhost:3000).
 
 ### Pages to visit
 
-- `/` — Landing page (hero, problem, solution, modules, featured entrepreneurs, partners, impact, CTA)
+**Public**
+- `/` — Landing page
 - `/directory` — Entrepreneur directory with filters
 - `/marketplace` — Product and service listings
 - `/opportunities` — Grants, investment, procurement, programmes and certifications
 - `/impact` — Impact metrics, ESG framework and sector breakdown
-- `/admin` — Admin dashboard mockup for BHAF moderators
+
+**Role portals**
+- `/portal` — Role picker / sign-in landing
+- `/portal/entrepreneur` — Entrepreneur workspace (profile, readiness, listings, ESG)
+- `/portal/funder` — Funder & donor workspace (pipeline, shortlists, impact)
+- `/portal/corporate` — Corporate partner workspace (procurement, RFPs, supplier diversity)
+- `/admin` — BHAF administrator dashboard
+
+### AI assistant (Asha)
+
+The floating chat widget on every page is wired to the Anthropic Claude API
+through `app/api/chat/route.ts`. To enable live responses set
+`ANTHROPIC_API_KEY` in your environment:
+
+```bash
+# Local
+echo "ANTHROPIC_API_KEY=sk-ant-..." >> .env.local
+
+# Vercel
+# Project Settings → Environment Variables → add ANTHROPIC_API_KEY
+```
+
+Without the key the widget still loads — it just returns a friendly
+"not configured yet" notice instead of streaming a response.
 
 ### Notes for contributors
 

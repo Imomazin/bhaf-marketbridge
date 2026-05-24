@@ -13,19 +13,19 @@ const footerColumns = [
     ],
   },
   {
-    title: "For partners",
+    title: "Sign in",
     links: [
-      { href: "#funders", label: "Funders & donors" },
-      { href: "#corporates", label: "Corporate buyers" },
-      { href: "#esg", label: "ESG & procurement" },
-      { href: "#training", label: "Training partners" },
+      { href: "/portal/entrepreneur", label: "Entrepreneur portal" },
+      { href: "/portal/funder", label: "Funder portal" },
+      { href: "/portal/corporate", label: "Corporate portal" },
+      { href: "/admin", label: "BHAF admin" },
     ],
   },
   {
     title: "About",
     links: [
       { href: "#about", label: "BHAF Mission" },
-      { href: "#case-studies", label: "Case studies" },
+      { href: "/impact", label: "Case studies" },
       { href: "#governance", label: "Governance" },
       { href: "#contact", label: "Contact" },
     ],
