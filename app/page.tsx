@@ -3,11 +3,29 @@ import Link from "next/link";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { EntrepreneurCard } from "@/components/cards/EntrepreneurCard";
 import { ImpactMetricCard } from "@/components/cards/ImpactMetricCard";
+import { HeroPhotoCarousel, type HeroSlide } from "@/components/ui/HeroPhotoCarousel";
+import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
+import { Reveal } from "@/components/ui/Reveal";
+import { MarqueePartners } from "@/components/ui/MarqueePartners";
 import { entrepreneurs } from "@/data/entrepreneurs";
 import { impactMetrics } from "@/data/impact";
 import { roles, accentClasses } from "@/data/roles";
 import { bhafPartners, photos } from "@/data/photos";
 import { cn } from "@/lib/utils";
+
+const heroSlides: HeroSlide[] = [
+  { photo: photos.abuja1, location: "Abuja", event: "Accelerator Cohort 1 in session" },
+  { photo: photos.nyc1, location: "New York", event: "BHAF Global Launch at the UN" },
+  { photo: photos.ihs1, location: "Dublin", event: "InvestHer Summit marketplace stage" },
+  { photo: photos.drc1, location: "Kinshasa", event: "FEMEC RDC circular economy training" },
+];
+
+const heroStatsConfig = [
+  { label: "Verified businesses", to: 165, suffix: "+", caption: "Across 11 African countries" },
+  { label: "Women supported", to: 1782, suffix: "", caption: "Through BHAF programmes" },
+  { label: "Funding mobilised", to: 3.6, prefix: "$", suffix: "M", decimals: 1, caption: "Grants, equity, procurement" },
+  { label: "Active opportunities", to: 24, suffix: "", caption: "Live this cycle" },
+];
 
 const trustPartners = [
   "UN Global Compact",
@@ -73,17 +91,11 @@ export default function HomePage() {
   return (
     <>
       {/* =========================================================== */}
-      {/* HERO — full-bleed photo, editorial typography, single column */}
+      {/* HERO — full-bleed CAROUSEL, animated stats, scroll reveal     */}
       {/* =========================================================== */}
       <section className="relative isolate overflow-hidden bg-forest-950">
-        <Image
-          src={photos.abuja1.src}
-          alt={photos.abuja1.alt}
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center"
-        />
+        <HeroPhotoCarousel slides={heroSlides} />
+
         {/* Layered overlays for depth + text legibility */}
         <div className="absolute inset-0 bg-gradient-to-r from-forest-950 via-forest-950/85 to-forest-950/15" />
         <div className="absolute inset-0 bg-gradient-to-t from-forest-950 via-forest-950/40 to-forest-950/70" />
@@ -97,53 +109,63 @@ export default function HomePage() {
 
         <div className="container-edge relative flex min-h-[680px] flex-col justify-end py-16 md:min-h-[760px] md:py-24">
           <div className="max-w-3xl text-cream-50">
-            <span className="inline-flex items-center gap-2 rounded-full border border-gold-300/50 bg-forest-950/40 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-200 backdrop-blur">
-              <span className="h-1.5 w-1.5 rounded-full bg-gold-300" />
-              BHAF Circular Academy · MarketBridge
-            </span>
+            <Reveal from="up">
+              <span className="inline-flex items-center gap-2 rounded-full border border-gold-300/50 bg-forest-950/40 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-200 backdrop-blur">
+                <span className="h-1.5 w-1.5 rounded-full bg-gold-300 animate-pulse" />
+                BHAF Circular Academy · MarketBridge
+              </span>
+            </Reveal>
 
-            <h1 className="mt-6 font-serif text-[2.5rem] font-bold leading-[1.04] tracking-tight text-cream-50 md:text-[4rem] lg:text-[4.6rem]">
-              Made by <span className="italic text-gold-300">African women</span>.
-              <br className="hidden md:block" /> Verified by BHAF. Ready for the world.
-            </h1>
+            <Reveal from="up" delayMs={120}>
+              <h1 className="mt-6 font-serif text-[2.5rem] font-bold leading-[1.04] tracking-tight text-cream-50 md:text-[4rem] lg:text-[4.6rem]">
+                Made by <span className="italic text-gold-300">African women</span>.
+                <br className="hidden md:block" /> Verified by BHAF. Ready for the world.
+              </h1>
+            </Reveal>
 
-            <p className="mt-6 max-w-2xl text-base leading-relaxed text-cream-100 md:text-lg">
-              MarketBridge is the verified marketplace connecting Africa's women-led businesses with the
-              funders, corporate buyers and global market access they belong in.
-            </p>
+            <Reveal from="up" delayMs={260}>
+              <p className="mt-6 max-w-2xl text-base leading-relaxed text-cream-100 md:text-lg">
+                MarketBridge is the verified marketplace connecting Africa's women-led businesses with the
+                funders, corporate buyers and global market access they belong in.
+              </p>
+            </Reveal>
 
-            <div className="mt-9 flex flex-wrap items-center gap-3">
-              <Link href="/portal/entrepreneur" className="btn-gold !px-6 !py-3.5 text-sm">
-                Register your business
-              </Link>
-              <Link
-                href="/portal"
-                className="inline-flex items-center justify-center rounded-md border border-cream-50/50 bg-forest-950/40 px-6 py-3.5 text-sm font-medium text-cream-50 backdrop-blur transition hover:border-cream-50 hover:bg-cream-50/10"
-              >
-                Sign in
-              </Link>
-              <Link
-                href="#how"
-                className="ml-2 text-sm font-medium text-cream-50 underline-offset-4 hover:text-gold-200 hover:underline"
-              >
-                See how it works →
-              </Link>
-            </div>
+            <Reveal from="up" delayMs={400}>
+              <div className="mt-9 flex flex-wrap items-center gap-3">
+                <Link href="/portal/entrepreneur" className="btn-gold !px-6 !py-3.5 text-sm">
+                  Register your business
+                </Link>
+                <Link
+                  href="/portal"
+                  className="inline-flex items-center justify-center rounded-md border border-cream-50/50 bg-forest-950/40 px-6 py-3.5 text-sm font-medium text-cream-50 backdrop-blur transition hover:border-cream-50 hover:bg-cream-50/10"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href="#how"
+                  className="ml-2 text-sm font-medium text-cream-50 underline-offset-4 hover:text-gold-200 hover:underline"
+                >
+                  See how it works →
+                </Link>
+              </div>
+            </Reveal>
           </div>
         </div>
 
-        {/* Stat strip pinned to the bottom of the hero */}
+        {/* Stat strip with animated counters */}
         <div className="relative border-t border-cream-50/15 bg-forest-950/85 backdrop-blur-md">
           <dl className="container-edge grid grid-cols-2 gap-x-6 gap-y-4 py-5 md:grid-cols-4 md:py-6">
-            {[
-              { label: "Verified businesses", value: "165+", caption: "Across 11 African countries" },
-              { label: "Women supported", value: "1,782", caption: "Through BHAF programmes" },
-              { label: "Funding mobilised", value: "$3.6M", caption: "Grants, equity, procurement" },
-              { label: "Active opportunities", value: "24", caption: "Live this cycle" },
-            ].map((s, idx) => (
+            {heroStatsConfig.map((s, idx) => (
               <div key={s.label} className={idx > 0 ? "md:border-l md:border-cream-50/10 md:pl-6" : ""}>
                 <dt className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-300">{s.label}</dt>
-                <dd className="mt-1 font-serif text-3xl font-bold text-cream-50 md:text-4xl">{s.value}</dd>
+                <dd className="mt-1 font-serif text-3xl font-bold text-cream-50 md:text-4xl">
+                  <AnimatedCounter
+                    to={s.to}
+                    prefix={s.prefix ?? ""}
+                    suffix={s.suffix ?? ""}
+                    decimals={s.decimals ?? 0}
+                  />
+                </dd>
                 <dd className="mt-0.5 text-[11px] text-cream-100/70">{s.caption}</dd>
               </div>
             ))}
@@ -152,21 +174,15 @@ export default function HomePage() {
       </section>
 
       {/* =========================================================== */}
-      {/* TRUST STRIP — partners in elegant text band                   */}
+      {/* TRUST STRIP — partners in continuous marquee scroll           */}
       {/* =========================================================== */}
       <section className="border-b border-cream-200 bg-white">
-        <div className="container-edge py-8">
+        <div className="container-edge pt-6">
           <p className="text-center text-[11px] font-semibold uppercase tracking-[0.22em] text-charcoal-400">
             In partnership with
           </p>
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-10 gap-y-3">
-            {trustPartners.map((name) => (
-              <span key={name} className="font-serif text-sm text-forest-900">
-                {name}
-              </span>
-            ))}
-          </div>
         </div>
+        <MarqueePartners partners={trustPartners} />
       </section>
 
       {/* =========================================================== */}
@@ -174,18 +190,22 @@ export default function HomePage() {
       {/* =========================================================== */}
       <section className="bg-cream-50 py-24">
         <div className="container-edge">
-          <SectionHeader
-            eyebrow="The problem"
-            title="African women entrepreneurs are building exceptional businesses — and still being overlooked."
-            description="Capital, procurement and ESG opportunities exist in abundance. What is missing is the infrastructure to make women-led businesses visible, verified and ready."
-          />
+          <Reveal>
+            <SectionHeader
+              eyebrow="The problem"
+              title="African women entrepreneurs are building exceptional businesses — and still being overlooked."
+              description="Capital, procurement and ESG opportunities exist in abundance. What is missing is the infrastructure to make women-led businesses visible, verified and ready."
+            />
+          </Reveal>
           <div className="mt-14 grid gap-6 md:grid-cols-3">
-            {problemPoints.map((p) => (
-              <div key={p.number} className="card flex h-full flex-col p-8">
-                <p className="font-serif text-3xl text-gold-500">{p.number}</p>
-                <h3 className="mt-4 font-serif text-xl text-forest-900">{p.title}</h3>
-                <p className="mt-3 text-sm leading-relaxed text-charcoal-500">{p.body}</p>
-              </div>
+            {problemPoints.map((p, idx) => (
+              <Reveal key={p.number} delayMs={idx * 120}>
+                <div className="card flex h-full flex-col p-8 transition hover:-translate-y-1 hover:shadow-soft">
+                  <p className="font-serif text-3xl text-gold-500">{p.number}</p>
+                  <h3 className="mt-4 font-serif text-xl text-forest-900">{p.title}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-charcoal-500">{p.body}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -245,44 +265,47 @@ export default function HomePage() {
       </section>
 
       {/* =========================================================== */}
-      {/* ROLE PICKER — 4 distinct entry paths                          */}
+      {/* ROLE PICKER — 4 distinct entry paths, staggered reveal        */}
       {/* =========================================================== */}
       <section id="roles" className="bg-forest-50 py-24">
         <div className="container-edge">
-          <SectionHeader
-            eyebrow="Choose your role"
-            title="MarketBridge works differently for each kind of partner."
-            description="A workspace built for the way you actually use the platform — pick yours and continue."
-          />
+          <Reveal>
+            <SectionHeader
+              eyebrow="Choose your role"
+              title="MarketBridge works differently for each kind of partner."
+              description="A workspace built for the way you actually use the platform — pick yours and continue."
+            />
+          </Reveal>
 
           <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-            {roles.map((role) => {
+            {roles.map((role, idx) => {
               const accent = accentClasses[role.accent];
               return (
-                <Link
-                  key={role.id}
-                  href={role.href}
-                  className="group flex h-full flex-col rounded-2xl border border-cream-200 bg-white p-7 transition hover:-translate-y-0.5 hover:shadow-soft"
-                >
-                  <span className={cn("inline-flex h-9 w-9 items-center justify-center rounded-md text-cream-50", accent.bg)}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                      <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </span>
-                  <h3 className="mt-5 font-serif text-xl text-forest-900">{role.shortLabel}</h3>
-                  <p className="mt-1 text-sm text-charcoal-500">{role.tagline}</p>
-                  <ul className="mt-5 space-y-2 border-t border-cream-200 pt-4">
-                    {role.primaryActions.slice(0, 3).map((a) => (
-                      <li key={a} className="flex items-start gap-2 text-xs text-charcoal-600">
-                        <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-gold-500" />
-                        {a}
-                      </li>
-                    ))}
-                  </ul>
-                  <span className="mt-auto pt-6 text-sm font-medium text-forest-900 transition group-hover:text-gold-700">
-                    {role.signInLabel} →
-                  </span>
-                </Link>
+                <Reveal key={role.id} delayMs={idx * 100}>
+                  <Link
+                    href={role.href}
+                    className="group flex h-full flex-col rounded-2xl border border-cream-200 bg-white p-7 transition duration-300 hover:-translate-y-1.5 hover:shadow-soft hover:ring-1 hover:ring-gold-200"
+                  >
+                    <span className={cn("inline-flex h-9 w-9 items-center justify-center rounded-md text-cream-50 transition group-hover:scale-110", accent.bg)}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                        <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </span>
+                    <h3 className="mt-5 font-serif text-xl text-forest-900">{role.shortLabel}</h3>
+                    <p className="mt-1 text-sm text-charcoal-500">{role.tagline}</p>
+                    <ul className="mt-5 space-y-2 border-t border-cream-200 pt-4">
+                      {role.primaryActions.slice(0, 3).map((a) => (
+                        <li key={a} className="flex items-start gap-2 text-xs text-charcoal-600">
+                          <span className="mt-1.5 h-1 w-1 flex-shrink-0 rounded-full bg-gold-500" />
+                          {a}
+                        </li>
+                      ))}
+                    </ul>
+                    <span className="mt-auto pt-6 text-sm font-medium text-forest-900 transition group-hover:translate-x-1 group-hover:text-gold-700">
+                      {role.signInLabel} →
+                    </span>
+                  </Link>
+                </Reveal>
               );
             })}
           </div>
@@ -290,22 +313,26 @@ export default function HomePage() {
       </section>
 
       {/* =========================================================== */}
-      {/* HOW IT WORKS — clean 6 steps                                  */}
+      {/* HOW IT WORKS — staggered reveal, hover lift                   */}
       {/* =========================================================== */}
       <section id="how" className="bg-white py-24">
         <div className="container-edge">
-          <SectionHeader
-            eyebrow="How it works"
-            title="A clear path from registration to global visibility."
-            description="The MarketBridge journey turns an entrepreneur's existing impact into structured, fundable, market-ready evidence."
-          />
+          <Reveal>
+            <SectionHeader
+              eyebrow="How it works"
+              title="A clear path from registration to global visibility."
+              description="The MarketBridge journey turns an entrepreneur's existing impact into structured, fundable, market-ready evidence."
+            />
+          </Reveal>
           <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {howItWorks.map((step) => (
-              <div key={step.step} className="card flex h-full flex-col p-7">
-                <span className="font-serif text-3xl text-gold-500">{step.step}</span>
-                <h3 className="mt-3 font-serif text-lg text-forest-900">{step.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-charcoal-500">{step.body}</p>
-              </div>
+            {howItWorks.map((step, idx) => (
+              <Reveal key={step.step} delayMs={idx * 80}>
+                <div className="card flex h-full flex-col p-7 transition duration-300 hover:-translate-y-1 hover:shadow-soft">
+                  <span className="font-serif text-3xl text-gold-500">{step.step}</span>
+                  <h3 className="mt-3 font-serif text-lg text-forest-900">{step.title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-charcoal-500">{step.body}</p>
+                </div>
+              </Reveal>
             ))}
           </div>
         </div>
@@ -538,45 +565,57 @@ export default function HomePage() {
       </section>
 
       {/* =========================================================== */}
-      {/* CTA — clean, no photo. Bold typography moment                 */}
+      {/* CTA — animated gradient backdrop, reveal-in heading           */}
       {/* =========================================================== */}
-      <section id="register" className="bg-gradient-to-br from-forest-900 via-forest-800 to-forest-950 py-24 text-cream-50">
-        <div className="container-edge">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-300">
-              Join MarketBridge
-            </p>
-            <h2 className="mt-3 font-serif text-3xl md:text-5xl">
-              Bring your business to the platform built for African women entrepreneurs.
-            </h2>
-            <p className="mx-auto mt-5 max-w-2xl text-base text-cream-100/85 md:text-lg">
-              Register, build your profile, document your impact and become visible to the funders, buyers and
-              partners shaping the next decade of African enterprise.
-            </p>
-            <div className="mt-10 flex flex-wrap justify-center gap-3">
-              <Link href="/portal/entrepreneur" className="btn-gold">
-                Register as entrepreneur
-              </Link>
-              <Link
-                href="/portal/funder"
-                className="inline-flex items-center justify-center rounded-md border border-cream-50/40 px-5 py-3 text-sm font-medium text-cream-50 transition hover:border-cream-50/80"
-              >
-                Sign in as funder
-              </Link>
-              <Link
-                href="/portal/corporate"
-                className="inline-flex items-center justify-center rounded-md border border-cream-50/40 px-5 py-3 text-sm font-medium text-cream-50 transition hover:border-cream-50/80"
-              >
-                Sign in as corporate
-              </Link>
-              <Link
-                href="/admin"
-                className="inline-flex items-center justify-center rounded-md bg-cream-50 px-5 py-3 text-sm font-medium text-forest-900 transition hover:bg-cream-100"
-              >
-                BHAF admin
-              </Link>
+      <section
+        id="register"
+        className="relative overflow-hidden bg-gradient-to-br from-forest-900 via-forest-800 to-forest-950 py-24 text-cream-50"
+      >
+        <div
+          className="pointer-events-none absolute inset-0 opacity-50 mix-blend-overlay"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 20% 30%, rgba(212, 167, 58, 0.35), transparent 45%), radial-gradient(circle at 80% 70%, rgba(143, 182, 161, 0.18), transparent 50%)",
+          }}
+        />
+        <div className="container-edge relative">
+          <Reveal>
+            <div className="mx-auto max-w-3xl text-center">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-300">
+                Join MarketBridge
+              </p>
+              <h2 className="mt-3 font-serif text-3xl md:text-5xl">
+                Bring your business to the platform built for African women entrepreneurs.
+              </h2>
+              <p className="mx-auto mt-5 max-w-2xl text-base text-cream-100/85 md:text-lg">
+                Register, build your profile, document your impact and become visible to the funders, buyers and
+                partners shaping the next decade of African enterprise.
+              </p>
+              <div className="mt-10 flex flex-wrap justify-center gap-3">
+                <Link href="/portal/entrepreneur" className="btn-gold transition hover:-translate-y-0.5">
+                  Register as entrepreneur
+                </Link>
+                <Link
+                  href="/portal/funder"
+                  className="inline-flex items-center justify-center rounded-md border border-cream-50/40 px-5 py-3 text-sm font-medium text-cream-50 transition hover:-translate-y-0.5 hover:border-cream-50/80"
+                >
+                  Sign in as funder
+                </Link>
+                <Link
+                  href="/portal/corporate"
+                  className="inline-flex items-center justify-center rounded-md border border-cream-50/40 px-5 py-3 text-sm font-medium text-cream-50 transition hover:-translate-y-0.5 hover:border-cream-50/80"
+                >
+                  Sign in as corporate
+                </Link>
+                <Link
+                  href="/admin"
+                  className="inline-flex items-center justify-center rounded-md bg-cream-50 px-5 py-3 text-sm font-medium text-forest-900 transition hover:-translate-y-0.5 hover:bg-cream-100"
+                >
+                  BHAF admin
+                </Link>
+              </div>
             </div>
-          </div>
+          </Reveal>
         </div>
       </section>
     </>
