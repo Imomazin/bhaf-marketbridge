@@ -1,6 +1,7 @@
 import { PageHero } from "@/components/ui/PageHero";
 import { MarketplaceCard } from "@/components/cards/MarketplaceCard";
 import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
+import { Reveal } from "@/components/ui/Reveal";
 import { marketplaceListings } from "@/data/marketplace";
 import { photos } from "@/data/photos";
 
@@ -51,8 +52,10 @@ export default function MarketplacePage() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {marketplaceListings.map((l) => (
-              <MarketplaceCard key={l.id} listing={l} />
+            {marketplaceListings.map((l, idx) => (
+              <Reveal key={l.id} delayMs={idx * 80}>
+                <MarketplaceCard listing={l} />
+              </Reveal>
             ))}
           </div>
 

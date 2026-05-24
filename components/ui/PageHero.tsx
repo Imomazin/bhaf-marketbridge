@@ -18,9 +18,16 @@ export function PageHero({ eyebrow, title, description, photo, caption }: PageHe
         fill
         sizes="100vw"
         priority
-        className="object-cover opacity-30"
+        className="object-cover opacity-55"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-forest-900 via-forest-900/85 to-forest-800/40" />
+      <div className="absolute inset-0 bg-gradient-to-r from-forest-950/95 via-forest-900/75 to-forest-800/15" />
+      <div
+        className="pointer-events-none absolute inset-0 mix-blend-overlay"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle at 80% 60%, rgba(219, 161, 40, 0.45), transparent 55%)",
+        }}
+      />
 
       <div className="container-edge relative grid gap-10 py-20 md:grid-cols-[1.4fr_1fr] md:items-end">
         <div>

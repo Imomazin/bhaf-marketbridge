@@ -1,24 +1,89 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SectionHeader } from "@/components/ui/SectionHeader";
-import { EntrepreneurCard } from "@/components/cards/EntrepreneurCard";
 import { ImpactMetricCard } from "@/components/cards/ImpactMetricCard";
 import { HeroPhotoCarousel, type HeroSlide } from "@/components/ui/HeroPhotoCarousel";
 import { AnimatedCounter } from "@/components/ui/AnimatedCounter";
 import { Reveal } from "@/components/ui/Reveal";
 import { MarqueePartners } from "@/components/ui/MarqueePartners";
+import { PhotoCarousel, type PhotoSlide } from "@/components/ui/PhotoCarousel";
+import { EntrepreneurCarousel } from "@/components/ui/EntrepreneurCarousel";
+import { AnimatedBars, type BarRow } from "@/components/ui/AnimatedBars";
+import { RoleFlowTabs } from "@/components/sections/RoleFlowTabs";
 import { entrepreneurs } from "@/data/entrepreneurs";
 import { impactMetrics } from "@/data/impact";
+import { sectorImpact } from "@/data/impact";
 import { roles, accentClasses } from "@/data/roles";
 import { bhafPartners, photos } from "@/data/photos";
 import { cn } from "@/lib/utils";
 
+// Photo discipline: each image is used in exactly ONE place across the
+// landing page. Hero gets the 4 signature shots; the gallery carousel and
+// the platform-section image draw from the rest of the library.
 const heroSlides: HeroSlide[] = [
   { photo: photos.abuja1, location: "Abuja", event: "Accelerator Cohort 1 in session" },
   { photo: photos.nyc1, location: "New York", event: "BHAF Global Launch at the UN" },
   { photo: photos.ihs1, location: "Dublin", event: "InvestHer Summit marketplace stage" },
   { photo: photos.drc1, location: "Kinshasa", event: "FEMEC RDC circular economy training" },
 ];
+
+const gallerySlides: PhotoSlide[] = [
+  {
+    photo: photos.abuja7,
+    location: "Abuja",
+    event: "Accelerator Cohort 1",
+    caption: "Cohort 1 group portrait — the founders carrying BHAF's first wave.",
+  },
+  {
+    photo: photos.abuja11,
+    location: "Abuja",
+    event: "Founder discussion",
+    caption: "Discussion circles that translate ambition into next steps.",
+  },
+  {
+    photo: photos.baloni1,
+    location: "Baloni Farm",
+    event: "Field visit",
+    caption: "Entrepreneurs touring a working circular-economy site.",
+  },
+  {
+    photo: photos.baloni3,
+    location: "Baloni Farm",
+    event: "Product showcase",
+    caption: "Real goods, real producers, real provenance.",
+  },
+  {
+    photo: photos.drc2,
+    location: "Kinshasa",
+    event: "FEMEC training",
+    caption: "Collaborative session inside the DRC training cohort.",
+  },
+  {
+    photo: photos.drc5,
+    location: "Kinshasa",
+    event: "Certification ceremony",
+    caption: "DRC cohort graduates with completion certificates.",
+  },
+  {
+    photo: photos.nyc3,
+    location: "New York",
+    event: "Panel · BHAF Launch",
+    caption: "Leadership conversation at the BHAF NYC Launch.",
+  },
+  {
+    photo: photos.ihs2,
+    location: "Dublin",
+    event: "InvestHer Summit",
+    caption: "Global investor connections on the marketplace stage.",
+  },
+];
+
+const sectorBars: BarRow[] = sectorImpact.map((s) => ({
+  label: s.sector,
+  value: s.entrepreneurs,
+  display: `${s.entrepreneurs} ventures · ${s.fundingMobilised}`,
+  caption: `${s.womenSupported.toLocaleString()} women supported`,
+}));
 
 const heroStatsConfig = [
   { label: "Verified businesses", to: 165, suffix: "+", caption: "Across 11 African countries" },
@@ -67,26 +132,8 @@ const modules = [
   { title: "Admin Dashboard", body: "BHAF moderation, approvals, opportunity publishing and impact oversight." },
 ];
 
-const howItWorks = [
-  { step: "01", title: "Register", body: "Entrepreneurs create an account and select their sector and country." },
-  { step: "02", title: "Create profile", body: "Structured profile with business details, products and verification documents." },
-  { step: "03", title: "Document ESG", body: "Capture environmental, social and governance activity using guided forms." },
-  { step: "04", title: "List products", body: "Publish marketplace listings for buyers, corporates and partners." },
-  { step: "05", title: "Readiness check", body: "Complete the readiness checklist to unlock visibility tiers." },
-  { step: "06", title: "Get discovered", body: "Become visible to funders, donors, buyers and corporate procurement." },
-];
-
-const galleryPhotos = [
-  { photo: photos.nyc1, location: "New York", event: "BHAF Global Launch", caption: "Convened with IPWRA at the United Nations." },
-  { photo: photos.abuja7, location: "Abuja", event: "Accelerator Cohort 1", caption: "Group portrait of the inaugural cohort." },
-  { photo: photos.drc1, location: "Kinshasa", event: "FEMEC RDC Launch", caption: "Circular economy training in session." },
-  { photo: photos.ihs1, location: "Dublin", event: "InvestHer Summit", caption: "BHAF on the networking & marketplace stage." },
-  { photo: photos.baloni3, location: "Baloni Farm", event: "Field Visit", caption: "Live ESG and circular economy site visit." },
-  { photo: photos.drc5, location: "Kinshasa", event: "Certification Ceremony", caption: "DRC cohort graduates with certificates." },
-];
 
 export default function HomePage() {
-  const featured = entrepreneurs.slice(0, 3);
 
   return (
     <>
@@ -96,14 +143,15 @@ export default function HomePage() {
       <section className="relative isolate overflow-hidden bg-forest-950">
         <HeroPhotoCarousel slides={heroSlides} />
 
-        {/* Layered overlays for depth + text legibility */}
-        <div className="absolute inset-0 bg-gradient-to-r from-forest-950 via-forest-950/85 to-forest-950/15" />
-        <div className="absolute inset-0 bg-gradient-to-t from-forest-950 via-forest-950/40 to-forest-950/70" />
+        {/* Layered overlays — lighter so the photos shine through */}
+        <div className="absolute inset-0 bg-gradient-to-r from-forest-950/95 via-forest-950/70 to-forest-950/5" />
+        <div className="absolute inset-0 bg-gradient-to-t from-forest-950/90 via-forest-950/20 to-forest-950/40" />
+        {/* Bolder gold accent streak */}
         <div
-          className="pointer-events-none absolute inset-0 opacity-40 mix-blend-overlay"
+          className="pointer-events-none absolute inset-0 mix-blend-overlay"
           style={{
             backgroundImage:
-              "radial-gradient(circle at 80% 60%, rgba(212, 167, 58, 0.35), transparent 45%)",
+              "radial-gradient(circle at 78% 55%, rgba(219, 161, 40, 0.65), transparent 55%), radial-gradient(circle at 8% 12%, rgba(230, 189, 69, 0.35), transparent 38%)",
           }}
         />
 
@@ -142,7 +190,7 @@ export default function HomePage() {
                   Sign in
                 </Link>
                 <Link
-                  href="#how"
+                  href="#roles"
                   className="ml-2 text-sm font-medium text-cream-50 underline-offset-4 hover:text-gold-200 hover:underline"
                 >
                   See how it works →
@@ -245,22 +293,47 @@ export default function HomePage() {
             </div>
           </div>
 
-          <figure className="order-1 md:order-2">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-3xl shadow-card">
-              <Image
-                src={photos.abuja12.src}
-                alt={photos.abuja12.alt}
-                fill
-                sizes="(max-width: 768px) 100vw, 600px"
-                className="object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-forest-950/75 via-transparent to-transparent" />
-            </div>
-            <figcaption className="mt-3 text-xs text-charcoal-500">
-              <span className="font-semibold uppercase tracking-[0.16em] text-gold-700">Abuja Accelerator</span>
-              <span className="ml-2">Keynote at the Cohort 1 launch.</span>
-            </figcaption>
-          </figure>
+          <Reveal from="right" className="order-1 md:order-2">
+            <figure className="relative">
+              <div className="group relative aspect-[4/5] overflow-hidden rounded-3xl shadow-card">
+                <Image
+                  src={photos.abuja4.src}
+                  alt={photos.abuja4.alt}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 600px"
+                  className="object-cover transition duration-700 group-hover:scale-[1.04]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-forest-950/85 via-forest-950/10 to-transparent" />
+                <figcaption className="absolute inset-x-0 bottom-0 p-6 text-cream-50">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-300">
+                    Abuja Accelerator · Cohort 1
+                  </p>
+                  <p className="mt-1.5 font-serif text-lg leading-snug">
+                    Founder panel — every voice on this stage maps to a profile MarketBridge makes discoverable.
+                  </p>
+                </figcaption>
+              </div>
+
+              {/* Floating ESG snapshot card with gentle motion */}
+              <div className="animate-float-soft absolute -bottom-6 -left-6 hidden w-56 rounded-2xl border border-cream-200 bg-white p-4 shadow-soft md:block">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-700">
+                  ESG snapshot
+                </p>
+                <div className="mt-2 space-y-1.5 text-[11px] text-charcoal-600">
+                  {[
+                    ["Women supported", "1,782"],
+                    ["Jobs created", "140"],
+                    ["CO₂ avoided", "612 t"],
+                  ].map(([label, value]) => (
+                    <div key={label} className="flex items-baseline justify-between">
+                      <span className="text-charcoal-500">{label}</span>
+                      <span className="font-serif font-semibold text-forest-900">{value}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </figure>
+          </Reveal>
         </div>
       </section>
 
@@ -313,30 +386,23 @@ export default function HomePage() {
       </section>
 
       {/* =========================================================== */}
-      {/* HOW IT WORKS — staggered reveal, hover lift                   */}
+      {/* YOUR JOURNEY — tabbed flow per role (1st, 2nd, 3rd...)        */}
       {/* =========================================================== */}
-      <section id="how" className="bg-white py-24">
+      <section className="bg-white py-24">
         <div className="container-edge">
           <Reveal>
             <SectionHeader
-              eyebrow="How it works"
-              title="A clear path from registration to global visibility."
-              description="The MarketBridge journey turns an entrepreneur's existing impact into structured, fundable, market-ready evidence."
+              eyebrow="Your journey"
+              title="What you do, in order — for every role on the platform."
+              description="Each role has a clear sequence of moves on MarketBridge. Pick yours and see exactly what step one looks like, what comes next, and how it leads to the outcome you care about."
             />
           </Reveal>
-          <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-            {howItWorks.map((step, idx) => (
-              <Reveal key={step.step} delayMs={idx * 80}>
-                <div className="card flex h-full flex-col p-7 transition duration-300 hover:-translate-y-1 hover:shadow-soft">
-                  <span className="font-serif text-3xl text-gold-500">{step.step}</span>
-                  <h3 className="mt-3 font-serif text-lg text-forest-900">{step.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-charcoal-500">{step.body}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+          <Reveal delayMs={150} className="mt-12">
+            <RoleFlowTabs />
+          </Reveal>
         </div>
       </section>
+
 
       {/* =========================================================== */}
       {/* KEY MODULES — pure product grid                               */}
@@ -359,108 +425,44 @@ export default function HomePage() {
       </section>
 
       {/* =========================================================== */}
-      {/* BHAF IN ACTION — magazine layout, one hero + 5 thumbnails    */}
+      {/* BHAF IN ACTION — auto-advancing horizontal photo carousel     */}
+      {/* (no longer a stacked grid)                                    */}
       {/* =========================================================== */}
       <section className="bg-white py-24">
         <div className="container-edge">
-          <SectionHeader
-            eyebrow="BHAF in action"
-            title="Real cohorts. Real cities. Real momentum."
-            description="From Abuja to Kinshasa to Dublin and New York — BHAF is already convening, training and connecting the women entrepreneurs MarketBridge brings online."
-          />
-
-          <div className="mt-14 grid gap-6 lg:grid-cols-12">
-            {/* Hero feature photo — spans 7 cols on desktop */}
-            <figure className="group lg:col-span-7">
-              <div className="relative aspect-[4/3] overflow-hidden rounded-3xl bg-forest-900 lg:aspect-[16/11]">
-                <Image
-                  src={galleryPhotos[0].photo.src}
-                  alt={galleryPhotos[0].photo.alt}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 800px"
-                  className="object-cover transition duration-700 group-hover:scale-[1.02]"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-forest-950/90 via-forest-950/10 to-transparent" />
-                <figcaption className="absolute inset-x-0 bottom-0 p-6 text-cream-50 md:p-8">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-300">
-                    {galleryPhotos[0].location} · {galleryPhotos[0].event}
-                  </p>
-                  <p className="mt-2 max-w-md font-serif text-xl leading-snug md:text-2xl">
-                    {galleryPhotos[0].caption}
-                  </p>
-                </figcaption>
-              </div>
-            </figure>
-
-            {/* Right column — 2 medium thumbnails stacked */}
-            <div className="grid gap-6 lg:col-span-5 lg:grid-rows-2">
-              {galleryPhotos.slice(1, 3).map((g) => (
-                <figure key={g.photo.src} className="group">
-                  <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-forest-900 lg:aspect-auto lg:h-full">
-                    <Image
-                      src={g.photo.src}
-                      alt={g.photo.alt}
-                      fill
-                      sizes="(max-width: 1024px) 100vw, 500px"
-                      className="object-cover transition duration-500 group-hover:scale-[1.03]"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-forest-950/80 via-forest-950/5 to-transparent" />
-                    <figcaption className="absolute inset-x-0 bottom-0 p-5 text-cream-50">
-                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-300">
-                        {g.location} · {g.event}
-                      </p>
-                      <p className="mt-1 text-sm leading-snug text-cream-100">{g.caption}</p>
-                    </figcaption>
-                  </div>
-                </figure>
-              ))}
-            </div>
-
-            {/* Bottom row — 3 thumbnails */}
-            {galleryPhotos.slice(3).map((g) => (
-              <figure key={g.photo.src} className="group lg:col-span-4">
-                <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-forest-900">
-                  <Image
-                    src={g.photo.src}
-                    alt={g.photo.alt}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 400px"
-                    className="object-cover transition duration-500 group-hover:scale-[1.03]"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-forest-950/80 via-forest-950/5 to-transparent" />
-                  <figcaption className="absolute inset-x-0 bottom-0 p-5 text-cream-50">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-300">
-                      {g.location} · {g.event}
-                    </p>
-                    <p className="mt-1 text-sm leading-snug text-cream-100">{g.caption}</p>
-                  </figcaption>
-                </div>
-              </figure>
-            ))}
-          </div>
+          <Reveal>
+            <SectionHeader
+              eyebrow="BHAF in action"
+              title="Real cohorts. Real cities. Real momentum."
+              description="From Abuja to Kinshasa to Dublin and New York — BHAF is already convening, training and connecting the women entrepreneurs MarketBridge brings online."
+            />
+          </Reveal>
+          <Reveal delayMs={150} className="mt-12">
+            <PhotoCarousel slides={gallerySlides} />
+          </Reveal>
         </div>
       </section>
 
       {/* =========================================================== */}
-      {/* FEATURED ENTREPRENEURS                                        */}
+      {/* FEATURED ENTREPRENEURS — auto-rotating carousel               */}
       {/* =========================================================== */}
       <section className="bg-cream-50 py-24">
         <div className="container-edge">
-          <div className="flex flex-wrap items-end justify-between gap-6">
-            <SectionHeader
-              eyebrow="Featured entrepreneurs"
-              title="Verified women-led businesses ready for buyers, funders and partners."
-            />
-            <Link href="/directory" className="btn-secondary">
-              View directory
-            </Link>
-          </div>
-          <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {featured.map((e) => (
-              <EntrepreneurCard key={e.id} entrepreneur={e} />
-            ))}
-          </div>
-          <p className="mt-6 text-xs text-charcoal-400">
+          <Reveal>
+            <div className="flex flex-wrap items-end justify-between gap-6">
+              <SectionHeader
+                eyebrow="Featured entrepreneurs"
+                title="Verified women-led businesses ready for buyers, funders and partners."
+              />
+              <Link href="/directory" className="btn-secondary">
+                View directory
+              </Link>
+            </div>
+          </Reveal>
+          <Reveal delayMs={150} className="mt-12">
+            <EntrepreneurCarousel entrepreneurs={entrepreneurs} />
+          </Reveal>
+          <p className="mt-6 text-center text-xs text-charcoal-400">
             Sample profiles used to illustrate the MVP. Real entrepreneur profiles will surface here once the
             directory is live.
           </p>
@@ -525,42 +527,50 @@ export default function HomePage() {
       </section>
 
       {/* =========================================================== */}
-      {/* IMPACT — metrics anchored by one Dublin photo                 */}
+      {/* IMPACT — animated metric cards + sector bar chart that fills   */}
+      {/* in on scroll. No photo, so no repeats.                         */}
       {/* =========================================================== */}
       <section className="bg-white py-24">
         <div className="container-edge">
-          <SectionHeader
-            eyebrow="Impact reporting"
-            title="Real numbers. Real evidence. Real accountability."
-            description="MarketBridge captures live impact data across women supported, jobs created, ESG outcomes and funding mobilised — turning activity into donor-grade reporting."
-          />
-          <div className="mt-14 grid gap-6 lg:grid-cols-[1fr_1.4fr]">
-            <figure className="relative">
-              <div className="relative aspect-[4/5] overflow-hidden rounded-2xl">
-                <Image
-                  src={photos.ihs1.src}
-                  alt={photos.ihs1.alt}
-                  fill
-                  sizes="(max-width: 1024px) 100vw, 500px"
-                  className="object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-forest-950/85 via-transparent to-transparent" />
-                <figcaption className="absolute inset-x-0 bottom-0 p-5 text-cream-50">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-300">
-                    InvestHer Summit · Dublin
-                  </p>
-                  <p className="mt-1 text-sm text-cream-100/95">
-                    Where MarketBridge data meets global capital.
-                  </p>
-                </figcaption>
-              </div>
-            </figure>
-            <div className="grid gap-4 sm:grid-cols-2">
+          <Reveal>
+            <SectionHeader
+              eyebrow="Impact reporting"
+              title="Real numbers. Real evidence. Real accountability."
+              description="MarketBridge captures live impact data across women supported, jobs created, ESG outcomes and funding mobilised — turning activity into donor-grade reporting."
+            />
+          </Reveal>
+
+          <Reveal delayMs={120} className="mt-14">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {impactMetrics.slice(0, 4).map((m, idx) => (
                 <ImpactMetricCard key={m.id} metric={m} emphasis={idx === 0} />
               ))}
             </div>
-          </div>
+          </Reveal>
+
+          <Reveal delayMs={200} className="mt-12">
+            <div className="rounded-3xl border border-cream-200 bg-cream-50 p-7 md:p-10">
+              <div className="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-700">
+                    Sector breakdown
+                  </p>
+                  <h3 className="mt-2 font-serif text-2xl text-forest-900">
+                    Where the BHAF network is concentrated.
+                  </h3>
+                </div>
+                <Link
+                  href="/impact"
+                  className="text-sm font-medium text-forest-900 hover:text-gold-700"
+                >
+                  Full impact report →
+                </Link>
+              </div>
+              <div className="mt-8">
+                <AnimatedBars rows={sectorBars} />
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
 

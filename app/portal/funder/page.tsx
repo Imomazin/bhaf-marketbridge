@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { PortalSidebar } from "@/components/layout/PortalSidebar";
+import { PortalWorkflowStrip } from "@/components/layout/PortalWorkflowStrip";
 import { DashboardCard } from "@/components/cards/DashboardCard";
 import { ReadinessBadge } from "@/components/ui/ReadinessBadge";
+import { DocumentVault } from "@/components/sections/DocumentVault";
+import { funderArtefacts } from "@/data/artefacts";
 import { entrepreneurs } from "@/data/entrepreneurs";
 import { impactMetrics } from "@/data/impact";
 
@@ -52,6 +55,8 @@ export default function FunderPortalPage() {
             </div>
           </div>
         </header>
+
+        <PortalWorkflowStrip roleId="funder" currentStep={3} />
 
         <div className="container-edge py-8 lg:px-8">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -155,6 +160,14 @@ export default function FunderPortalPage() {
                 ))}
               </ul>
             </DashboardCard>
+          </div>
+
+          <div className="mt-10">
+            <DocumentVault
+              artefacts={funderArtefacts}
+              title="Compliance & mandate vault"
+              intro="Your fund-level KYC, mandate and impact-thesis artefacts. BHAF re-screens these before any introduction or shortlist is shared with entrepreneurs."
+            />
           </div>
         </div>
       </div>

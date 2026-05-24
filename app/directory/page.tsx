@@ -1,6 +1,7 @@
 import { PageHero } from "@/components/ui/PageHero";
 import { EntrepreneurCard } from "@/components/cards/EntrepreneurCard";
 import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
+import { Reveal } from "@/components/ui/Reveal";
 import { entrepreneurs } from "@/data/entrepreneurs";
 import { photos } from "@/data/photos";
 
@@ -56,8 +57,10 @@ export default function DirectoryPage() {
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {entrepreneurs.map((e) => (
-              <EntrepreneurCard key={e.id} entrepreneur={e} />
+            {entrepreneurs.map((e, idx) => (
+              <Reveal key={e.id} delayMs={idx * 80}>
+                <EntrepreneurCard entrepreneur={e} />
+              </Reveal>
             ))}
           </div>
 
