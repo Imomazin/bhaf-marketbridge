@@ -3,6 +3,7 @@ import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { AiChatWidget } from "@/components/ui/AiChatWidget";
+import { SessionWrapper } from "@/components/auth/SessionWrapper";
 
 export const metadata: Metadata = {
   title: "BHAF MarketBridge — Marketplace & Impact Infrastructure for African Women Entrepreneurs",
@@ -14,10 +15,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <Navbar />
-        <main>{children}</main>
-        <Footer />
-        <AiChatWidget />
+        <SessionWrapper>
+          <Navbar />
+          <main>{children}</main>
+          <Footer />
+          <AiChatWidget />
+        </SessionWrapper>
       </body>
     </html>
   );

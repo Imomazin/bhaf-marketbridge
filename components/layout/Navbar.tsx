@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { SignOutButton } from "@/components/auth/SignOutButton";
 import { bhafLogo } from "@/data/photos";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +20,17 @@ const navLinks = [
 export function Navbar() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: session } = useSession();
+  const portalHref =
+    session?.user?.role === "ADMIN" || session?.user?.role === "AUDITOR"
+      ? "/admin"
+      : session?.user?.role === "FUNDER"
+      ? "/portal/funder"
+      : session?.user?.role === "CORPORATE"
+      ? "/portal/corporate"
+      : session?.user
+      ? "/portal/entrepreneur"
+      : "/portal";
 
   return (
     <header className="sticky top-0 z-40 border-b border-cream-200 bg-cream-50/90 backdrop-blur">
@@ -59,12 +72,26 @@ export function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Link href="/portal" className="text-sm font-medium text-forest-900 hover:text-forest-700">
-            Sign in
-          </Link>
-          <Link href="/portal/entrepreneur" className="btn-gold !py-2 !px-4 text-xs">
-            Register
-          </Link>
+          {session?.user ? (
+            <>
+              <Link
+                href={portalHref}
+                className="text-sm font-medium text-forest-900 hover:text-forest-700"
+              >
+                My workspace
+              </Link>
+              <SignOutButton className="btn-secondary !py-2 !px-4 text-xs" />
+            </>
+          ) : (
+            <>
+              <Link href="/auth/sign-in" className="text-sm font-medium text-forest-900 hover:text-forest-700">
+                Sign in
+              </Link>
+              <Link href="/auth/sign-up" className="btn-gold !py-2 !px-4 text-xs">
+                Register
+              </Link>
+            </>
+          )}
         </div>
 
         <button
@@ -97,12 +124,23 @@ export function Navbar() {
               </Link>
             ))}
             <div className="mt-2 flex gap-2 border-t border-cream-200 pt-3">
-              <Link href="/portal" onClick={() => setMobileOpen(false)} className="btn-secondary flex-1 !py-2 text-xs">
-                Sign in
-              </Link>
-              <Link href="/portal/entrepreneur" onClick={() => setMobileOpen(false)} className="btn-gold flex-1 !py-2 text-xs">
-                Register
-              </Link>
+              {session?.user ? (
+                <>
+                  <Link href={portalHref} onClick={() => setMobileOpen(false)} className="btn-secondary flex-1 !py-2 text-xs">
+                    My workspace
+                  </Link>
+                  <SignOutButton className="btn-gold flex-1 !py-2 text-xs" />
+                </>
+              ) : (
+                <>
+                  <Link href="/auth/sign-in" onClick={() => setMobileOpen(false)} className="btn-secondary flex-1 !py-2 text-xs">
+                    Sign in
+                  </Link>
+                  <Link href="/auth/sign-up" onClick={() => setMobileOpen(false)} className="btn-gold flex-1 !py-2 text-xs">
+                    Register
+                  </Link>
+                </>
+              )}
             </div>
           </nav>
         </div>
