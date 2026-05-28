@@ -1,12 +1,17 @@
-import { auth } from "@/auth";
+import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
+import { authConfig } from "@/auth.config";
 
-// Apply security headers to every response and let Auth.js gate
-// protected portal routes via the `authorized` callback.
+const { auth } = NextAuth(authConfig);
+
+/**
+ * Edge middleware — must NOT import Prisma, bcrypt, crypto, Resend, or
+ * anything from `@/auth` (full config). The `auth.config.ts` file is
+ * deliberately lean so this stays Edge-compatible.
+ */
 export default auth((req) => {
   const res = NextResponse.next();
 
-  // Strict security headers — production-grade defaults.
   res.headers.set("X-Frame-Options", "DENY");
   res.headers.set("X-Content-Type-Options", "nosniff");
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
@@ -22,7 +27,6 @@ export default auth((req) => {
     );
   }
 
-  // Redirect unauthenticated users hitting a protected route to sign-in.
   const url = req.nextUrl;
   const isProtected =
     url.pathname.startsWith("/portal/entrepreneur") ||
@@ -40,8 +44,7 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: [
-    // Skip Next internals and static files, hit everything else.
-    "/((?!_next/static|_next/image|favicon.ico|media/|api/auth).*)",
-  ],
+  // Skip Next internals, static assets, and ALL API routes (server actions
+  // and Auth.js handlers don't need middleware to redirect them).
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|media/|api/).*)"],
 };
