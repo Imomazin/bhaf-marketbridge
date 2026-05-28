@@ -206,6 +206,43 @@ The app will be available at [http://localhost:3000](http://localhost:3000).
 - `/portal/corporate` — Corporate partner workspace (procurement, RFPs, supplier diversity)
 - `/admin` — BHAF administrator dashboard
 
+### Production setup (P0 stack)
+
+The platform now ships with real authentication, database, file storage, audit logging, rate limiting and email infrastructure. To enable them set the env vars below. Without them the site still runs against mock data.
+
+| Variable | Purpose | Where to get it |
+| --- | --- | --- |
+| `DATABASE_URL` | Postgres connection string | https://neon.tech (free tier works) |
+| `AUTH_SECRET` | Session encryption key | `openssl rand -base64 32` |
+| `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Optional Google OAuth | https://console.cloud.google.com |
+| `AUTH_RESEND_KEY` | Optional magic-link sign-in | https://resend.com |
+| `RESEND_API_KEY` | Transactional email | https://resend.com |
+| `EMAIL_FROM` | From-address for outbound mail | e.g. `"BHAF MarketBridge <noreply@your-domain.com>"` |
+| `BLOB_READ_WRITE_TOKEN` | File storage | Vercel dashboard → Storage → Blob |
+| `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Distributed rate limiting | https://upstash.com |
+| `ANTHROPIC_API_KEY` (or `CLAUDE_API_KEY`) | Asha AI assistant | https://console.anthropic.com |
+
+#### Initial database setup
+
+```bash
+# 1. Provision Postgres (Neon takes 30 seconds), copy DATABASE_URL into .env.local
+cp .env.example .env.local        # then fill in values
+
+# 2. Push the schema
+npm run db:push
+
+# 3. (optional) Seed sample admin + entrepreneur + funder accounts
+npm run db:seed
+```
+
+After seeding you can sign in with:
+
+- **Admin**: `admin@bhaf.example` / `ChangeMe!123`
+- **Entrepreneur**: `amara@greenweave.example` / `Founder!123`
+- **Funder**: `fund@mosaic.example` / `Funder!123`
+
+Rotate these immediately after the first sign-in.
+
 ### AI assistant (Asha)
 
 The floating chat widget on every page is wired to the Anthropic Claude API

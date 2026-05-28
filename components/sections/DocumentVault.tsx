@@ -1,6 +1,8 @@
 import type { Artefact } from "@/data/artefacts";
 import { ArtefactCard } from "@/components/ui/ArtefactCard";
 import { UploadDropzone } from "@/components/ui/UploadDropzone";
+import { RealUploadDropzone } from "@/components/ui/RealUploadDropzone";
+import { DB_ENABLED } from "@/lib/db";
 
 interface DocumentVaultProps {
   artefacts: Artefact[];
@@ -70,7 +72,7 @@ export function DocumentVault({
         </div>
 
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-          <UploadDropzone />
+          {DB_ENABLED ? <RealUploadDropzone /> : <UploadDropzone />}
           <div className="rounded-2xl border border-cream-200 bg-cream-50 p-5 text-xs text-charcoal-600">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-700">
               How validation works

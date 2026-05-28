@@ -1,0 +1,381 @@
+// BHAF MarketBridge — Prisma schema
+//
+// Provider: PostgreSQL (use Neon / Supabase / RDS in production).
+// For local dev, point DATABASE_URL at any Postgres instance.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ────────────────────────────────────────────────────────────
+// Auth.js (NextAuth v5) tables
+// ────────────────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  role          Role      @default(ENTREPRENEUR)
+  status        UserStatus @default(ACTIVE)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  accounts            Account[]
+  sessions            Session[]
+  entrepreneurProfile EntrepreneurProfile?
+  funderProfile       FunderProfile?
+  corporateProfile    CorporateProfile?
+  artefacts           Artefact[]
+  auditEntries        AuditEntry[]        @relation("AuditActor")
+  reviewedArtefacts   ArtefactReview[]
+  listings            Listing[]
+  notifications       Notification[]
+
+  @@index([email])
+  @@index([role])
+  @@index([deletedAt])
+}
+
+enum Role {
+  ENTREPRENEUR
+  FUNDER
+  CORPORATE
+  ADMIN
+  AUDITOR
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+  DELETED
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ────────────────────────────────────────────────────────────
+// Role-specific profiles
+// ────────────────────────────────────────────────────────────
+
+model EntrepreneurProfile {
+  id              String           @id @default(cuid())
+  userId          String           @unique
+  businessName    String
+  country         String
+  sector          String
+  description     String           @db.Text
+  fundingNeed     String?
+  esgActivity     String?          @db.Text
+  yearFounded     Int?
+  readinessLevel  ReadinessLevel   @default(EMERGING)
+  womenSupported  Int              @default(0)
+  jobsCreated     Int              @default(0)
+  verified        Boolean          @default(false)
+  publishedAt     DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  products        Product[]
+  certifications  Certification[]
+
+  @@index([country])
+  @@index([sector])
+  @@index([readinessLevel])
+  @@index([verified])
+}
+
+enum ReadinessLevel {
+  EMERGING
+  DEVELOPING
+  MARKET_READY
+  FUNDING_READY
+}
+
+model FunderProfile {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  orgName       String
+  mandate       String   @db.Text
+  geoFocus      String[]
+  sectorFocus   String[]
+  ticketMin     Int?
+  ticketMax     Int?
+  verified      Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model CorporateProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  orgName         String
+  industry        String
+  procurementGeo  String[]
+  esgFramework    String?
+  verified        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  profileId    String
+  name         String
+  description  String?  @db.Text
+  category     String?
+  profile      EntrepreneurProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+}
+
+model Certification {
+  id           String   @id @default(cuid())
+  profileId    String
+  name         String
+  issuer       String?
+  issuedAt     DateTime?
+  expiresAt    DateTime?
+  profile      EntrepreneurProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+}
+
+// ────────────────────────────────────────────────────────────
+// Artefacts — uploaded documents with multi-stage validation
+// ────────────────────────────────────────────────────────────
+
+model Artefact {
+  id                  String          @id @default(cuid())
+  userId              String
+  name                String
+  description         String?         @db.Text
+  category            String
+  required            Boolean         @default(false)
+  status              ArtefactStatus  @default(PENDING_REVIEW)
+  fileName            String?
+  fileSize            Int?
+  mimeType            String?
+  storageKey          String?         // path/key in object storage
+  sha256              String?         // tamper-evident content hash
+  uploadedAt          DateTime        @default(now())
+  validatedAt         DateTime?
+  expiresAt           DateTime?
+  rejectionReason     String?         @db.Text
+  requiresDualSignOff Boolean         @default(false)
+
+  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checks              ArtefactCheck[]
+  reviews             ArtefactReview[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([sha256])
+}
+
+enum ArtefactStatus {
+  PENDING_UPLOAD
+  PENDING_REVIEW
+  UNDER_REVIEW
+  VALIDATED
+  REJECTED
+  EXPIRES_SOON
+  EXPIRED
+  FLAGGED
+  QUARANTINED
+}
+
+model ArtefactCheck {
+  id          String              @id @default(cuid())
+  artefactId  String
+  name        String
+  status      ArtefactCheckStatus
+  detail      String?
+  performedAt DateTime            @default(now())
+
+  artefact    Artefact            @relation(fields: [artefactId], references: [id], onDelete: Cascade)
+}
+
+enum ArtefactCheckStatus {
+  PASS
+  FAIL
+  WARN
+  PENDING
+}
+
+model ArtefactReview {
+  id          String   @id @default(cuid())
+  artefactId  String
+  reviewerId  String
+  decision    ReviewDecision
+  comment     String?  @db.Text
+  reviewedAt  DateTime @default(now())
+
+  artefact    Artefact @relation(fields: [artefactId], references: [id], onDelete: Cascade)
+  reviewer    User     @relation(fields: [reviewerId], references: [id])
+
+  @@index([artefactId])
+}
+
+enum ReviewDecision {
+  APPROVE
+  REJECT
+  REQUEST_CHANGES
+  ESCALATE
+}
+
+// ────────────────────────────────────────────────────────────
+// Tamper-evident audit log — append-only, hash-chained
+// ────────────────────────────────────────────────────────────
+
+model AuditEntry {
+  id          String   @id @default(cuid())
+  occurredAt  DateTime @default(now())
+  actorId     String?
+  actorLabel  String   // denormalised for auditor exports
+  action      String
+  entityType  String?
+  entityId    String?
+  metadata    Json?
+  prevHash    String?
+  selfHash    String   @unique // SHA-256 of canonical entry + prevHash
+
+  actor       User?    @relation("AuditActor", fields: [actorId], references: [id])
+
+  @@index([occurredAt])
+  @@index([actorId])
+  @@index([entityType, entityId])
+}
+
+// ────────────────────────────────────────────────────────────
+// Marketplace listings & opportunities
+// ────────────────────────────────────────────────────────────
+
+model Listing {
+  id          String   @id @default(cuid())
+  ownerId     String
+  title       String
+  category    String
+  description String   @db.Text
+  priceRange  String?
+  minOrder    String?
+  esgHighlight String?
+  tags        String[]
+  status      ListingStatus @default(DRAFT)
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([category])
+  @@index([status])
+}
+
+enum ListingStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  REJECTED
+  ARCHIVED
+}
+
+model Opportunity {
+  id            String   @id @default(cuid())
+  title         String
+  organisation  String
+  type          OpportunityType
+  region        String?
+  amount        String?
+  deadline      DateTime?
+  description   String   @db.Text
+  eligibility   String[]
+  published     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([type])
+  @@index([deadline])
+}
+
+enum OpportunityType {
+  GRANT
+  INVESTMENT
+  PROCUREMENT
+  PROGRAMME
+  CERTIFICATION
+}
+
+// ────────────────────────────────────────────────────────────
+// Notifications
+// ────────────────────────────────────────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  kind      NotificationKind
+  title     String
+  body      String           @db.Text
+  read      Boolean          @default(false)
+  link      String?
+  createdAt DateTime         @default(now())
+
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+}
+
+enum NotificationKind {
+  ARTEFACT_VALIDATED
+  ARTEFACT_REJECTED
+  ARTEFACT_EXPIRES_SOON
+  OPPORTUNITY_MATCH
+  ENQUIRY_RECEIVED
+  PROFILE_APPROVED
+  PROFILE_VERIFIED
+  WELCOME
+  GENERIC
+}

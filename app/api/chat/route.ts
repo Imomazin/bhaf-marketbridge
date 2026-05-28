@@ -1,4 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { rateLimit, rateLimitKeyFrom } from "@/lib/ratelimit";
+import { auth } from "@/auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,6 +23,17 @@ interface ChatMessage {
 }
 
 export async function POST(req: Request) {
+  // Per-user / per-IP rate limit before doing anything expensive.
+  const session = await auth();
+  const limitKey = session?.user?.id ?? rateLimitKeyFrom(req, "chat");
+  const limited = await rateLimit("chat", limitKey);
+  if (!limited.success) {
+    return Response.json(
+      { error: "rate_limited", message: "You've hit the chat rate limit. Try again in a moment." },
+      { status: 429 },
+    );
+  }
+
   // Accept any of the conventional names so the deployment is resilient to
   // however the operator chose to label their secret on Vercel.
   const apiKey =
