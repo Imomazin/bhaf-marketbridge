@@ -1,10 +1,13 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 import { PortalSidebar } from "@/components/layout/PortalSidebar";
 import { PortalWorkflowStrip } from "@/components/layout/PortalWorkflowStrip";
 import { DashboardCard } from "@/components/cards/DashboardCard";
 import { DocumentVault } from "@/components/sections/DocumentVault";
-import { corporateArtefacts } from "@/data/artefacts";
 import { marketplaceListings } from "@/data/marketplace";
+import { loadMyArtefacts } from "@/lib/queries/artefacts";
+
+export const dynamic = "force-dynamic";
 
 const nav = [
   { label: "Procurement desk", href: "/portal/corporate", active: true },
@@ -27,7 +30,12 @@ const diversityStats = [
   { label: "Countries sourced from", value: "9", change: "Pan-African coverage" },
 ];
 
-export default function CorporatePortalPage() {
+export default async function CorporatePortalPage() {
+  const session = await auth();
+  const { artefacts: myArtefacts } = session?.user
+    ? await loadMyArtefacts(session.user.id, "corporate")
+    : { artefacts: [] };
+
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
       <PortalSidebar currentRole="corporate" nav={nav} />
@@ -147,7 +155,7 @@ export default function CorporatePortalPage() {
 
           <div className="mt-10">
             <DocumentVault
-              artefacts={corporateArtefacts}
+              artefacts={myArtefacts}
               title="Procurement & ESG policy vault"
               intro="Your corporate KYC, supplier diversity policy and ESG disclosure artefacts. BHAF revalidates these before exposing your RFPs to verified suppliers."
             />

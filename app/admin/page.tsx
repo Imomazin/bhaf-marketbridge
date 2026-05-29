@@ -44,8 +44,12 @@ export default async function AdminPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <button className="btn-secondary !py-2 !px-3 text-xs">Export report</button>
-            <button className="btn-primary !py-2 !px-3 text-xs">Publish opportunity</button>
+            <a href="/api/setup?action=verify" className="btn-secondary !py-2 !px-3 text-xs">
+              Network status
+            </a>
+            <a href="/admin/opportunities/new" className="btn-primary !py-2 !px-3 text-xs">
+              Publish opportunity
+            </a>
           </div>
         </div>
 

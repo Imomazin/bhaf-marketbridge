@@ -1,12 +1,15 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 import { PortalSidebar } from "@/components/layout/PortalSidebar";
 import { PortalWorkflowStrip } from "@/components/layout/PortalWorkflowStrip";
 import { DashboardCard } from "@/components/cards/DashboardCard";
 import { ReadinessBadge } from "@/components/ui/ReadinessBadge";
 import { DocumentVault } from "@/components/sections/DocumentVault";
-import { entrepreneurArtefacts } from "@/data/artefacts";
 import { entrepreneurs } from "@/data/entrepreneurs";
 import { opportunities } from "@/data/opportunities";
+import { loadMyArtefacts } from "@/lib/queries/artefacts";
+
+export const dynamic = "force-dynamic";
 
 const nav = [
   { label: "Dashboard", href: "/portal/entrepreneur", active: true },
@@ -32,9 +35,13 @@ const recentEnquiries = [
   { buyer: "UK Trade Network", item: "Marketplace enquiry", time: "3 days ago" },
 ];
 
-export default function EntrepreneurPortalPage() {
+export default async function EntrepreneurPortalPage() {
   const me = entrepreneurs[0];
   const completion = 78;
+  const session = await auth();
+  const { artefacts: myArtefacts } = session?.user
+    ? await loadMyArtefacts(session.user.id, "entrepreneur")
+    : { artefacts: [] };
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
@@ -57,10 +64,10 @@ export default function EntrepreneurPortalPage() {
             </div>
             <div className="flex items-center gap-3">
               <ReadinessBadge level={me.readinessLevel} />
-              <Link href="#profile" className="btn-secondary !py-2 !px-3 text-xs">
-                Edit profile
+              <Link href="/settings" className="btn-secondary !py-2 !px-3 text-xs">
+                Settings
               </Link>
-              <Link href="#listings" className="btn-primary !py-2 !px-3 text-xs">
+              <Link href="/portal/entrepreneur/listings/new" className="btn-primary !py-2 !px-3 text-xs">
                 New listing
               </Link>
             </div>
@@ -202,7 +209,7 @@ export default function EntrepreneurPortalPage() {
           </div>
 
           <div className="mt-10">
-            <DocumentVault artefacts={entrepreneurArtefacts} />
+            <DocumentVault artefacts={myArtefacts} />
           </div>
         </div>
       </div>

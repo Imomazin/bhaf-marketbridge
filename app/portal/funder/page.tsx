@@ -1,12 +1,15 @@
 import Link from "next/link";
+import { auth } from "@/auth";
 import { PortalSidebar } from "@/components/layout/PortalSidebar";
 import { PortalWorkflowStrip } from "@/components/layout/PortalWorkflowStrip";
 import { DashboardCard } from "@/components/cards/DashboardCard";
 import { ReadinessBadge } from "@/components/ui/ReadinessBadge";
 import { DocumentVault } from "@/components/sections/DocumentVault";
-import { funderArtefacts } from "@/data/artefacts";
 import { entrepreneurs } from "@/data/entrepreneurs";
 import { impactMetrics } from "@/data/impact";
+import { loadMyArtefacts } from "@/lib/queries/artefacts";
+
+export const dynamic = "force-dynamic";
 
 const nav = [
   { label: "Investment desk", href: "/portal/funder", active: true },
@@ -30,8 +33,12 @@ const shortlists = [
   { name: "Funding-Ready women in tech", count: 4, owner: "Catalyst Equity" },
 ];
 
-export default function FunderPortalPage() {
+export default async function FunderPortalPage() {
   const investable = entrepreneurs.filter((e) => e.readinessLevel === "Funding-Ready");
+  const session = await auth();
+  const { artefacts: myArtefacts } = session?.user
+    ? await loadMyArtefacts(session.user.id, "funder")
+    : { artefacts: [] };
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
@@ -164,7 +171,7 @@ export default function FunderPortalPage() {
 
           <div className="mt-10">
             <DocumentVault
-              artefacts={funderArtefacts}
+              artefacts={myArtefacts}
               title="Compliance & mandate vault"
               intro="Your fund-level KYC, mandate and impact-thesis artefacts. BHAF re-screens these before any introduction or shortlist is shared with entrepreneurs."
             />
