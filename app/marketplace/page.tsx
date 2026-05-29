@@ -2,8 +2,10 @@ import { PageHero } from "@/components/ui/PageHero";
 import { MarketplaceCard } from "@/components/cards/MarketplaceCard";
 import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
 import { Reveal } from "@/components/ui/Reveal";
-import { marketplaceListings } from "@/data/marketplace";
+import { loadMarketplace } from "@/lib/queries/marketplace";
 import { photos } from "@/data/photos";
+
+export const dynamic = "force-dynamic";
 
 const categories = [
   "All categories",
@@ -15,7 +17,8 @@ const categories = [
   "Training",
 ];
 
-export default function MarketplacePage() {
+export default async function MarketplacePage() {
+  const { listings: marketplaceListings, isReal } = await loadMarketplace();
   return (
     <>
       <PageHero
@@ -47,6 +50,11 @@ export default function MarketplacePage() {
             <span>
               <strong className="text-forest-900">{marketplaceListings.length}</strong> listings · all entrepreneurs
               verified by BHAF
+              {!isReal && (
+                <span className="ml-2 rounded-full bg-cream-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-charcoal-500">
+                  Sample data
+                </span>
+              )}
             </span>
             <span>Sorted by relevance</span>
           </div>

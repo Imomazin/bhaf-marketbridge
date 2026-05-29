@@ -2,12 +2,15 @@ import { PageHero } from "@/components/ui/PageHero";
 import { OpportunityCard } from "@/components/cards/OpportunityCard";
 import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
 import { Reveal } from "@/components/ui/Reveal";
-import { opportunities } from "@/data/opportunities";
+import { loadOpportunities } from "@/lib/queries/opportunities";
 import { photos } from "@/data/photos";
+
+export const dynamic = "force-dynamic";
 
 const types = ["All types", "Grant", "Investment", "Procurement", "Programme", "Certification"];
 
-export default function OpportunitiesPage() {
+export default async function OpportunitiesPage() {
+  const { opportunities, isReal } = await loadOpportunities();
   return (
     <>
       <PageHero
@@ -37,6 +40,11 @@ export default function OpportunitiesPage() {
             </div>
             <span className="text-xs text-charcoal-500">
               <strong className="text-forest-900">{opportunities.length}</strong> open opportunities
+              {!isReal && (
+                <span className="ml-2 rounded-full bg-cream-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-charcoal-500">
+                  Sample data
+                </span>
+              )}
             </span>
           </div>
 

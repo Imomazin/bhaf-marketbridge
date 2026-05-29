@@ -1,4 +1,5 @@
 import type { Opportunity, OpportunityType } from "@/data/opportunities";
+import { ApplyButton } from "@/components/opportunities/ApplyButton";
 import { cn } from "@/lib/utils";
 
 const typeStyles: Record<OpportunityType, string> = {
@@ -58,9 +59,7 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
         </ul>
       </div>
 
-      <button className="mt-6 w-full rounded-md bg-forest-800 px-4 py-2.5 text-xs font-medium text-cream-50 transition hover:bg-forest-700">
-        Apply through MarketBridge
-      </button>
+      <ApplyButton opportunityId={opportunity.id} title={opportunity.title} />
     </article>
   );
 }
