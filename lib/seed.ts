@@ -20,7 +20,13 @@ export async function seedDemoAccounts(prisma: PrismaClient): Promise<SeedResult
 
   const admin = await prisma.user.upsert({
     where: { email: "admin@bhaf.example" },
-    update: {},
+    update: {
+      // Force-reset the password on every seed so an existing row from
+      // an earlier attempt can't lock you out with a stale hash.
+      passwordHash: adminPwd,
+      role: "ADMIN",
+      status: "ACTIVE",
+    },
     create: {
       email: "admin@bhaf.example",
       name: "BHAF Admin",
@@ -33,7 +39,11 @@ export async function seedDemoAccounts(prisma: PrismaClient): Promise<SeedResult
 
   const founder = await prisma.user.upsert({
     where: { email: "amara@greenweave.example" },
-    update: {},
+    update: {
+      passwordHash: founderPwd,
+      role: "ENTREPRENEUR",
+      status: "ACTIVE",
+    },
     create: {
       email: "amara@greenweave.example",
       name: "Amara Okafor",
@@ -65,7 +75,11 @@ export async function seedDemoAccounts(prisma: PrismaClient): Promise<SeedResult
 
   const funder = await prisma.user.upsert({
     where: { email: "fund@mosaic.example" },
-    update: {},
+    update: {
+      passwordHash: funderPwd,
+      role: "FUNDER",
+      status: "ACTIVE",
+    },
     create: {
       email: "fund@mosaic.example",
       name: "Mosaic Impact Partners",
