@@ -28,6 +28,12 @@ CREATE TYPE "OpportunityType" AS ENUM ('GRANT', 'INVESTMENT', 'PROCUREMENT', 'PR
 -- CreateEnum
 CREATE TYPE "NotificationKind" AS ENUM ('ARTEFACT_VALIDATED', 'ARTEFACT_REJECTED', 'ARTEFACT_EXPIRES_SOON', 'OPPORTUNITY_MATCH', 'ENQUIRY_RECEIVED', 'PROFILE_APPROVED', 'PROFILE_VERIFIED', 'WELCOME', 'GENERIC');
 
+-- CreateEnum
+CREATE TYPE "CohortStatus" AS ENUM ('PLANNED', 'OPEN', 'IN_PROGRESS', 'COMPLETED', 'ARCHIVED');
+
+-- CreateEnum
+CREATE TYPE "CohortMembershipStatus" AS ENUM ('INVITED', 'CONFIRMED', 'ACTIVE', 'COMPLETED', 'DROPPED');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -272,6 +278,68 @@ CREATE TABLE "Notification" (
     CONSTRAINT "Notification_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Conversation" (
+    "id" TEXT NOT NULL,
+    "subject" TEXT,
+    "contextType" TEXT,
+    "contextId" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Conversation_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "ConversationParticipant" (
+    "id" TEXT NOT NULL,
+    "conversationId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "lastReadAt" TIMESTAMP(3),
+
+    CONSTRAINT "ConversationParticipant_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Message" (
+    "id" TEXT NOT NULL,
+    "conversationId" TEXT NOT NULL,
+    "senderId" TEXT NOT NULL,
+    "body" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Message_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Cohort" (
+    "id" TEXT NOT NULL,
+    "name" TEXT NOT NULL,
+    "programme" TEXT,
+    "region" TEXT,
+    "description" TEXT,
+    "startDate" TIMESTAMP(3),
+    "endDate" TIMESTAMP(3),
+    "capacity" INTEGER,
+    "status" "CohortStatus" NOT NULL DEFAULT 'PLANNED',
+    "createdById" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Cohort_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "CohortMembership" (
+    "id" TEXT NOT NULL,
+    "cohortId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "status" "CohortMembershipStatus" NOT NULL DEFAULT 'INVITED',
+    "joinedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "CohortMembership_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -356,6 +424,30 @@ CREATE INDEX "Opportunity_deadline_idx" ON "Opportunity"("deadline");
 -- CreateIndex
 CREATE INDEX "Notification_userId_read_idx" ON "Notification"("userId", "read");
 
+-- CreateIndex
+CREATE INDEX "Conversation_updatedAt_idx" ON "Conversation"("updatedAt");
+
+-- CreateIndex
+CREATE INDEX "ConversationParticipant_userId_idx" ON "ConversationParticipant"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "ConversationParticipant_conversationId_userId_key" ON "ConversationParticipant"("conversationId", "userId");
+
+-- CreateIndex
+CREATE INDEX "Message_conversationId_createdAt_idx" ON "Message"("conversationId", "createdAt");
+
+-- CreateIndex
+CREATE INDEX "Cohort_status_idx" ON "Cohort"("status");
+
+-- CreateIndex
+CREATE INDEX "Cohort_region_idx" ON "Cohort"("region");
+
+-- CreateIndex
+CREATE INDEX "CohortMembership_userId_idx" ON "CohortMembership"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "CohortMembership_cohortId_userId_key" ON "CohortMembership"("cohortId", "userId");
+
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -397,4 +489,25 @@ ALTER TABLE "Listing" ADD CONSTRAINT "Listing_ownerId_fkey" FOREIGN KEY ("ownerI
 
 -- AddForeignKey
 ALTER TABLE "Notification" ADD CONSTRAINT "Notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ConversationParticipant" ADD CONSTRAINT "ConversationParticipant_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "Conversation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "ConversationParticipant" ADD CONSTRAINT "ConversationParticipant_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Message" ADD CONSTRAINT "Message_conversationId_fkey" FOREIGN KEY ("conversationId") REFERENCES "Conversation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Message" ADD CONSTRAINT "Message_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Cohort" ADD CONSTRAINT "Cohort_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CohortMembership" ADD CONSTRAINT "CohortMembership_cohortId_fkey" FOREIGN KEY ("cohortId") REFERENCES "Cohort"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "CohortMembership" ADD CONSTRAINT "CohortMembership_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
