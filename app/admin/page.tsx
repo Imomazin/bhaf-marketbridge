@@ -4,10 +4,12 @@ import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
 import { PortalWorkflowStrip } from "@/components/layout/PortalWorkflowStrip";
 import { VerificationQueue } from "@/components/sections/VerificationQueue";
 import { AuditLog } from "@/components/sections/AuditLog";
-import { auditTrail, verificationQueue } from "@/data/artefacts";
 import { entrepreneurs } from "@/data/entrepreneurs";
 import { opportunities } from "@/data/opportunities";
 import { photos } from "@/data/photos";
+import { loadAdminData } from "@/lib/queries/admin";
+
+export const dynamic = "force-dynamic";
 
 const overviewStats = [
   { label: "Pending approvals", value: "12", trend: "+3 this week", tone: "gold" as const },
@@ -25,7 +27,8 @@ const activity = [
   { time: "3 days ago", actor: "Khaya Harvest", action: "Marketplace listing approved" },
 ];
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  const adminData = await loadAdminData();
   return (
     <>
       <PortalWorkflowStrip roleId="admin" currentStep={2} />
@@ -165,12 +168,12 @@ export default function AdminPage() {
 
         {/* Quality assurance — verification queue */}
         <div className="mt-10">
-          <VerificationQueue items={verificationQueue} />
+          <VerificationQueue items={adminData.queue} />
         </div>
 
         {/* Tamper-evident audit trail */}
         <div className="mt-6">
-          <AuditLog entries={auditTrail} />
+          <AuditLog entries={adminData.audit} />
         </div>
 
         <div className="mt-10 grid gap-4 md:grid-cols-4">

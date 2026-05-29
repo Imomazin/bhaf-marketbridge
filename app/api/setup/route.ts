@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import bcrypt from "bcryptjs";
 
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { seedDemoAccounts } from "@/lib/seed";
@@ -129,6 +130,61 @@ export async function GET(req: Request) {
       });
     }
 
+    if (action === "rotate") {
+      // Rotate demo passwords to operator-supplied values.
+      // Usage: ?action=rotate&token=...&admin=NEWPWD&entrepreneur=NEWPWD&funder=NEWPWD
+      // Any of admin/entrepreneur/funder may be omitted to skip that role.
+      const targets: Array<{ key: string; email: string; newPwd: string | null }> = [
+        { key: "admin", email: "admin@bhaf.example", newPwd: url.searchParams.get("admin") },
+        { key: "entrepreneur", email: "amara@greenweave.example", newPwd: url.searchParams.get("entrepreneur") },
+        { key: "funder", email: "fund@mosaic.example", newPwd: url.searchParams.get("funder") },
+      ];
+      const requested = targets.filter((t) => t.newPwd !== null);
+      if (requested.length === 0) {
+        return jsonResponse(
+          {
+            ok: false,
+            error:
+              "No passwords supplied. Pass at least one of: admin, entrepreneur, funder. Example: ?action=rotate&token=...&admin=MyNewPwd123!",
+          },
+          400,
+        );
+      }
+      // Light validation: 10 chars minimum, contains a digit
+      for (const t of requested) {
+        if (!t.newPwd || t.newPwd.length < 10 || !/[0-9]/.test(t.newPwd)) {
+          return jsonResponse(
+            {
+              ok: false,
+              error: `Password for "${t.key}" must be at least 10 characters and contain a digit.`,
+            },
+            400,
+          );
+        }
+      }
+      const results: Array<{ email: string; rotated: boolean; reason?: string }> = [];
+      for (const t of requested) {
+        const existing = await prisma.user.findUnique({ where: { email: t.email } });
+        if (!existing) {
+          results.push({ email: t.email, rotated: false, reason: "user not found — run seed first" });
+          continue;
+        }
+        const hash = await bcrypt.hash(t.newPwd!, 12);
+        await prisma.user.update({
+          where: { email: t.email },
+          data: { passwordHash: hash, status: "ACTIVE" },
+        });
+        results.push({ email: t.email, rotated: true });
+      }
+      return jsonResponse({
+        ok: true,
+        action: "rotate",
+        message:
+          "Passwords rotated. You can now sign in with the new values. Delete SETUP_TOKEN on Vercel and redeploy to disarm this endpoint.",
+        results,
+      });
+    }
+
     if (action === "verify") {
       const [admins, entrepreneurs, funders, corporates, auditors, total] = await Promise.all([
         prisma.user.count({ where: { role: "ADMIN" } }),
@@ -163,7 +219,7 @@ export async function GET(req: Request) {
     }
 
     return jsonResponse(
-      { ok: false, error: `Unknown action: ${action}. Use status | push | seed | verify.` },
+      { ok: false, error: `Unknown action: ${action}. Use status | push | seed | rotate | verify.` },
       400,
     );
   } catch (err) {

@@ -2,14 +2,17 @@ import { PageHero } from "@/components/ui/PageHero";
 import { EntrepreneurCard } from "@/components/cards/EntrepreneurCard";
 import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
 import { Reveal } from "@/components/ui/Reveal";
-import { entrepreneurs } from "@/data/entrepreneurs";
+import { loadDirectory } from "@/lib/queries/directory";
 import { photos } from "@/data/photos";
 
 const sectors = ["All sectors", "Circular Economy", "Clean Energy", "Agri-Processing", "Health & Beauty", "Technology", "Education"];
 const countries = ["All countries", "Nigeria", "South Africa", "Senegal", "Kenya", "Zimbabwe", "Ghana"];
 const readiness = ["All levels", "Emerging", "Developing", "Market-Ready", "Funding-Ready"];
 
-export default function DirectoryPage() {
+export const dynamic = "force-dynamic";
+
+export default async function DirectoryPage() {
+  const { entrepreneurs, isReal } = await loadDirectory();
   return (
     <>
       <PageHero
@@ -52,6 +55,11 @@ export default function DirectoryPage() {
           <div className="mb-6 flex items-center justify-between text-sm text-charcoal-500">
             <span>
               Showing <strong className="text-forest-900">{entrepreneurs.length}</strong> verified entrepreneurs
+              {!isReal && (
+                <span className="ml-2 rounded-full bg-cream-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-charcoal-500">
+                  Sample data
+                </span>
+              )}
             </span>
             <span>Sorted by readiness level</span>
           </div>

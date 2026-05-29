@@ -80,6 +80,12 @@ export function Navbar() {
               >
                 My workspace
               </Link>
+              <Link
+                href="/settings"
+                className="text-sm font-medium text-charcoal-600 hover:text-forest-900"
+              >
+                Settings
+              </Link>
               <SignOutButton className="btn-secondary !py-2 !px-4 text-xs" />
             </>
           ) : (
