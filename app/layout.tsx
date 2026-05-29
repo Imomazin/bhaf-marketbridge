@@ -3,6 +3,7 @@ import "./globals.css";
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { AiChatWidget } from "@/components/ui/AiChatWidget";
+import { CookieConsent } from "@/components/ui/CookieConsent";
 import { SessionWrapper } from "@/components/auth/SessionWrapper";
 
 export const metadata: Metadata = {
@@ -20,6 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <main>{children}</main>
           <Footer />
           <AiChatWidget />
+          <CookieConsent />
         </SessionWrapper>
       </body>
     </html>

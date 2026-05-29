@@ -5,9 +5,11 @@ import { PortalWorkflowStrip } from "@/components/layout/PortalWorkflowStrip";
 import { DashboardCard } from "@/components/cards/DashboardCard";
 import { ReadinessBadge } from "@/components/ui/ReadinessBadge";
 import { DocumentVault } from "@/components/sections/DocumentVault";
+import { OnboardingCard } from "@/components/onboarding/OnboardingCard";
 import { entrepreneurs } from "@/data/entrepreneurs";
 import { opportunities } from "@/data/opportunities";
 import { loadMyArtefacts } from "@/lib/queries/artefacts";
+import { loadOnboardingState } from "@/lib/queries/onboarding";
 
 export const dynamic = "force-dynamic";
 
@@ -42,6 +44,9 @@ export default async function EntrepreneurPortalPage() {
   const { artefacts: myArtefacts } = session?.user
     ? await loadMyArtefacts(session.user.id, "entrepreneur")
     : { artefacts: [] };
+  const onboarding = session?.user
+    ? await loadOnboardingState(session.user.id, session.user.role)
+    : null;
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
@@ -77,6 +82,11 @@ export default async function EntrepreneurPortalPage() {
         <PortalWorkflowStrip roleId="entrepreneur" currentStep={5} />
 
         <div className="container-edge py-8 lg:px-8">
+          {onboarding && (
+            <div className="mb-8">
+              <OnboardingCard state={onboarding} role="entrepreneur" />
+            </div>
+          )}
           {/* Profile completion + readiness */}
           <div className="grid gap-6 lg:grid-cols-3">
             <div className="rounded-2xl border border-gold-200 bg-gradient-to-br from-gold-50 to-cream-50 p-6 lg:col-span-2">

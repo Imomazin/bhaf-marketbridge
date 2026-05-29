@@ -24,10 +24,10 @@ const footerColumns = [
   {
     title: "About",
     links: [
-      { href: "#about", label: "BHAF Mission" },
       { href: "/impact", label: "Case studies" },
-      { href: "#governance", label: "Governance" },
-      { href: "#contact", label: "Contact" },
+      { href: "/legal/terms", label: "Terms of Service" },
+      { href: "/legal/privacy", label: "Privacy Policy" },
+      { href: "/legal/cookies", label: "Cookie Policy" },
     ],
   },
 ];
