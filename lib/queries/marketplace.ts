@@ -1,14 +1,39 @@
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { marketplaceListings as mockListings, type MarketplaceListing } from "@/data/marketplace";
 
-export async function loadMarketplace(): Promise<{ listings: MarketplaceListing[]; isReal: boolean }> {
+export interface MarketplaceFilters {
+  q?: string;
+  category?: string;
+}
+
+function applyMockFilters(rows: MarketplaceListing[], f: MarketplaceFilters): MarketplaceListing[] {
+  const q = f.q?.toLowerCase().trim();
+  return rows.filter((r) => {
+    if (f.category && f.category !== "All categories" && r.category !== f.category) return false;
+    if (q) {
+      const hay = `${r.title} ${r.business} ${r.description} ${r.tags.join(" ")}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+export async function loadMarketplace(filters: MarketplaceFilters = {}): Promise<{ listings: MarketplaceListing[]; isReal: boolean }> {
   if (!DB_ENABLED || !prisma) {
-    return { listings: mockListings, isReal: false };
+    return { listings: applyMockFilters(mockListings, filters), isReal: false };
   }
 
   try {
+    const where: Record<string, unknown> = { status: "PUBLISHED" };
+    if (filters.category && filters.category !== "All categories") where.category = filters.category;
+    if (filters.q) {
+      where.OR = [
+        { title: { contains: filters.q, mode: "insensitive" } },
+        { description: { contains: filters.q, mode: "insensitive" } },
+      ];
+    }
     const rows = await prisma.listing.findMany({
-      where: { status: "PUBLISHED" },
+      where,
       include: {
         owner: {
           select: {
@@ -23,7 +48,7 @@ export async function loadMarketplace(): Promise<{ listings: MarketplaceListing[
     });
 
     if (rows.length === 0) {
-      return { listings: mockListings, isReal: false };
+      return { listings: applyMockFilters(mockListings, filters), isReal: false };
     }
 
     const real: MarketplaceListing[] = rows.map((l) => ({

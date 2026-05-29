@@ -8,20 +8,55 @@ const READINESS_MAP: Record<string, ReadinessLevel> = {
   FUNDING_READY: "Funding-Ready",
 };
 
-/**
- * Returns the directory entries to render. When the DB is enabled and has
- * verified entrepreneur profiles, returns those. Otherwise falls back to
- * the mock data so the marketing pages still look complete on a fresh
- * install.
- */
-export async function loadDirectory(): Promise<{ entrepreneurs: Entrepreneur[]; isReal: boolean }> {
+export interface DirectoryFilters {
+  q?: string;
+  sector?: string;
+  country?: string;
+  readiness?: string;
+}
+
+function applyMockFilters(rows: Entrepreneur[], f: DirectoryFilters): Entrepreneur[] {
+  const q = f.q?.toLowerCase().trim();
+  return rows.filter((r) => {
+    if (f.sector && f.sector !== "All sectors" && r.sector !== f.sector) return false;
+    if (f.country && f.country !== "All countries" && r.country !== f.country) return false;
+    if (f.readiness && f.readiness !== "All levels" && r.readinessLevel !== f.readiness) return false;
+    if (q) {
+      const hay = `${r.name} ${r.businessName} ${r.description} ${r.products.join(" ")}`.toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+const READINESS_DB_MAP: Record<string, "EMERGING" | "DEVELOPING" | "MARKET_READY" | "FUNDING_READY"> = {
+  Emerging: "EMERGING",
+  Developing: "DEVELOPING",
+  "Market-Ready": "MARKET_READY",
+  "Funding-Ready": "FUNDING_READY",
+};
+
+export async function loadDirectory(filters: DirectoryFilters = {}): Promise<{ entrepreneurs: Entrepreneur[]; isReal: boolean }> {
   if (!DB_ENABLED || !prisma) {
-    return { entrepreneurs: mockEntrepreneurs, isReal: false };
+    return { entrepreneurs: applyMockFilters(mockEntrepreneurs, filters), isReal: false };
   }
 
   try {
+    const where: Record<string, unknown> = { verified: true };
+    if (filters.sector && filters.sector !== "All sectors") where.sector = filters.sector;
+    if (filters.country && filters.country !== "All countries") where.country = filters.country;
+    if (filters.readiness && filters.readiness !== "All levels") {
+      where.readinessLevel = READINESS_DB_MAP[filters.readiness] ?? undefined;
+    }
+    if (filters.q) {
+      where.OR = [
+        { businessName: { contains: filters.q, mode: "insensitive" } },
+        { description: { contains: filters.q, mode: "insensitive" } },
+        { user: { name: { contains: filters.q, mode: "insensitive" } } },
+      ];
+    }
     const rows = await prisma.entrepreneurProfile.findMany({
-      where: { verified: true },
+      where,
       include: {
         user: { select: { name: true, email: true } },
         products: { select: { name: true } },
@@ -32,8 +67,8 @@ export async function loadDirectory(): Promise<{ entrepreneurs: Entrepreneur[]; 
     });
 
     if (rows.length === 0) {
-      // No real profiles yet — show mock so the page isn't empty
-      return { entrepreneurs: mockEntrepreneurs, isReal: false };
+      // No real DB rows — fall back to mock and apply the same filters there
+      return { entrepreneurs: applyMockFilters(mockEntrepreneurs, filters), isReal: false };
     }
 
     const real: Entrepreneur[] = rows.map((r) => {

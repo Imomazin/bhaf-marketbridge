@@ -11,8 +11,13 @@ const readiness = ["All levels", "Emerging", "Developing", "Market-Ready", "Fund
 
 export const dynamic = "force-dynamic";
 
-export default async function DirectoryPage() {
-  const { entrepreneurs, isReal } = await loadDirectory();
+export default async function DirectoryPage({
+  searchParams,
+}: {
+  searchParams: { q?: string; sector?: string; country?: string; readiness?: string };
+}) {
+  const { entrepreneurs, isReal } = await loadDirectory(searchParams);
+
   return (
     <>
       <PageHero
@@ -25,32 +30,42 @@ export default async function DirectoryPage() {
 
       <section className="bg-cream-50 py-16">
         <div className="container-edge">
-          <div className="card mb-10 grid gap-4 p-5 md:grid-cols-4">
+          <form className="card mb-10 grid gap-4 p-5 md:grid-cols-4">
             <div>
               <label className="text-[11px] font-semibold uppercase tracking-wide text-charcoal-400">Search</label>
               <input
                 type="text"
+                name="q"
+                defaultValue={searchParams.q ?? ""}
                 placeholder="Name, business or product"
                 className="mt-1.5 w-full rounded-md border border-cream-200 bg-cream-50 px-3 py-2 text-sm text-forest-900 placeholder:text-charcoal-300 focus:border-forest-700 focus:outline-none"
               />
             </div>
             {[
-              { label: "Sector", options: sectors },
-              { label: "Country", options: countries },
-              { label: "Readiness", options: readiness },
+              { label: "Sector", name: "sector", options: sectors, value: searchParams.sector },
+              { label: "Country", name: "country", options: countries, value: searchParams.country },
+              { label: "Readiness", name: "readiness", options: readiness, value: searchParams.readiness },
             ].map((filter) => (
               <div key={filter.label}>
                 <label className="text-[11px] font-semibold uppercase tracking-wide text-charcoal-400">
                   {filter.label}
                 </label>
-                <select className="mt-1.5 w-full rounded-md border border-cream-200 bg-cream-50 px-3 py-2 text-sm text-forest-900 focus:border-forest-700 focus:outline-none">
+                <select
+                  name={filter.name}
+                  defaultValue={filter.value ?? filter.options[0]}
+                  className="mt-1.5 w-full rounded-md border border-cream-200 bg-cream-50 px-3 py-2 text-sm text-forest-900 focus:border-forest-700 focus:outline-none"
+                >
                   {filter.options.map((opt) => (
                     <option key={opt}>{opt}</option>
                   ))}
                 </select>
               </div>
             ))}
-          </div>
+            <div className="md:col-span-4 flex gap-2">
+              <button type="submit" className="btn-primary !py-2 !px-4 text-xs">Apply filters</button>
+              <a href="/directory" className="btn-secondary !py-2 !px-4 text-xs">Reset</a>
+            </div>
+          </form>
 
           <div className="mb-6 flex items-center justify-between text-sm text-charcoal-500">
             <span>
@@ -73,27 +88,9 @@ export default async function DirectoryPage() {
           </div>
 
           <div className="mt-16 grid gap-6 md:grid-cols-3">
-            <AnnotatedPhoto
-              photo={photos.abuja7}
-              tag="Cohort 1"
-              caption="Group portrait — Abuja Accelerator."
-              aspect="auto"
-              className="min-h-[220px]"
-            />
-            <AnnotatedPhoto
-              photo={photos.drc1}
-              tag="DRC"
-              caption="Working group at the FEMEC RDC training, Kinshasa."
-              aspect="auto"
-              className="min-h-[220px]"
-            />
-            <AnnotatedPhoto
-              photo={photos.baloni7}
-              tag="Field"
-              caption="Entrepreneurs on the Baloni Farm visit."
-              aspect="auto"
-              className="min-h-[220px]"
-            />
+            <AnnotatedPhoto photo={photos.abuja7} tag="Cohort 1" caption="Group portrait — Abuja Accelerator." aspect="auto" className="min-h-[220px]" />
+            <AnnotatedPhoto photo={photos.drc1} tag="DRC" caption="Working group at the FEMEC RDC training, Kinshasa." aspect="auto" className="min-h-[220px]" />
+            <AnnotatedPhoto photo={photos.baloni7} tag="Field" caption="Entrepreneurs on the Baloni Farm visit." aspect="auto" className="min-h-[220px]" />
           </div>
         </div>
       </section>

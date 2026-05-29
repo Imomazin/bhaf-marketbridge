@@ -17,8 +17,13 @@ const categories = [
   "Training",
 ];
 
-export default async function MarketplacePage() {
-  const { listings: marketplaceListings, isReal } = await loadMarketplace();
+export default async function MarketplacePage({
+  searchParams,
+}: {
+  searchParams: { q?: string; category?: string };
+}) {
+  const { listings: marketplaceListings, isReal } = await loadMarketplace(searchParams);
+
   return (
     <>
       <PageHero
@@ -31,20 +36,26 @@ export default async function MarketplacePage() {
 
       <section className="bg-cream-50 py-16">
         <div className="container-edge">
-          <div className="card mb-10 flex flex-wrap items-center gap-2 p-4">
-            {categories.map((cat, idx) => (
-              <button
-                key={cat}
-                className={
-                  idx === 0
-                    ? "rounded-full bg-forest-800 px-3.5 py-1.5 text-xs font-medium text-cream-50"
-                    : "rounded-full border border-cream-300 px-3.5 py-1.5 text-xs font-medium text-charcoal-600 transition hover:border-forest-700 hover:text-forest-900"
-                }
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
+          <form className="card mb-10 flex flex-wrap items-center gap-3 p-4">
+            <input
+              type="text"
+              name="q"
+              defaultValue={searchParams.q ?? ""}
+              placeholder="Search products and services"
+              className="flex-1 min-w-[200px] rounded-md border border-cream-300 bg-cream-50 px-3 py-2 text-sm text-forest-900 placeholder:text-charcoal-300 focus:border-forest-700 focus:outline-none"
+            />
+            <select
+              name="category"
+              defaultValue={searchParams.category ?? "All categories"}
+              className="rounded-md border border-cream-300 bg-cream-50 px-3 py-2 text-sm text-forest-900 focus:border-forest-700 focus:outline-none"
+            >
+              {categories.map((c) => (
+                <option key={c}>{c}</option>
+              ))}
+            </select>
+            <button type="submit" className="btn-primary !py-2 !px-4 text-xs">Search</button>
+            <a href="/marketplace" className="btn-secondary !py-2 !px-4 text-xs">Reset</a>
+          </form>
 
           <div className="mb-6 flex items-center justify-between text-sm text-charcoal-500">
             <span>
