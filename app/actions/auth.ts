@@ -93,6 +93,15 @@ export async function registerAction(raw: RegisterInput): Promise<ActionResult> 
     body: `Hi ${user.name ?? "there"},\n\nWelcome to MarketBridge. Your account is created and you can sign in now. We'll guide you through profile setup and document verification step by step.\n\n— BHAF Circular Academy`,
   });
 
+  // Email verification (best-effort — registration succeeds even if it
+  // can't be sent, e.g. when RESEND_API_KEY isn't set)
+  try {
+    const { sendVerificationEmail } = await import("@/app/actions/verify-email");
+    await sendVerificationEmail(user.id);
+  } catch (err) {
+    console.error("[register] verification email failed", err);
+  }
+
   return { ok: true, message: "Account created. Signing you in…" };
 }
 
