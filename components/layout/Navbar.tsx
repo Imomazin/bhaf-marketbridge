@@ -81,6 +81,12 @@ export function Navbar() {
                 My workspace
               </Link>
               <Link
+                href="/messages"
+                className="text-sm font-medium text-charcoal-600 hover:text-forest-900"
+              >
+                Messages
+              </Link>
+              <Link
                 href="/inbox"
                 className="text-sm font-medium text-charcoal-600 hover:text-forest-900"
               >

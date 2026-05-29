@@ -43,9 +43,9 @@ export default async function AdminPage() {
               across the MarketBridge network.
             </p>
           </div>
-          <div className="flex gap-2">
-            <a href="/api/setup?action=verify" className="btn-secondary !py-2 !px-3 text-xs">
-              Network status
+          <div className="flex flex-wrap gap-2">
+            <a href="/admin/cohorts" className="btn-secondary !py-2 !px-3 text-xs">
+              Cohorts
             </a>
             <a href="/admin/opportunities/new" className="btn-primary !py-2 !px-3 text-xs">
               Publish opportunity
