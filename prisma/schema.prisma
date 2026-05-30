@@ -45,6 +45,9 @@ model User {
   cohortsCreated           Cohort[]                 @relation("CohortCreator")
   subscriptions            Subscription[]
   invoices                 Invoice[]
+  applications             Application[]
+  rfps                     Rfp[]                    @relation("RfpOwner")
+  rfpResponses             RfpResponse[]            @relation("RfpResponder")
 
   @@index([email])
   @@index([role])
@@ -550,4 +553,93 @@ enum InvoiceStatus {
   PAID
   FAILED
   REFUNDED
+}
+
+// ────────────────────────────────────────────────────────────
+// Applications (entrepreneur → opportunity)
+// ────────────────────────────────────────────────────────────
+
+model Application {
+  id            String            @id @default(cuid())
+  userId        String
+  opportunityId String
+  coverNote     String?           @db.Text
+  status        ApplicationStatus @default(SUBMITTED)
+  adminNote     String?           @db.Text
+  decidedById   String?
+  decidedAt     DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, opportunityId])
+  @@index([opportunityId])
+  @@index([status])
+}
+
+enum ApplicationStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  SHORTLISTED
+  REJECTED
+  WITHDRAWN
+  AWARDED
+}
+
+// ────────────────────────────────────────────────────────────
+// RFPs (corporate → marketplace responses)
+// ────────────────────────────────────────────────────────────
+
+model Rfp {
+  id           String     @id @default(cuid())
+  ownerId      String
+  title        String
+  category     String
+  description  String     @db.Text
+  region       String?
+  budgetUsd    String?
+  deadline     DateTime?
+  status       RfpStatus  @default(OPEN)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  owner     User          @relation("RfpOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  responses RfpResponse[]
+
+  @@index([status])
+  @@index([category])
+}
+
+enum RfpStatus {
+  DRAFT
+  OPEN
+  REVIEWING
+  AWARDED
+  CLOSED
+  ARCHIVED
+}
+
+model RfpResponse {
+  id          String             @id @default(cuid())
+  rfpId       String
+  responderId String
+  body        String             @db.Text
+  pricingNote String?
+  status      RfpResponseStatus  @default(SUBMITTED)
+  createdAt   DateTime           @default(now())
+
+  rfp       Rfp  @relation(fields: [rfpId], references: [id], onDelete: Cascade)
+  responder User @relation("RfpResponder", fields: [responderId], references: [id], onDelete: Cascade)
+
+  @@unique([rfpId, responderId])
+  @@index([rfpId])
+}
+
+enum RfpResponseStatus {
+  SUBMITTED
+  SHORTLISTED
+  REJECTED
+  AWARDED
+  WITHDRAWN
 }

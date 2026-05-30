@@ -44,6 +44,9 @@ export default async function AdminPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <a href="/admin/applications" className="btn-secondary !py-2 !px-3 text-xs">
+              Applications
+            </a>
             <a href="/admin/cohorts" className="btn-secondary !py-2 !px-3 text-xs">
               Cohorts
             </a>

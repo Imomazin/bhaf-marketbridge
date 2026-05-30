@@ -40,6 +40,15 @@ CREATE TYPE "SubscriptionStatus" AS ENUM ('TRIALING', 'ACTIVE', 'PAST_DUE', 'CAN
 -- CreateEnum
 CREATE TYPE "InvoiceStatus" AS ENUM ('PENDING', 'PAID', 'FAILED', 'REFUNDED');
 
+-- CreateEnum
+CREATE TYPE "ApplicationStatus" AS ENUM ('SUBMITTED', 'UNDER_REVIEW', 'SHORTLISTED', 'REJECTED', 'WITHDRAWN', 'AWARDED');
+
+-- CreateEnum
+CREATE TYPE "RfpStatus" AS ENUM ('DRAFT', 'OPEN', 'REVIEWING', 'AWARDED', 'CLOSED', 'ARCHIVED');
+
+-- CreateEnum
+CREATE TYPE "RfpResponseStatus" AS ENUM ('SUBMITTED', 'SHORTLISTED', 'REJECTED', 'AWARDED', 'WITHDRAWN');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -384,6 +393,52 @@ CREATE TABLE "Invoice" (
     CONSTRAINT "Invoice_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Application" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "opportunityId" TEXT NOT NULL,
+    "coverNote" TEXT,
+    "status" "ApplicationStatus" NOT NULL DEFAULT 'SUBMITTED',
+    "adminNote" TEXT,
+    "decidedById" TEXT,
+    "decidedAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Application_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Rfp" (
+    "id" TEXT NOT NULL,
+    "ownerId" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "category" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
+    "region" TEXT,
+    "budgetUsd" TEXT,
+    "deadline" TIMESTAMP(3),
+    "status" "RfpStatus" NOT NULL DEFAULT 'OPEN',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Rfp_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "RfpResponse" (
+    "id" TEXT NOT NULL,
+    "rfpId" TEXT NOT NULL,
+    "responderId" TEXT NOT NULL,
+    "body" TEXT NOT NULL,
+    "pricingNote" TEXT,
+    "status" "RfpResponseStatus" NOT NULL DEFAULT 'SUBMITTED',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "RfpResponse_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -513,6 +568,27 @@ CREATE INDEX "Invoice_status_idx" ON "Invoice"("status");
 -- CreateIndex
 CREATE INDEX "Invoice_providerReference_idx" ON "Invoice"("providerReference");
 
+-- CreateIndex
+CREATE INDEX "Application_opportunityId_idx" ON "Application"("opportunityId");
+
+-- CreateIndex
+CREATE INDEX "Application_status_idx" ON "Application"("status");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Application_userId_opportunityId_key" ON "Application"("userId", "opportunityId");
+
+-- CreateIndex
+CREATE INDEX "Rfp_status_idx" ON "Rfp"("status");
+
+-- CreateIndex
+CREATE INDEX "Rfp_category_idx" ON "Rfp"("category");
+
+-- CreateIndex
+CREATE INDEX "RfpResponse_rfpId_idx" ON "RfpResponse"("rfpId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "RfpResponse_rfpId_responderId_key" ON "RfpResponse"("rfpId", "responderId");
+
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -584,4 +660,16 @@ ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_userId_fkey" FOREIGN KEY ("userId"
 
 -- AddForeignKey
 ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "Subscription"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Application" ADD CONSTRAINT "Application_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Rfp" ADD CONSTRAINT "Rfp_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RfpResponse" ADD CONSTRAINT "RfpResponse_rfpId_fkey" FOREIGN KEY ("rfpId") REFERENCES "Rfp"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "RfpResponse" ADD CONSTRAINT "RfpResponse_responderId_fkey" FOREIGN KEY ("responderId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
