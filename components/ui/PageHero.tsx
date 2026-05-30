@@ -29,11 +29,11 @@ export function PageHero({ eyebrow, title, description, photo, caption }: PageHe
         }}
       />
 
-      <div className="container-edge relative grid gap-10 py-20 md:grid-cols-[1.4fr_1fr] md:items-end">
+      <div className="container-edge relative grid gap-6 py-12 md:gap-10 md:py-20 md:grid-cols-[1.4fr_1fr] md:items-end">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-300">{eyebrow}</p>
-          <h1 className="mt-3 max-w-2xl font-serif text-3xl leading-tight text-cream-50 md:text-5xl">{title}</h1>
-          <p className="mt-4 max-w-xl text-base text-cream-100/80 md:text-lg">{description}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-300 md:text-[11px]">{eyebrow}</p>
+          <h1 className="mt-2 max-w-2xl font-serif text-[1.7rem] leading-[1.1] text-cream-50 md:mt-3 md:text-5xl">{title}</h1>
+          <p className="mt-3 max-w-xl text-sm text-cream-100/85 md:mt-4 md:text-lg">{description}</p>
         </div>
         {caption && (
           <p className="hidden max-w-xs border-l border-cream-50/20 pl-5 text-xs text-cream-100/70 md:block">
