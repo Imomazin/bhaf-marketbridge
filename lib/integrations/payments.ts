@@ -55,27 +55,36 @@ export async function createCheckoutSession(
   const provider = preferred ?? preferredProviderForCountry("");
   const ref = `bm_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
 
+  if (provider === "paystack" && process.env.PAYSTACK_SECRET_KEY) {
+    const { initializeTransaction } = await import("@/lib/integrations/paystack");
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://bhaf-marketbridge.vercel.app";
+    const result = await initializeTransaction({
+      email: input.email,
+      amountUsdCents: input.amountUsdCents,
+      reference: ref,
+      callbackUrl: `${baseUrl}/billing/return?ref=${ref}`,
+      metadata: { userId: input.userId, plan: input.plan ?? null, description: input.description },
+    });
+    if (!result.ok || !result.authorizationUrl) {
+      return { ok: false, provider: "paystack", message: result.message, ref };
+    }
+    return {
+      ok: true,
+      provider: "paystack",
+      url: result.authorizationUrl,
+      ref: result.reference ?? ref,
+      message: "Paystack checkout ready.",
+    };
+  }
+
   if (provider === "stripe" && process.env.STRIPE_SECRET_KEY) {
-    // Real Stripe call goes here. Sketch:
-    // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-    // const session = await stripe.checkout.sessions.create({...});
+    // Stripe wire-up follows the same shape. Sketch only for now.
     return {
       ok: true,
       provider: "stripe",
       url: `https://checkout.stripe.example/${ref}`,
       ref,
       message: "Stripe checkout session created (sketch).",
-    };
-  }
-
-  if (provider === "paystack" && process.env.PAYSTACK_SECRET_KEY) {
-    // const res = await fetch("https://api.paystack.co/transaction/initialize", { ... })
-    return {
-      ok: true,
-      provider: "paystack",
-      url: `https://checkout.paystack.example/${ref}`,
-      ref,
-      message: "Paystack initialise (sketch).",
     };
   }
 

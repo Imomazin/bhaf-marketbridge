@@ -34,6 +34,12 @@ CREATE TYPE "CohortStatus" AS ENUM ('PLANNED', 'OPEN', 'IN_PROGRESS', 'COMPLETED
 -- CreateEnum
 CREATE TYPE "CohortMembershipStatus" AS ENUM ('INVITED', 'CONFIRMED', 'ACTIVE', 'COMPLETED', 'DROPPED');
 
+-- CreateEnum
+CREATE TYPE "SubscriptionStatus" AS ENUM ('TRIALING', 'ACTIVE', 'PAST_DUE', 'CANCELED', 'UNPAID', 'INCOMPLETE');
+
+-- CreateEnum
+CREATE TYPE "InvoiceStatus" AS ENUM ('PENDING', 'PAID', 'FAILED', 'REFUNDED');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -340,6 +346,44 @@ CREATE TABLE "CohortMembership" (
     CONSTRAINT "CohortMembership_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "Subscription" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "plan" TEXT NOT NULL,
+    "amountUsdCents" INTEGER NOT NULL,
+    "status" "SubscriptionStatus" NOT NULL DEFAULT 'TRIALING',
+    "provider" TEXT NOT NULL,
+    "providerCustomerId" TEXT,
+    "providerSubscriptionId" TEXT,
+    "currentPeriodStart" TIMESTAMP(3),
+    "currentPeriodEnd" TIMESTAMP(3),
+    "cancelAtPeriodEnd" BOOLEAN NOT NULL DEFAULT false,
+    "canceledAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "Subscription_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "Invoice" (
+    "id" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "subscriptionId" TEXT,
+    "amountUsdCents" INTEGER NOT NULL,
+    "currency" TEXT NOT NULL DEFAULT 'USD',
+    "provider" TEXT NOT NULL,
+    "providerInvoiceId" TEXT,
+    "providerReference" TEXT,
+    "status" "InvoiceStatus" NOT NULL DEFAULT 'PENDING',
+    "description" TEXT,
+    "paidAt" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "Invoice_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -448,6 +492,27 @@ CREATE INDEX "CohortMembership_userId_idx" ON "CohortMembership"("userId");
 -- CreateIndex
 CREATE UNIQUE INDEX "CohortMembership_cohortId_userId_key" ON "CohortMembership"("cohortId", "userId");
 
+-- CreateIndex
+CREATE INDEX "Subscription_userId_idx" ON "Subscription"("userId");
+
+-- CreateIndex
+CREATE INDEX "Subscription_status_idx" ON "Subscription"("status");
+
+-- CreateIndex
+CREATE INDEX "Subscription_providerSubscriptionId_idx" ON "Subscription"("providerSubscriptionId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "Invoice_providerInvoiceId_key" ON "Invoice"("providerInvoiceId");
+
+-- CreateIndex
+CREATE INDEX "Invoice_userId_idx" ON "Invoice"("userId");
+
+-- CreateIndex
+CREATE INDEX "Invoice_status_idx" ON "Invoice"("status");
+
+-- CreateIndex
+CREATE INDEX "Invoice_providerReference_idx" ON "Invoice"("providerReference");
+
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -510,4 +575,13 @@ ALTER TABLE "CohortMembership" ADD CONSTRAINT "CohortMembership_cohortId_fkey" F
 
 -- AddForeignKey
 ALTER TABLE "CohortMembership" ADD CONSTRAINT "CohortMembership_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Subscription" ADD CONSTRAINT "Subscription_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "Subscription"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 

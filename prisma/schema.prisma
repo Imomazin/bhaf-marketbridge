@@ -43,6 +43,8 @@ model User {
   messagesSent             Message[]                @relation("MessageSender")
   cohortMemberships        CohortMembership[]
   cohortsCreated           Cohort[]                 @relation("CohortCreator")
+  subscriptions            Subscription[]
+  invoices                 Invoice[]
 
   @@index([email])
   @@index([role])
@@ -482,4 +484,70 @@ enum CohortMembershipStatus {
   ACTIVE
   COMPLETED
   DROPPED
+}
+
+// ────────────────────────────────────────────────────────────
+// Billing — subscriptions and invoices
+// ────────────────────────────────────────────────────────────
+
+model Subscription {
+  id                     String             @id @default(cuid())
+  userId                 String
+  plan                   String
+  amountUsdCents         Int
+  status                 SubscriptionStatus @default(TRIALING)
+  provider               String             // paystack | stripe | flutterwave | stub
+  providerCustomerId     String?
+  providerSubscriptionId String?
+  currentPeriodStart     DateTime?
+  currentPeriodEnd       DateTime?
+  cancelAtPeriodEnd      Boolean            @default(false)
+  canceledAt             DateTime?
+  createdAt              DateTime           @default(now())
+  updatedAt              DateTime           @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoices Invoice[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([providerSubscriptionId])
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
+  UNPAID
+  INCOMPLETE
+}
+
+model Invoice {
+  id                  String        @id @default(cuid())
+  userId              String
+  subscriptionId      String?
+  amountUsdCents      Int
+  currency            String        @default("USD")
+  provider            String
+  providerInvoiceId   String?       @unique
+  providerReference   String?       // local idempotency reference (e.g. our checkout ref)
+  status              InvoiceStatus @default(PENDING)
+  description         String?
+  paidAt              DateTime?
+  createdAt           DateTime      @default(now())
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([status])
+  @@index([providerReference])
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
 }
