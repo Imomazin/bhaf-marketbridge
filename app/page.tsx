@@ -618,6 +618,12 @@ export default function HomePage() {
                   Sign in as corporate
                 </Link>
                 <Link
+                  href="/billing"
+                  className="inline-flex items-center justify-center rounded-md border border-cream-50/40 px-5 py-3 text-sm font-medium text-cream-50 transition hover:-translate-y-0.5 hover:border-cream-50/80"
+                >
+                  See pricing
+                </Link>
+                <Link
                   href="/admin"
                   className="inline-flex items-center justify-center rounded-md bg-cream-50 px-5 py-3 text-sm font-medium text-forest-900 transition hover:-translate-y-0.5 hover:bg-cream-100"
                 >

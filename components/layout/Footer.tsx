@@ -10,6 +10,7 @@ const footerColumns = [
       { href: "/marketplace", label: "Marketplace" },
       { href: "/opportunities", label: "Opportunities" },
       { href: "/impact", label: "Impact & ESG" },
+      { href: "/billing", label: "Pricing" },
     ],
   },
   {
