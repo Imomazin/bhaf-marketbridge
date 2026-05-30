@@ -69,8 +69,11 @@ export default async function EntrepreneurPortalPage() {
             </div>
             <div className="flex items-center gap-3">
               <ReadinessBadge level={me.readinessLevel} />
-              <Link href="/settings" className="btn-secondary !py-2 !px-3 text-xs">
-                Settings
+              <Link href="/portal/entrepreneur/applications" className="btn-secondary !py-2 !px-3 text-xs">
+                My applications
+              </Link>
+              <Link href="/marketplace/rfps" className="btn-secondary !py-2 !px-3 text-xs">
+                Open RFPs
               </Link>
               <Link href="/portal/entrepreneur/listings/new" className="btn-primary !py-2 !px-3 text-xs">
                 New listing

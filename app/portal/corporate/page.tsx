@@ -48,11 +48,14 @@ export default async function CorporatePortalPage() {
               <p className="font-serif text-xl text-forest-900">Consumer Goods Alliance</p>
               <p className="text-xs text-charcoal-500">FMCG · West & Southern Africa procurement programme</p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
               <Link href="/marketplace" className="btn-secondary !py-2 !px-3 text-xs">
                 Browse marketplace
               </Link>
-              <Link href="#rfps" className="btn-primary !py-2 !px-3 text-xs">
+              <Link href="/marketplace/rfps" className="btn-secondary !py-2 !px-3 text-xs">
+                All RFPs
+              </Link>
+              <Link href="/portal/corporate/rfps/new" className="btn-primary !py-2 !px-3 text-xs">
                 Post RFP
               </Link>
             </div>
