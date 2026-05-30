@@ -9,6 +9,7 @@ import { uploadFileToStorage } from "@/lib/storage";
 import { writeAudit } from "@/lib/audit";
 import { sendEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/ratelimit";
+import { checkBySha256 } from "@/lib/integrations/virusTotal";
 
 const uploadSchema = z.object({
   name: z.string().min(2).max(160),
@@ -74,13 +75,7 @@ export async function uploadArtefact(formData: FormData): Promise<ArtefactAction
       sha256: a.sha256,
       uploadedAt: new Date(),
       checks: {
-        create: [
-          { name: "File integrity (SHA-256)", status: "PASS" },
-          { name: "MIME & magic-byte match", status: "PASS" },
-          { name: "Size & format limits", status: "PASS" },
-          { name: "Antivirus scan", status: "PENDING", detail: "Queued for ClamAV / VirusTotal" },
-          { name: "Cross-check against profile", status: "PENDING" },
-        ],
+        create: await buildInitialChecks(a.sha256),
       },
     },
   });
@@ -184,4 +179,38 @@ export async function reviewArtefact(input: z.infer<typeof reviewSchema>): Promi
   revalidatePath("/admin");
 
   return { ok: true, id: artefact.id, sha256: artefact.sha256 ?? "", status: nextStatus };
+}
+
+/**
+ * Returns the initial set of automated check rows for a new artefact.
+ * The first three are synchronous (we already verified them at upload
+ * time). The AV check actually queries VirusTotal when configured —
+ * if not, it stays PENDING and a human reviewer can re-trigger later.
+ */
+async function buildInitialChecks(sha256: string) {
+  const base = [
+    { name: "File integrity (SHA-256)", status: "PASS" as const },
+    { name: "MIME & magic-byte match", status: "PASS" as const },
+    { name: "Size & format limits", status: "PASS" as const },
+  ];
+
+  let avRow:
+    | { name: string; status: "PASS" | "FAIL" | "WARN" | "PENDING"; detail?: string };
+  try {
+    const av = await checkBySha256(sha256);
+    avRow =
+      av.status === "CLEAN"
+        ? { name: "Antivirus scan (VirusTotal)", status: "PASS", detail: `${av.total ?? 0} engines · ${av.message}` }
+        : av.status === "INFECTED"
+        ? { name: "Antivirus scan (VirusTotal)", status: "FAIL", detail: av.message }
+        : av.status === "PENDING"
+        ? { name: "Antivirus scan (VirusTotal)", status: "PENDING", detail: av.message }
+        : av.status === "NOT_CONFIGURED"
+        ? { name: "Antivirus scan", status: "PENDING", detail: "VirusTotal not configured — manual review" }
+        : { name: "Antivirus scan", status: "WARN", detail: av.message };
+  } catch {
+    avRow = { name: "Antivirus scan", status: "PENDING" };
+  }
+
+  return [...base, avRow, { name: "Cross-check against profile", status: "PENDING" as const }];
 }

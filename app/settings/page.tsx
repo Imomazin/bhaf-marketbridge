@@ -7,6 +7,7 @@ import { DeleteAccountSection } from "@/components/settings/DeleteAccountSection
 import { EntrepreneurProfileForm } from "@/components/settings/EntrepreneurProfileForm";
 import { FunderProfileForm } from "@/components/settings/FunderProfileForm";
 import { CorporateProfileForm } from "@/components/settings/CorporateProfileForm";
+import { KycSection } from "@/components/settings/KycSection";
 
 export const metadata = { title: "Account settings · BHAF MarketBridge" };
 export const dynamic = "force-dynamic";
@@ -120,6 +121,8 @@ export default async function SettingsPage() {
               </div>
             </section>
           )}
+
+          <KycSection initialFullName={user?.name ?? ""} />
 
           <section className="card p-6">
             <h2 className="font-serif text-lg text-forest-900">Change password</h2>
