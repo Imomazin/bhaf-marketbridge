@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { SignOutButton } from "@/components/auth/SignOutButton";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 import { bhafLogo } from "@/data/photos";
 import { cn } from "@/lib/utils";
 
@@ -72,6 +73,7 @@ export function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
+          <LanguageToggle />
           {session?.user ? (
             <>
               <Link
