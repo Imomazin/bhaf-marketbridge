@@ -11,6 +11,7 @@ const TYPE_MAP: Record<string, OpportunityType> = {
   PROCUREMENT: "Procurement",
   PROGRAMME: "Programme",
   CERTIFICATION: "Certification",
+  GOVERNMENT: "Government",
 };
 
 export interface OpportunityFilters {
@@ -18,12 +19,13 @@ export interface OpportunityFilters {
   type?: string;
 }
 
-const TYPE_DB: Record<string, "GRANT" | "INVESTMENT" | "PROCUREMENT" | "PROGRAMME" | "CERTIFICATION"> = {
+const TYPE_DB: Record<string, "GRANT" | "INVESTMENT" | "PROCUREMENT" | "PROGRAMME" | "CERTIFICATION" | "GOVERNMENT"> = {
   Grant: "GRANT",
   Investment: "INVESTMENT",
   Procurement: "PROCUREMENT",
   Programme: "PROGRAMME",
   Certification: "CERTIFICATION",
+  Government: "GOVERNMENT",
 };
 
 function applyMockFilters(rows: Opportunity[], f: OpportunityFilters): Opportunity[] {

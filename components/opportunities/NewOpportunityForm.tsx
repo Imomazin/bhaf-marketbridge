@@ -4,12 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createOpportunity } from "@/app/actions/opportunities";
 
-const TYPES: { value: "GRANT" | "INVESTMENT" | "PROCUREMENT" | "PROGRAMME" | "CERTIFICATION"; label: string }[] = [
+const TYPES: { value: "GRANT" | "INVESTMENT" | "PROCUREMENT" | "PROGRAMME" | "CERTIFICATION" | "GOVERNMENT"; label: string }[] = [
   { value: "GRANT", label: "Grant" },
   { value: "INVESTMENT", label: "Investment" },
   { value: "PROCUREMENT", label: "Procurement" },
   { value: "PROGRAMME", label: "Programme" },
   { value: "CERTIFICATION", label: "Certification" },
+  { value: "GOVERNMENT", label: "Government & multilateral" },
 ];
 
 export function NewOpportunityForm() {
