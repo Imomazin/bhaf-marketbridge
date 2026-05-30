@@ -527,6 +527,57 @@ export default function HomePage() {
       </section>
 
       {/* =========================================================== */}
+      {/* GOVERNMENT & MULTILATERAL FUNDING                              */}
+      {/* =========================================================== */}
+      <section className="bg-cream-50 py-24">
+        <div className="container-edge">
+          <Reveal>
+            <SectionHeader
+              eyebrow="Government & multilateral funding"
+              title="Access AfDB, BoI, DBN, WEF, MASLOC, DER, SEFA, BDF and more — all in one place."
+              description="MarketBridge curates national and multilateral funding streams open to African women entrepreneurs. From AFAWA at the AfDB to the Federal Ministry of Women Affairs in Nigeria, applications and eligibility checks run through the platform."
+            />
+          </Reveal>
+
+          <Reveal delayMs={150} className="mt-14">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                { label: "Multilateral", value: "AfDB · AFAWA", caption: "$5B unlocked for women SMEs continent-wide" },
+                { label: "Nigeria", value: "BoI · DBN · FMWA", caption: "Concessional loans + cohort grants" },
+                { label: "Anglophone", value: "WEF · NEIP · SEFA · BDF", caption: "Kenya · Ghana · ZA · Rwanda" },
+                { label: "Francophone", value: "DER/FJ · FEMEC", caption: "Senegal · DRC · regional cohorts" },
+              ].map((row) => (
+                <div key={row.label} className="card flex h-full flex-col p-5">
+                  <span className="rounded-full bg-[#0d2840] px-2.5 py-1 self-start text-[10px] font-semibold uppercase tracking-wider text-cream-50">
+                    {row.label}
+                  </span>
+                  <p className="mt-4 font-serif text-base text-forest-900">{row.value}</p>
+                  <p className="mt-1 text-xs text-charcoal-500">{row.caption}</p>
+                </div>
+              ))}
+            </div>
+          </Reveal>
+
+          <Reveal delayMs={300} className="mt-10">
+            <div className="card flex flex-wrap items-center justify-between gap-3 p-5">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-700">
+                  Why government funding through BHAF
+                </p>
+                <p className="mt-1 text-sm text-charcoal-600">
+                  Compliance docs, KYC and ESG evidence prepared once on MarketBridge are reusable across every
+                  scheme — entrepreneurs apply faster, agencies vet faster.
+                </p>
+              </div>
+              <Link href="/opportunities?type=Government" className="btn-primary !py-2 !px-4 text-xs">
+                Browse government funding →
+              </Link>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* =========================================================== */}
       {/* IMPACT — animated metric cards + sector bar chart that fills   */}
       {/* in on scroll. No photo, so no repeats.                         */}
       {/* =========================================================== */}

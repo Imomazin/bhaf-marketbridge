@@ -351,6 +351,7 @@ enum OpportunityType {
   PROCUREMENT
   PROGRAMME
   CERTIFICATION
+  GOVERNMENT
 }
 
 // ────────────────────────────────────────────────────────────

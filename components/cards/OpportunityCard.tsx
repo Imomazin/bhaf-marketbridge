@@ -8,6 +8,7 @@ const typeStyles: Record<OpportunityType, string> = {
   Procurement: "bg-cream-100 text-charcoal-600 border-cream-300",
   Programme: "bg-forest-900 text-cream-50 border-forest-900",
   Certification: "bg-white text-forest-900 border-forest-200",
+  Government: "bg-[#0d2840] text-cream-50 border-[#0d2840]",
 };
 
 interface OpportunityCardProps {

@@ -7,7 +7,7 @@ import { photos } from "@/data/photos";
 
 export const dynamic = "force-dynamic";
 
-const types = ["All types", "Grant", "Investment", "Procurement", "Programme", "Certification"];
+const types = ["All types", "Grant", "Investment", "Procurement", "Programme", "Certification", "Government"];
 
 export default async function OpportunitiesPage({
   searchParams,

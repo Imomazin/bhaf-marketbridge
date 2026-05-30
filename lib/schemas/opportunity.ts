@@ -6,6 +6,7 @@ export const OPPORTUNITY_TYPES = [
   "PROCUREMENT",
   "PROGRAMME",
   "CERTIFICATION",
+  "GOVERNMENT",
 ] as const;
 
 export const opportunitySchema = z.object({
