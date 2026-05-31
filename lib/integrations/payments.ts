@@ -40,9 +40,32 @@ export interface CheckoutResult {
   message: string;
 }
 
+const AFRICAN_NAMES = new Set([
+  "nigeria",
+  "ghana",
+  "south africa",
+  "kenya",
+  "senegal",
+  "drc",
+  "democratic republic of the congo",
+  "rwanda",
+  "uganda",
+  "tanzania",
+  "ethiopia",
+  "egypt",
+  "morocco",
+  "cameroon",
+  "cote d'ivoire",
+  "ivory coast",
+  "zambia",
+  "zimbabwe",
+]);
+const AFRICAN_CODES = new Set(["ng", "gh", "za", "ke", "sn", "cd", "rw", "ug", "tz", "et", "eg", "ma", "cm", "ci", "zm", "zw"]);
+
 export function preferredProviderForCountry(country: string): CheckoutProvider {
-  const c = country.toLowerCase();
-  if (["nigeria", "ng", "ghana", "gh", "south africa", "za", "kenya", "ke"].some((x) => c.includes(x))) {
+  const c = country.trim().toLowerCase();
+  const isAfrican = AFRICAN_NAMES.has(c) || AFRICAN_CODES.has(c);
+  if (isAfrican) {
     return process.env.PAYSTACK_SECRET_KEY ? "paystack" : process.env.FLUTTERWAVE_SECRET_KEY ? "flutterwave" : "stub";
   }
   return process.env.STRIPE_SECRET_KEY ? "stripe" : "stub";
