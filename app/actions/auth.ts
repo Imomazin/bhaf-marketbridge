@@ -7,12 +7,19 @@ import { writeAudit } from "@/lib/audit";
 import { sendEmail } from "@/lib/email";
 import { signIn } from "@/auth";
 import { registerSchema, type RegisterInput } from "@/lib/schemas/auth";
+import { verifyTurnstile } from "@/lib/integrations/turnstile";
 
 export type ActionResult<T = void> =
   | { ok: true; data?: T; message?: string }
   | { ok: false; fieldErrors?: Record<string, string>; message: string };
 
-export async function registerAction(raw: RegisterInput): Promise<ActionResult> {
+export async function registerAction(raw: RegisterInput & { turnstileToken?: string }): Promise<ActionResult> {
+  // Bot check (no-op when Turnstile not configured)
+  const captcha = await verifyTurnstile(raw.turnstileToken);
+  if (!captcha.ok) {
+    return { ok: false, message: "Bot protection failed. Refresh and try again." };
+  }
+
   const parsed = registerSchema.safeParse(raw);
   if (!parsed.success) {
     const fieldErrors: Record<string, string> = {};

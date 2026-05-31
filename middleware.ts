@@ -20,6 +20,27 @@ export default auth((req) => {
     "camera=(), microphone=(), geolocation=(), interest-cohort=()",
   );
   res.headers.set("X-DNS-Prefetch-Control", "on");
+
+  // Content Security Policy — strict by default. Allows Sentry, Cloudflare
+  // Turnstile, Vercel Blob image hosts and the third-party APIs we call
+  // server-side. unsafe-inline on style is kept for Tailwind; scripts
+  // allow inline because Next.js inlines small bootstrap chunks.
+  const csp = [
+    "default-src 'self'",
+    "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com https://www.google.com",
+    "style-src 'self' 'unsafe-inline'",
+    "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://*.sentry.io",
+    "font-src 'self' data:",
+    "connect-src 'self' https://*.sentry.io https://api.anthropic.com https://www.virustotal.com https://api.paystack.co https://api.smileidentity.com https://*.upstash.io",
+    "frame-src 'self' https://challenges.cloudflare.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "upgrade-insecure-requests",
+  ].join("; ");
+  res.headers.set("Content-Security-Policy", csp);
+
   if (process.env.NODE_ENV === "production") {
     res.headers.set(
       "Strict-Transport-Security",
