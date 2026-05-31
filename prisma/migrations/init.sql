@@ -49,6 +49,12 @@ CREATE TYPE "RfpStatus" AS ENUM ('DRAFT', 'OPEN', 'REVIEWING', 'AWARDED', 'CLOSE
 -- CreateEnum
 CREATE TYPE "RfpResponseStatus" AS ENUM ('SUBMITTED', 'SHORTLISTED', 'REJECTED', 'AWARDED', 'WITHDRAWN');
 
+-- CreateEnum
+CREATE TYPE "DataRoomStatus" AS ENUM ('OPEN', 'RESTRICTED', 'CLOSED');
+
+-- CreateEnum
+CREATE TYPE "AccessLevel" AS ENUM ('VIEW', 'DOWNLOAD', 'EDIT');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" TEXT NOT NULL,
@@ -439,6 +445,33 @@ CREATE TABLE "RfpResponse" (
     CONSTRAINT "RfpResponse_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "DataRoom" (
+    "id" TEXT NOT NULL,
+    "ownerId" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "description" TEXT,
+    "contextType" TEXT,
+    "contextId" TEXT,
+    "status" "DataRoomStatus" NOT NULL DEFAULT 'OPEN',
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "DataRoom_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "DataRoomAccess" (
+    "id" TEXT NOT NULL,
+    "dataRoomId" TEXT NOT NULL,
+    "userId" TEXT NOT NULL,
+    "level" "AccessLevel" NOT NULL DEFAULT 'VIEW',
+    "grantedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt" TIMESTAMP(3),
+
+    CONSTRAINT "DataRoomAccess_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
@@ -589,6 +622,15 @@ CREATE INDEX "RfpResponse_rfpId_idx" ON "RfpResponse"("rfpId");
 -- CreateIndex
 CREATE UNIQUE INDEX "RfpResponse_rfpId_responderId_key" ON "RfpResponse"("rfpId", "responderId");
 
+-- CreateIndex
+CREATE INDEX "DataRoom_ownerId_idx" ON "DataRoom"("ownerId");
+
+-- CreateIndex
+CREATE INDEX "DataRoom_status_idx" ON "DataRoom"("status");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "DataRoomAccess_dataRoomId_userId_key" ON "DataRoomAccess"("dataRoomId", "userId");
+
 -- AddForeignKey
 ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -672,4 +714,13 @@ ALTER TABLE "RfpResponse" ADD CONSTRAINT "RfpResponse_rfpId_fkey" FOREIGN KEY ("
 
 -- AddForeignKey
 ALTER TABLE "RfpResponse" ADD CONSTRAINT "RfpResponse_responderId_fkey" FOREIGN KEY ("responderId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "DataRoom" ADD CONSTRAINT "DataRoom_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "DataRoomAccess" ADD CONSTRAINT "DataRoomAccess_dataRoomId_fkey" FOREIGN KEY ("dataRoomId") REFERENCES "DataRoom"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "DataRoomAccess" ADD CONSTRAINT "DataRoomAccess_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
