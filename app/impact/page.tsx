@@ -83,6 +83,19 @@ export default function ImpactPage() {
 
       <section className="bg-cream-50 py-20">
         <div className="container-edge">
+          <div className="mb-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-forest-200 bg-forest-50 p-5">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-forest-700">
+                Donor-grade impact report
+              </p>
+              <p className="mt-1 text-sm text-forest-900">
+                Generate a branded, printable report computed live from platform data.
+              </p>
+            </div>
+            <a href="/impact/report" className="btn-primary !py-2 !px-4 text-xs">
+              Open impact report →
+            </a>
+          </div>
           <SectionHeader eyebrow="Sector breakdown" title="Impact across BHAF's five strategic sectors." />
           <div className="card mt-10 overflow-hidden">
             <table className="w-full text-left text-sm">

@@ -83,6 +83,12 @@ export function Navbar() {
                 My workspace
               </Link>
               <Link
+                href="/data-rooms"
+                className="text-sm font-medium text-charcoal-600 hover:text-forest-900"
+              >
+                Data rooms
+              </Link>
+              <Link
                 href="/messages"
                 className="text-sm font-medium text-charcoal-600 hover:text-forest-900"
               >
