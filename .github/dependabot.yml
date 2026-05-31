@@ -1,0 +1,29 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      next:
+        patterns:
+          - next
+          - eslint-config-next
+      prisma:
+        patterns:
+          - prisma
+          - "@prisma/*"
+      auth:
+        patterns:
+          - next-auth
+          - "@auth/*"
+      anthropic:
+        patterns:
+          - "@anthropic-ai/*"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
