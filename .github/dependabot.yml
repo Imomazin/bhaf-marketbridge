@@ -22,6 +22,32 @@ updates:
       anthropic:
         patterns:
           - "@anthropic-ai/*"
+    # Block major bumps that have known breaking changes for our stack.
+    # When you're ready to absorb a major (e.g. Prisma 7's prisma.config.ts
+    # migration, Next 15, React 19), remove the matching ignore.
+    ignore:
+      - dependency-name: prisma
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@prisma/client"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: next
+        update-types: ["version-update:semver-major"]
+      - dependency-name: react
+        update-types: ["version-update:semver-major"]
+      - dependency-name: react-dom
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: eslint
+        update-types: ["version-update:semver-major"]
+      - dependency-name: eslint-config-next
+        update-types: ["version-update:semver-major"]
+      - dependency-name: tailwindcss
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: /
