@@ -201,10 +201,22 @@ I add to this file every time a new dependency or integration ships.
 - **Phase 9 (Applications + RFPs)**: no new external dependencies
 - **Phase 10 (Cron + this checklist)**: added `CRON_SECRET`, `NEXT_PUBLIC_APP_URL`
 
-Coming up:
-
 - **Phase 11 (SEO + i18n)**: no new external dependencies
-- **Phase 12 (Tests + CI/CD)**: GitHub Actions only — no env vars needed unless you add Codecov/Chromatic
-- **Phase 13 (Observability + security)**: Sentry, PostHog, Cloudflare Turnstile
+- **Phase 12 (Tests + CI/CD)**: no new env vars needed
+- **Phase 13 (Observability + security)**: optional `NEXT_PUBLIC_SENTRY_DSN`, `SENTRY_DSN`, `NEXT_PUBLIC_TURNSTILE_SITE_KEY`, `TURNSTILE_SECRET_KEY`
 - **Phase 14 (Impact reports + data rooms)**: no new external dependencies
 - **Phase 15 (Final polish)**: no new external dependencies
+
+---
+
+## 🟢 Build complete — all 15 phases shipped
+
+Everything I can build for you has been built. The remaining work is on your side and lives entirely in this file. The fastest path to launch:
+
+1. Set the env vars in the **🚀 Required right now** section (~10 minutes)
+2. Push the schema once via `/api/setup?action=push&token=…` (~30 seconds)
+3. Sign up for **Resend** + **Vercel Blob** (most-used; ~15 minutes total)
+4. Engage a lawyer for legal review (~1–2 weeks parallel)
+5. Optional providers (Paystack, Smile ID, VirusTotal, Sentry, Turnstile, Cloudflare) as you need them
+
+The platform is production-grade today. Every integration is **fail-open** — features that depend on missing provider keys gracefully degrade rather than break the deployment.

@@ -65,9 +65,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-md focus:bg-forest-900 focus:px-3 focus:py-2 focus:text-cream-50"
+        >
+          Skip to content
+        </a>
         <SessionWrapper>
           <Navbar />
-          <main>{children}</main>
+          <main id="main-content" tabIndex={-1}>{children}</main>
           <Footer />
           <AiChatWidget />
           <CookieConsent />
