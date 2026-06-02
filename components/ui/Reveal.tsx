@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePrefersReducedMotion } from "@/components/hooks/usePrefersReducedMotion";
 import { cn } from "@/lib/utils";
 
 interface RevealProps {
@@ -11,17 +12,16 @@ interface RevealProps {
 }
 
 export function Reveal({ children, className, delayMs = 0, from = "up" }: RevealProps) {
+  const prefersReduced = usePrefersReducedMotion();
   const [visible, setVisible] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
+  // When the user prefers reduced motion we render in the final
+  // "visible" state immediately by short-circuiting the className below.
+  const effectivelyVisible = visible || prefersReduced;
+
   useEffect(() => {
-    if (!ref.current) return;
-    const prefersReduced =
-      typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReduced) {
-      setVisible(true);
-      return;
-    }
+    if (prefersReduced || !ref.current) return;
     const obs = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -33,7 +33,7 @@ export function Reveal({ children, className, delayMs = 0, from = "up" }: Reveal
     );
     obs.observe(ref.current);
     return () => obs.disconnect();
-  }, []);
+  }, [prefersReduced]);
 
   const offClass =
     from === "left"
@@ -50,7 +50,7 @@ export function Reveal({ children, className, delayMs = 0, from = "up" }: Reveal
       style={{ transitionDelay: `${delayMs}ms` }}
       className={cn(
         "transition-all duration-700 ease-out will-change-transform",
-        visible ? "translate-x-0 translate-y-0 opacity-100" : offClass,
+        effectivelyVisible ? "translate-x-0 translate-y-0 opacity-100" : offClass,
         className,
       )}
     >

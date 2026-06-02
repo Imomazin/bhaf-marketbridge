@@ -11,7 +11,7 @@ export default function PortalIndexPage() {
             Sign in to MarketBridge
           </p>
           <h1 className="mt-3 font-serif text-3xl text-forest-900 md:text-5xl">
-            Choose how you'll use MarketBridge today.
+            Choose how you&apos;ll use MarketBridge today.
           </h1>
           <p className="mt-4 text-base text-charcoal-500">
             Each role has its own workspace. Pick yours to continue.

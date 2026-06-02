@@ -17,11 +17,13 @@ export function LanguageToggle() {
     const url = new URL(window.location.href);
     const fromUrl = url.searchParams.get("lang");
     if (fromUrl === "fr" || fromUrl === "en") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- URL and document.cookie are browser-only, so we must hydrate locale client-side after mount.
       setCurrent(fromUrl);
       document.cookie = `${LOCALE_COOKIE}=${fromUrl};path=/;max-age=31536000;samesite=lax`;
       return;
     }
     const cookieMatch = document.cookie.match(new RegExp(`${LOCALE_COOKIE}=(en|fr)`));
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- see above.
     if (cookieMatch) setCurrent(cookieMatch[1] as "en" | "fr");
   }, []);
 

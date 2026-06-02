@@ -57,7 +57,7 @@ export default async function RfpDetailPage({ params }: { params: { id: string }
           {session?.user && (session.user.role === "ENTREPRENEUR" || session.user.role === "ADMIN") && (
             myResponse ? (
               <div className="rounded-md border border-forest-200 bg-forest-50 p-4 text-sm text-forest-800">
-                You've already responded to this RFP. Status: <strong>{myResponse.status.toLowerCase()}</strong>.
+                You&apos;ve already responded to this RFP. Status: <strong>{myResponse.status.toLowerCase()}</strong>.
               </div>
             ) : (
               <RfpResponseForm rfpId={rfp.id} />

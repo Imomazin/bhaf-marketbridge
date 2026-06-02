@@ -19,7 +19,7 @@ export default function CookiesPage() {
           Set when you sign in; cleared when you sign out.
         </li>
         <li>
-          <strong>Functional</strong>: a tiny cookie remembering your cookie consent choice (so we don't ask again).
+          <strong>Functional</strong>: a tiny cookie remembering your cookie consent choice (so we don&apos;t ask again).
         </li>
         <li>
           <strong>Analytics</strong>: only set if and when you accept analytics. We use a privacy-respecting analytics

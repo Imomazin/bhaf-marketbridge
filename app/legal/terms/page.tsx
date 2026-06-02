@@ -9,8 +9,8 @@ export default function TermsPage() {
 
       <h2>1. Who we are</h2>
       <p>
-        BHAF MarketBridge ("MarketBridge", "we", "us") is operated by BHAF Circular Academy &amp; Consulting Firm
-        ("BHAF"). MarketBridge is the marketplace and impact infrastructure platform connecting African women-led
+        BHAF MarketBridge (&ldquo;MarketBridge&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;) is operated by BHAF Circular Academy &amp; Consulting Firm
+        (&ldquo;BHAF&rdquo;). MarketBridge is the marketplace and impact infrastructure platform connecting African women-led
         businesses with funders, corporate partners and global market access.
       </p>
 
@@ -53,7 +53,7 @@ export default function TermsPage() {
 
       <h2>7. Liability</h2>
       <p>
-        MarketBridge is provided "as is". To the maximum extent permitted by law, BHAF is not liable for indirect,
+        MarketBridge is provided &ldquo;as is&rdquo;. To the maximum extent permitted by law, BHAF is not liable for indirect,
         incidental or consequential losses arising from your use of the platform or from transactions concluded
         between platform participants.
       </p>

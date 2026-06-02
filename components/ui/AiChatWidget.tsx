@@ -66,15 +66,19 @@ export function AiChatWidget() {
       const reader = res.body?.getReader();
       if (!reader) throw new Error("No response stream");
       const decoder = new TextDecoder();
-      let assistantText = "";
+      // Accumulate the streamed text in an array so we never mutate a
+      // captured `let`. Joined when we update state — keeps the React
+      // Compiler happy about purity.
+      const chunks: string[] = [];
 
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;
-        assistantText += decoder.decode(value, { stream: true });
+        chunks.push(decoder.decode(value, { stream: true }));
+        const joined = chunks.join("");
         setMessages((m) => {
           const copy = [...m];
-          copy[copy.length - 1] = { role: "assistant", content: assistantText };
+          copy[copy.length - 1] = { role: "assistant", content: joined };
           return copy;
         });
       }

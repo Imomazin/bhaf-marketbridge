@@ -76,8 +76,6 @@ export function RealUploadDropzone({ defaultCategory = "Business identity" }: Re
     }
   }
 
-  const done = result?.ok === true;
-
   return (
     <div className="rounded-2xl border border-cream-200 bg-white p-5">
       <div className="flex items-center justify-between">

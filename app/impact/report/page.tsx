@@ -10,8 +10,9 @@ export const dynamic = "force-dynamic";
  * dependency needed and works offline.
  */
 export default async function ImpactReportPage({ searchParams }: { searchParams: { from?: string; to?: string } }) {
-  const from = searchParams.from ? new Date(searchParams.from) : new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
-  const to = searchParams.to ? new Date(searchParams.to) : new Date();
+  const now = new Date();
+  const from = searchParams.from ? new Date(searchParams.from) : new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+  const to = searchParams.to ? new Date(searchParams.to) : now;
 
   let totals = {
     entrepreneurs: 0,
@@ -97,7 +98,7 @@ export default async function ImpactReportPage({ searchParams }: { searchParams:
             ${(totals.fundingMobilisedCents / 100).toLocaleString()}
           </p>
           <p className="mt-2 text-xs text-charcoal-500">
-            Across {totals.invoicesPaid} settled invoices. Aggregated from the platform's billing ledger and
+            Across {totals.invoicesPaid} settled invoices. Aggregated from the platform&apos;s billing ledger and
             counter-verified against payment-provider webhook receipts.
           </p>
         </section>

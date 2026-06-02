@@ -9,9 +9,9 @@ export default function PrivacyPage() {
 
       <h2>1. What this notice covers</h2>
       <p>
-        This Privacy Policy explains how BHAF Circular Academy &amp; Consulting Firm ("BHAF") collects, uses and
+        This Privacy Policy explains how BHAF Circular Academy &amp; Consulting Firm (&ldquo;BHAF&rdquo;) collects, uses and
         protects personal data when you use BHAF MarketBridge. It is written to comply with the GDPR, the Nigeria
-        Data Protection Act (NDPA) 2023, the Kenya Data Protection Act 2019 and South Africa's POPIA.
+        Data Protection Act (NDPA) 2023, the Kenya Data Protection Act 2019 and South Africa&apos;s POPIA.
       </p>
 
       <h2>2. Data we collect</h2>

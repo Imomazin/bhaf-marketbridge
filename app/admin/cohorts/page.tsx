@@ -41,7 +41,7 @@ export default async function CohortsAdminPage() {
         <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-700">Admin</p>
         <h1 className="mt-2 font-serif text-3xl text-forest-900 md:text-4xl">Cohorts</h1>
         <p className="mt-2 text-sm text-charcoal-500">
-          Run Abuja Accelerator, FEMEC RDC, InvestHer and other programmes. Invite members by email; they'll see
+          Run Abuja Accelerator, FEMEC RDC, InvestHer and other programmes. Invite members by email; they&apos;ll see
           the cohort in their workspace.
         </p>
 

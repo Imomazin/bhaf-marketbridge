@@ -8,7 +8,7 @@ export default function VerifyPage() {
         We sent you a sign-in link. Open it in this browser to continue.
       </p>
       <p className="mt-6 text-xs text-charcoal-400">
-        Didn't get it? Check spam, or wait a minute and try again. Magic links expire after 24 hours.
+        Didn&apos;t get it? Check spam, or wait a minute and try again. Magic links expire after 24 hours.
       </p>
     </div>
   );

@@ -27,7 +27,7 @@ export default function ResetPasswordPage({
   return (
     <div className="card p-8">
       <h1 className="font-serif text-2xl text-forest-900">Set a new password</h1>
-      <p className="mt-1 text-sm text-charcoal-500">Choose something you'll remember.</p>
+      <p className="mt-1 text-sm text-charcoal-500">Choose something you&apos;ll remember.</p>
       <div className="mt-6">
         <ResetPasswordForm token={searchParams.token} uid={searchParams.uid} />
       </div>

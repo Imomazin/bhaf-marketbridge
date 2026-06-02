@@ -71,7 +71,7 @@ export default async function MessagesIndex() {
 
         {conversations.length === 0 && (
           <div className="card mt-8 p-10 text-center text-sm text-charcoal-500">
-            No conversations yet. Open "Start a new conversation" above to message anyone on the platform by email.
+            No conversations yet. Open &ldquo;Start a new conversation&rdquo; above to message anyone on the platform by email.
           </div>
         )}
 

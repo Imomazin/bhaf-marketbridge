@@ -11,8 +11,10 @@ export function CookieConsent() {
   useEffect(() => {
     try {
       const v = localStorage.getItem(STORAGE_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is unavailable on the server, so we must hydrate the decision client-side after mount.
       setDecided(v === "accepted" || v === "essential-only");
     } catch {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- see above.
       setDecided(true); // fail open — no banner
     }
   }, []);
