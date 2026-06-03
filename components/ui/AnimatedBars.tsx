@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePrefersReducedMotion } from "@/components/hooks/usePrefersReducedMotion";
 
 export interface BarRow {
   label: string;
@@ -16,21 +17,19 @@ interface AnimatedBarsProps {
 }
 
 export function AnimatedBars({ rows, max, durationMs = 1400 }: AnimatedBarsProps) {
+  const prefersReduced = usePrefersReducedMotion();
   const [progress, setProgress] = useState(0);
   const [started, setStarted] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
   const peak = max ?? Math.max(...rows.map((r) => r.value));
 
+  // Reduced-motion users skip the bar-fill animation — render at full
+  // width immediately. Derived in render rather than via setState.
+  const effectiveProgress = prefersReduced ? 1 : progress;
+
   useEffect(() => {
-    if (started || !ref.current) return;
-    const prefersReduced =
-      typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReduced) {
-      setProgress(1);
-      setStarted(true);
-      return;
-    }
+    if (prefersReduced || started || !ref.current) return;
     const obs = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -42,10 +41,10 @@ export function AnimatedBars({ rows, max, durationMs = 1400 }: AnimatedBarsProps
     );
     obs.observe(ref.current);
     return () => obs.disconnect();
-  }, [started]);
+  }, [started, prefersReduced]);
 
   useEffect(() => {
-    if (!started) return;
+    if (!started || prefersReduced) return;
     const start = performance.now();
     let raf = 0;
     const tick = (now: number) => {
@@ -56,13 +55,13 @@ export function AnimatedBars({ rows, max, durationMs = 1400 }: AnimatedBarsProps
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [started, durationMs]);
+  }, [started, durationMs, prefersReduced]);
 
   return (
     <div ref={ref} className="space-y-5">
       {rows.map((row, idx) => {
         const target = (row.value / peak) * 100;
-        const width = target * progress;
+        const width = target * effectiveProgress;
         return (
           <div key={row.label}>
             <div className="flex items-baseline justify-between gap-4">

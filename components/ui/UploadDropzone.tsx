@@ -146,7 +146,7 @@ export function UploadDropzone({
 
           {done && (
             <p className="mt-4 rounded-md bg-forest-50 px-3 py-2 text-[11px] text-forest-800">
-              Submitted to BHAF verification queue. You'll receive an update within 24 hours. Tamper-evident
+              Submitted to BHAF verification queue. You&apos;ll receive an update within 24 hours. Tamper-evident
               hash recorded in the audit log.
             </p>
           )}

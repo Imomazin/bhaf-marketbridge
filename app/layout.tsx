@@ -62,9 +62,26 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const orgJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "BHAF MarketBridge",
+    legalName: "BHAF Circular Academy & Consulting Firm",
+    url: process.env.NEXT_PUBLIC_APP_URL ?? "https://bhaf-marketbridge.vercel.app",
+    logo: "/brand/bhaf-mark.svg",
+    description:
+      "BHAF MarketBridge connects African women entrepreneurs with funders, corporate partners and global markets through verified profiles, ESG documentation and impact reporting.",
+    sameAs: ["https://www.linkedin.com/company/bhaf-circular-academy"],
+    foundingLocation: { "@type": "Place", name: "Africa" },
+  };
   return (
     <html lang="en">
       <body>
+        <script
+          type="application/ld+json"
+          // eslint-disable-next-line react/no-danger -- structured data only; content is JSON-stringified from a trusted constant.
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
+        />
         <a
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-md focus:bg-forest-900 focus:px-3 focus:py-2 focus:text-cream-50"

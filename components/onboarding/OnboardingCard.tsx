@@ -57,7 +57,7 @@ export function OnboardingCard({ state, role }: OnboardingCardProps) {
             Get started
           </p>
           <h2 className="mt-1 font-serif text-xl text-forest-900">
-            Welcome — let's finish setting up your account
+            Welcome — let&apos;s finish setting up your account
           </h2>
         </div>
         <span className="text-xs font-semibold text-gold-800">{state.percent}% complete</span>

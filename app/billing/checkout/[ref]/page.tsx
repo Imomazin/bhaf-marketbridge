@@ -17,7 +17,7 @@ export default function StubCheckoutPage({
         <h1 className="mt-2 font-serif text-3xl text-forest-900">No payment provider connected</h1>
         <p className="mt-3 text-sm text-charcoal-500">
           This is a sandbox checkout. Connect a real payment provider (Stripe, Paystack or Flutterwave) by setting
-          their env vars on Vercel, and this page will be replaced with the provider's hosted checkout.
+          their env vars on Vercel, and this page will be replaced with the provider&apos;s hosted checkout.
         </p>
 
         <div className="card mt-8 p-6">

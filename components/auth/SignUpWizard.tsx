@@ -64,6 +64,7 @@ export function SignUpWizard() {
     mode: "onTouched",
   });
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form's watch() is not Compiler-memoizable upstream; opting this hook out of compilation is the recommended workaround.
   const role = watch("role");
 
   async function next() {
@@ -141,7 +142,7 @@ export function SignUpWizard() {
         {step === 1 && (
           <fieldset className="space-y-3">
             <legend className="text-sm font-medium text-forest-900">
-              I'm joining MarketBridge as a…
+              I&apos;m joining MarketBridge as a…
             </legend>
             {[
               { value: "ENTREPRENEUR", label: "Woman entrepreneur", caption: "Build a verified profile and reach funders & buyers." },

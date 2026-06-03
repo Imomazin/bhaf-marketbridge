@@ -4,7 +4,6 @@ import { auth } from "@/auth";
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { GrantAccessForm } from "@/components/data-rooms/GrantAccessForm";
 import { RevokeAccessButton } from "@/components/data-rooms/RevokeAccessButton";
-import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -54,7 +53,7 @@ export default async function DataRoomDetail({ params }: { params: { id: string 
           Validated artefacts {artefacts.length > 0 && <span className="text-gold-700">({artefacts.length})</span>}
         </h2>
         {artefacts.length === 0 && (
-          <p className="mt-3 text-sm text-charcoal-500">The owner hasn't validated any artefacts yet.</p>
+          <p className="mt-3 text-sm text-charcoal-500">The owner hasn&apos;t validated any artefacts yet.</p>
         )}
         <ul className="mt-4 space-y-2">
           {artefacts.map((a) => (

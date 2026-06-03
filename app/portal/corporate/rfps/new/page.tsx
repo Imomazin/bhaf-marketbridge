@@ -22,7 +22,7 @@ export default async function NewRfpPage() {
         </p>
         <h1 className="mt-2 font-serif text-3xl text-forest-900 md:text-4xl">Post a new RFP</h1>
         <p className="mt-2 text-sm text-charcoal-500">
-          Verified women-led suppliers will see your RFP on the marketplace. You'll review responses from the
+          Verified women-led suppliers will see your RFP on the marketplace. You&apos;ll review responses from the
           corporate workspace.
         </p>
 

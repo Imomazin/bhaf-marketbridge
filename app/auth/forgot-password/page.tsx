@@ -8,7 +8,7 @@ export default function ForgotPasswordPage() {
     <div className="card p-8">
       <h1 className="font-serif text-2xl text-forest-900">Reset your password</h1>
       <p className="mt-1 text-sm text-charcoal-500">
-        We'll email you a secure link to choose a new password.
+        We&apos;ll email you a secure link to choose a new password.
       </p>
       <div className="mt-6">
         <ForgotPasswordForm />

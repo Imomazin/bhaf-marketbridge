@@ -173,7 +173,7 @@ export default function HomePage() {
 
             <Reveal from="up" delayMs={260}>
               <p className="mt-6 max-w-2xl text-base leading-relaxed text-cream-100 md:text-lg">
-                MarketBridge is the verified marketplace connecting Africa's women-led businesses with the
+                MarketBridge is the verified marketplace connecting Africa&apos;s women-led businesses with the
                 funders, corporate buyers and global market access they belong in.
               </p>
             </Reveal>

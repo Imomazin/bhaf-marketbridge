@@ -56,7 +56,7 @@ export default async function MyApplicationsPage() {
         </p>
         <h1 className="mt-2 font-serif text-3xl text-forest-900 md:text-4xl">Application history</h1>
         <p className="mt-2 text-sm text-charcoal-500">
-          Every opportunity you've applied to and where it stands.
+          Every opportunity you&apos;ve applied to and where it stands.
         </p>
 
         {apps.length === 0 && (

@@ -71,7 +71,7 @@ export async function verifyAuditChain(): Promise<{ ok: boolean; brokenAt?: stri
       metadata: e.metadata,
       prevHash,
     });
-    const expected = require("crypto").createHash("sha256").update(canonical).digest("hex");
+    const expected = crypto.createHash("sha256").update(canonical).digest("hex");
     if (expected !== e.selfHash) return { ok: false, brokenAt: e.id };
     prevHash = e.selfHash;
   }
