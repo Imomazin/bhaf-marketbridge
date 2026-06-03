@@ -38,7 +38,6 @@ function parseOrWarn<T extends z.ZodTypeAny>(schema: T, raw: unknown, label: str
   if (process.env.NODE_ENV === "production") {
     throw new Error(`[env] Invalid ${label} environment: ${issues}`);
   }
-  // eslint-disable-next-line no-console
   console.warn(`[env] ${label} validation issues (dev): ${issues}`);
   // Strip the invalid keys and re-parse with defaults.
   const cleaned: Record<string, unknown> = { ...(raw as Record<string, unknown>) };

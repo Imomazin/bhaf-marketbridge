@@ -11,9 +11,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Sentry/observability hook — capture once on mount.
     if (typeof window !== "undefined") {
-      // eslint-disable-next-line no-console
       console.error("[global-error]", error.message, error.digest);
     }
   }, [error]);
