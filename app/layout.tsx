@@ -79,7 +79,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <script
           type="application/ld+json"
-          // eslint-disable-next-line react/no-danger -- structured data only; content is JSON-stringified from a trusted constant.
           dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }}
         />
         <a

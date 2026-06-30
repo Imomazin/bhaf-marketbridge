@@ -14,6 +14,7 @@ const navLinks = [
   { href: "/directory", label: "Directory" },
   { href: "/marketplace", label: "Marketplace" },
   { href: "/opportunities", label: "Opportunities" },
+  { href: "/use-cases", label: "Use Cases" },
   { href: "/impact", label: "Impact & ESG" },
   { href: "/portal", label: "Portals" },
 ];
