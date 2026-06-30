@@ -8,15 +8,23 @@ import { UseCaseJourney } from "@/components/use-cases/UseCaseJourney";
 import { EntrepreneurProfileCard } from "@/components/use-cases/EntrepreneurProfileCard";
 import { SupplierComparisonTable } from "@/components/use-cases/SupplierComparisonTable";
 import { EvidenceReadiness } from "@/components/use-cases/EvidenceReadiness";
+import { ComparisonBlock } from "@/components/use-cases/ComparisonBlock";
+import { MockUIPeek } from "@/components/use-cases/MockUIPeek";
 import { FeatureValueMap } from "@/components/use-cases/FeatureValueMap";
 import { DemoFlow } from "@/components/use-cases/DemoFlow";
 import { UseCasesCTA } from "@/components/use-cases/UseCasesCTA";
+import { LiveMetricRibbon } from "@/components/use-cases/LiveMetricRibbon";
+import { StickyJourneyNav } from "@/components/use-cases/StickyJourneyNav";
+import { ImpactProjector } from "@/components/use-cases/ImpactProjector";
+import { StickyCTABar } from "@/components/use-cases/StickyCTABar";
 
 export const metadata: Metadata = {
   title: "Use Cases · Prototype MVP demonstration",
   description:
-    "Three demonstrator journeys showing how MarketBridge can unlock capital, contracts and credibility for women-led enterprises across Africa.",
+    "Three demonstrator journeys plus an interactive impact projector showing how MarketBridge can unlock capital, contracts and credibility for women-led enterprises.",
 };
+
+export const dynamic = "force-dynamic";
 
 export default function UseCasesPage() {
   return (
@@ -30,8 +38,14 @@ export default function UseCasesPage() {
         </div>
       </section>
 
+      {/* Live metric ribbon — pulls real DB counts to prove the platform is live */}
+      <LiveMetricRibbon />
+
+      {/* Sticky scroll-spy navigator */}
+      <StickyJourneyNav />
+
       {/* Use-case overview cards */}
-      <section className="bg-cream-50 py-16 md:py-20">
+      <section id="use-cases-overview" className="scroll-mt-28 bg-cream-50 py-16 md:py-20">
         <div className="container-edge max-w-6xl">
           <Reveal>
             <header className="max-w-3xl">
@@ -59,14 +73,50 @@ export default function UseCasesPage() {
         </div>
       </section>
 
-      {/* Use case 1 — Entrepreneur, with profile card */}
-      <UseCaseJourney uc={useCases[0]} extra={<EntrepreneurProfileCard />} />
+      {/* Use case 1 — Entrepreneur */}
+      <UseCaseJourney
+        uc={useCases[0]}
+        extra={
+          <div className="space-y-6">
+            <EntrepreneurProfileCard />
+            <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
+              <MockUIPeek variant="entrepreneur" />
+              <ComparisonBlock rows={useCases[0].comparison} accent={useCases[0].accent} />
+            </div>
+          </div>
+        }
+      />
 
-      {/* Use case 2 — Corporate RFP, with supplier comparison */}
-      <UseCaseJourney uc={useCases[1]} extra={<SupplierComparisonTable />} />
+      {/* Use case 2 — Corporate RFP */}
+      <UseCaseJourney
+        uc={useCases[1]}
+        extra={
+          <div className="space-y-6">
+            <SupplierComparisonTable />
+            <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
+              <MockUIPeek variant="buyer" />
+              <ComparisonBlock rows={useCases[1].comparison} accent={useCases[1].accent} />
+            </div>
+          </div>
+        }
+      />
 
-      {/* Use case 3 — Funder, with evidence readiness panel */}
-      <UseCaseJourney uc={useCases[2]} extra={<EvidenceReadiness />} />
+      {/* Use case 3 — Funder */}
+      <UseCaseJourney
+        uc={useCases[2]}
+        extra={
+          <div className="space-y-6">
+            <EvidenceReadiness />
+            <div className="grid gap-6 lg:grid-cols-[1.1fr_1fr]">
+              <MockUIPeek variant="funder" />
+              <ComparisonBlock rows={useCases[2].comparison} accent={useCases[2].accent} />
+            </div>
+          </div>
+        }
+      />
+
+      {/* Interactive Impact Projector */}
+      <ImpactProjector />
 
       {/* Feature → value mapping */}
       <FeatureValueMap />
@@ -76,6 +126,9 @@ export default function UseCasesPage() {
 
       {/* Final CTA */}
       <UseCasesCTA />
+
+      {/* Floating CTA bar that appears once user has scrolled past the hero */}
+      <StickyCTABar />
     </>
   );
 }
