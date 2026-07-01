@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Reveal } from "@/components/ui/Reveal";
 import { EcosystemDiagram } from "./EcosystemDiagram";
+import { StakeholderSwitcher } from "./StakeholderSwitcher";
 
 const tags = [
   "Prototype scenarios",
@@ -92,6 +93,8 @@ export function UseCasesHero() {
                   View the impact pathway
                 </Link>
               </div>
+
+              <StakeholderSwitcher />
             </div>
           </Reveal>
 

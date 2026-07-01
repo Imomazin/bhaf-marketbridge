@@ -16,6 +16,7 @@ const sections: Section[] = [
   { id: "use-case-3", label: "03 · Funder", tone: "navy" },
   { id: "impact-projector", label: "Projector", tone: "charcoal" },
   { id: "feature-value-map", label: "Feature map", tone: "charcoal" },
+  { id: "faq", label: "FAQ", tone: "charcoal" },
 ];
 
 const toneClass: Record<Section["tone"], string> = {

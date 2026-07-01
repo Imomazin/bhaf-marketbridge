@@ -19,6 +19,9 @@ import { ImpactProjector } from "@/components/use-cases/ImpactProjector";
 import { StickyCTABar } from "@/components/use-cases/StickyCTABar";
 import { PartnerRail } from "@/components/use-cases/PartnerRail";
 import { QuoteCarousel } from "@/components/use-cases/QuoteCarousel";
+import { ScrollProgress } from "@/components/use-cases/ScrollProgress";
+import { TrustMarkers } from "@/components/use-cases/TrustMarkers";
+import { FaqBlock } from "@/components/use-cases/FaqBlock";
 
 export const metadata: Metadata = {
   title: "Use Cases · Prototype MVP demonstration",
@@ -31,6 +34,7 @@ export const dynamic = "force-dynamic";
 export default function UseCasesPage() {
   return (
     <>
+      <ScrollProgress />
       <UseCasesHero />
 
       {/* Disclaimer strip — visible immediately below the hero */}
@@ -42,6 +46,9 @@ export default function UseCasesPage() {
 
       {/* Live metric ribbon — pulls real DB counts to prove the platform is live */}
       <LiveMetricRibbon />
+
+      {/* Institutional-grade trust infrastructure */}
+      <TrustMarkers />
 
       {/* Programme partner category rail */}
       <PartnerRail />
@@ -131,6 +138,9 @@ export default function UseCasesPage() {
 
       {/* How the demo flows */}
       <DemoFlow />
+
+      {/* Anticipated questions from institutional audiences */}
+      <FaqBlock />
 
       {/* Final CTA */}
       <UseCasesCTA />
