@@ -17,6 +17,8 @@ import { LiveMetricRibbon } from "@/components/use-cases/LiveMetricRibbon";
 import { StickyJourneyNav } from "@/components/use-cases/StickyJourneyNav";
 import { ImpactProjector } from "@/components/use-cases/ImpactProjector";
 import { StickyCTABar } from "@/components/use-cases/StickyCTABar";
+import { PartnerRail } from "@/components/use-cases/PartnerRail";
+import { QuoteCarousel } from "@/components/use-cases/QuoteCarousel";
 
 export const metadata: Metadata = {
   title: "Use Cases · Prototype MVP demonstration",
@@ -40,6 +42,9 @@ export default function UseCasesPage() {
 
       {/* Live metric ribbon — pulls real DB counts to prove the platform is live */}
       <LiveMetricRibbon />
+
+      {/* Programme partner category rail */}
+      <PartnerRail />
 
       {/* Sticky scroll-spy navigator */}
       <StickyJourneyNav />
@@ -117,6 +122,9 @@ export default function UseCasesPage() {
 
       {/* Interactive Impact Projector */}
       <ImpactProjector />
+
+      {/* Placeholder testimonial carousel */}
+      <QuoteCarousel />
 
       {/* Feature → value mapping */}
       <FeatureValueMap />

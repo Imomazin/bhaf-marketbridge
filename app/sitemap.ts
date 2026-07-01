@@ -1,9 +1,12 @@
 import type { MetadataRoute } from "next";
 import { prisma, DB_ENABLED } from "@/lib/db";
+import { useCases } from "@/data/use-cases";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "https://bhaf-marketbridge.vercel.app";
   const now = new Date();
+
+  const useCasePaths = useCases.map((u) => `/use-cases/${u.slug}`);
 
   const staticPaths = [
     "/",
@@ -12,6 +15,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/marketplace/rfps",
     "/opportunities",
     "/use-cases",
+    ...useCasePaths,
     "/impact",
     "/portal",
     "/billing",
