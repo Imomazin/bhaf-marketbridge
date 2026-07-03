@@ -73,17 +73,17 @@ export function UseCaseCard({ uc }: { uc: UseCase }) {
         <PrototypeDisclaimer text={PROTOTYPE_DISCLAIMER_SHORT} variant="badge" />
         <div className="mt-4 flex items-center justify-between gap-3">
           <Link
-            href={`#use-case-${uc.number}`}
+            href={`/use-cases/${uc.slug}`}
             className="inline-flex items-center gap-1.5 text-xs font-semibold text-forest-900 underline-offset-2 transition hover:text-gold-700 hover:underline"
           >
-            See full journey
+            Open the full detail page
             <span aria-hidden>→</span>
           </Link>
           <Link
-            href={uc.cta.href}
+            href={`#use-case-${uc.number}`}
             className="text-[11px] font-medium text-charcoal-500 hover:text-forest-800"
           >
-            {uc.cta.label}
+            Or jump to summary ↓
           </Link>
         </div>
       </div>

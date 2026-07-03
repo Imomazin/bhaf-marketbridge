@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Reveal } from "@/components/ui/Reveal";
+import { EcosystemDiagram } from "./EcosystemDiagram";
+import { StakeholderSwitcher } from "./StakeholderSwitcher";
 
 const tags = [
   "Prototype scenarios",
@@ -91,71 +93,44 @@ export function UseCasesHero() {
                   View the impact pathway
                 </Link>
               </div>
+
+              <StakeholderSwitcher />
             </div>
           </Reveal>
 
-          {/* Layered bridge / ecosystem visual */}
+          {/* Animated ecosystem diagram */}
           <Reveal from="right" delayMs={120}>
             <div className="relative">
-              <div className="relative grid gap-3">
-                {/* Top: stakeholder chip row */}
-                <div className="flex flex-wrap gap-2">
-                  {stakeholderChips.map((c) => (
-                    <span
-                      key={c.label}
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${toneClass[c.tone]}`}
-                    >
-                      <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
-                      {c.label}
-                    </span>
-                  ))}
-                </div>
+              {/* Stakeholder chip row above the diagram */}
+              <div className="mb-4 flex flex-wrap gap-2">
+                {stakeholderChips.map((c) => (
+                  <span
+                    key={c.label}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${toneClass[c.tone]}`}
+                  >
+                    <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current opacity-70" />
+                    {c.label}
+                  </span>
+                ))}
+              </div>
 
-                {/* Bridge cards */}
-                <div className="grid gap-3 rounded-2xl border border-white/15 bg-white/[0.04] p-4 backdrop-blur">
-                  <BridgeCard
-                    eyebrow="Entrepreneur"
-                    title="Verified profile"
-                    body="Sector, region, evidence, listing"
-                    accent="forest"
-                  />
-                  <BridgeArrow />
-                  <BridgeCard
-                    eyebrow="Marketplace · RFP"
-                    title="Visibility & demand"
-                    body="Listings, opportunities, structured RFPs"
-                    accent="gold"
-                  />
-                  <BridgeArrow />
-                  <BridgeCard
-                    eyebrow="Data room"
-                    title="Evidence shared"
-                    body="Artefacts, financials, ESG, impact"
-                    accent="navy"
-                  />
-                  <BridgeArrow />
-                  <BridgeCard
-                    eyebrow="Funder / Buyer"
-                    title="Trust & decision"
-                    body="Shortlist · engagement · impact report"
-                    accent="charcoal"
-                  />
-                </div>
+              <div className="rounded-2xl border border-white/15 bg-white/[0.04] p-4 backdrop-blur">
+                <EcosystemDiagram />
+              </div>
 
-                {/* Mini metric strip */}
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {miniMetrics.map((m) => (
-                    <div
-                      key={m.label}
-                      className="rounded-lg border border-white/15 bg-white/[0.05] p-2.5 text-cream-50 backdrop-blur"
-                    >
-                      <p className="text-[10px] uppercase tracking-[0.14em] text-gold-300">
-                        {m.hint}
-                      </p>
-                      <p className="mt-1 text-[12px] font-semibold leading-tight">{m.label}</p>
-                    </div>
-                  ))}
-                </div>
+              {/* Mini label strip */}
+              <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                {miniMetrics.map((m) => (
+                  <div
+                    key={m.label}
+                    className="rounded-lg border border-white/15 bg-white/[0.05] p-2.5 text-cream-50 backdrop-blur"
+                  >
+                    <p className="text-[10px] uppercase tracking-[0.14em] text-gold-300">
+                      {m.hint}
+                    </p>
+                    <p className="mt-1 text-[12px] font-semibold leading-tight">{m.label}</p>
+                  </div>
+                ))}
               </div>
             </div>
           </Reveal>
@@ -165,53 +140,3 @@ export function UseCasesHero() {
   );
 }
 
-function BridgeCard({
-  eyebrow,
-  title,
-  body,
-  accent,
-}: {
-  eyebrow: string;
-  title: string;
-  body: string;
-  accent: "forest" | "gold" | "navy" | "charcoal";
-}) {
-  const dotClass: Record<string, string> = {
-    forest: "bg-forest-400",
-    gold: "bg-gold-400",
-    navy: "bg-blue-400",
-    charcoal: "bg-cream-100",
-  };
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.06] p-3.5">
-      <span
-        aria-hidden
-        className={`h-2 w-2 flex-shrink-0 rounded-full ${dotClass[accent]} shadow-[0_0_0_4px_rgba(255,255,255,0.08)]`}
-      />
-      <div className="min-w-0 flex-1">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-gold-300">
-          {eyebrow}
-        </p>
-        <p className="mt-0.5 text-sm font-semibold text-cream-50">{title}</p>
-        <p className="text-[11px] text-cream-200">{body}</p>
-      </div>
-    </div>
-  );
-}
-
-function BridgeArrow() {
-  return (
-    <div className="flex justify-center" aria-hidden>
-      <svg width="14" height="14" viewBox="0 0 24 24" className="text-gold-300/70">
-        <path
-          d="M12 4v16m0 0l-6-6m6 6l6-6"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
-    </div>
-  );
-}

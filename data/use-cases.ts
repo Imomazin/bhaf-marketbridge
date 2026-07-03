@@ -25,6 +25,11 @@ export interface PrototypeMetric {
   value: string; // always a prototype label, e.g. "Profile completed", "To be populated"
 }
 
+export interface ComparisonRow {
+  without: string;
+  withPlatform: string;
+}
+
 export interface UseCase {
   slug: string;
   number: number;
@@ -46,6 +51,7 @@ export interface UseCase {
   suggestedMetrics: PrototypeMetric[];
   audienceMoment: string;
   cta: { label: string; href: string };
+  comparison: ComparisonRow[];
 }
 
 export const PROTOTYPE_DISCLAIMER_LONG =
@@ -134,6 +140,28 @@ export const useCases: UseCase[] = [
     audienceMoment:
       "A clear journey from an informal but promising growth-stage entrepreneur to a structured, verified, visible and funding-ready enterprise profile.",
     cta: { label: "See how an entrepreneur joins", href: "/auth/sign-up" },
+    comparison: [
+      {
+        without: "Profile lives on WhatsApp screenshots, scattered photos and a personal CV",
+        withPlatform: "Structured public profile with sector, region, stage, products and impact",
+      },
+      {
+        without: "Buyers and funders can't tell which businesses are real or verified",
+        withPlatform: "Business registration uploaded and validated through MarketBridge's pipeline",
+      },
+      {
+        without: "Listing exists only at trade fairs or local markets",
+        withPlatform: "Textile-craft listing published in the marketplace, discoverable by sector",
+      },
+      {
+        without: "Impact story told verbally, no evidence trail",
+        withPlatform: "Impact narrative on the profile + ESG-tagged artefacts in the vault",
+      },
+      {
+        without: "Investor enquiries are ad-hoc, rare, and lost in inboxes",
+        withPlatform: "Enquiries arrive in MarketBridge messages with full profile context attached",
+      },
+    ],
   },
   {
     slug: "corporate-rfp-supplier-discovery",
@@ -200,6 +228,28 @@ export const useCases: UseCase[] = [
     audienceMoment:
       "A clear journey showing how a buyer can move from a vague supplier need to a structured pool of verified women-led suppliers ready for review.",
     cta: { label: "See how a buyer posts an RFP", href: "/marketplace/rfps" },
+    comparison: [
+      {
+        without: "Procurement team relies on word-of-mouth or single-broker introductions",
+        withPlatform: "RFP surfaced to a curated, verified, women-led supplier pool",
+      },
+      {
+        without: "Supplier responses arrive as inconsistent PDFs and emails",
+        withPlatform: "Structured responses with uniform profile, capacity and ESG fields",
+      },
+      {
+        without: "Supplier-diversity reporting is built from spreadsheets after the fact",
+        withPlatform: "Diversity signal captured up-front from verified profiles",
+      },
+      {
+        without: "ESG compliance is a follow-up email chain weeks after shortlisting",
+        withPlatform: "ESG disclosures attached to each response, reviewable side-by-side",
+      },
+      {
+        without: "African women-led suppliers struggle to be considered at all",
+        withPlatform: "Verified suppliers are first-class entries in the buyer's discovery view",
+      },
+    ],
   },
   {
     slug: "funder-due-diligence-impact",
@@ -263,8 +313,66 @@ export const useCases: UseCase[] = [
     audienceMoment:
       "A clear journey showing how MarketBridge reduces evidence friction and turns fragmented business data into a funder-ready review experience.",
     cta: { label: "See how a data room works", href: "/data-rooms" },
+    comparison: [
+      {
+        without: "Due diligence packets compiled by email over 6–10 weeks",
+        withPlatform: "Evidence sits in a controlled data room, accessible on grant",
+      },
+      {
+        without: "Financials, audits and ESG evidence live across multiple inboxes",
+        withPlatform: "Artefact vault with status labels, expiry tracking and audit log",
+      },
+      {
+        without: "Impact claims are difficult to validate or compare across portfolio",
+        withPlatform: "Impact summary generated from cohort + profile + artefact data",
+      },
+      {
+        without: "Access to documents continues indefinitely once granted",
+        withPlatform: "Time-bound access (VIEW / DOWNLOAD / EDIT) with revocation",
+      },
+      {
+        without: "Tampering or version-confusion risks during review",
+        withPlatform: "Tamper-evident audit log (SHA-256 hash chain) records every action",
+      },
+    ],
   },
 ];
+
+/**
+ * Coefficients for the Impact Projector. Strictly illustrative — replace
+ * with BHAF's own data once available. The projector multiplies user-set
+ * inputs by these factors and labels every output as a projection.
+ */
+export interface ProjectorCoefficient {
+  key: string;
+  label: string;
+  source: "entrepreneur" | "cohort" | "rfp";
+  perUnit: number;
+  unit?: string;
+}
+
+export const projectorCoefficients: ProjectorCoefficient[] = [
+  { key: "documents", label: "Documents validated", source: "entrepreneur", perUnit: 4 },
+  { key: "listings", label: "Listings published", source: "entrepreneur", perUnit: 1.2 },
+  { key: "graduations", label: "Cohort graduations", source: "cohort", perUnit: 22 },
+  { key: "fundingReady", label: "Funding-ready businesses", source: "cohort", perUnit: 9 },
+  { key: "supplierMatches", label: "Supplier matches surfaced", source: "rfp", perUnit: 5.5 },
+  { key: "responses", label: "RFP responses received", source: "rfp", perUnit: 3.2 },
+  { key: "womenTrained", label: "Women trained alongside", source: "entrepreneur", perUnit: 18 },
+  { key: "capitalPathways", label: "Capital pathways opened", source: "cohort", perUnit: 4 },
+];
+
+export const projectorBaselines = {
+  entrepreneurs: 50,
+  cohorts: 3,
+  rfps: 8,
+};
+
+export const projectorMaxes = {
+  entrepreneurs: 500,
+  cohorts: 20,
+  rfps: 100,
+};
 
 export interface FeatureValueRow {
   feature: string;
