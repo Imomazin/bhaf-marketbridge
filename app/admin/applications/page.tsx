@@ -4,6 +4,9 @@ import { auth } from "@/auth";
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { ApplicationActions } from "@/components/admin/ApplicationActions";
 import { cn } from "@/lib/utils";
+import { getAllDemoApplications } from "@/lib/demoState";
+import { getAllDemoUsers } from "@/lib/demoUsers";
+import { opportunities as mockOpportunities } from "@/data/opportunities";
 
 export const metadata = { title: "Applications · BHAF Admin" };
 export const dynamic = "force-dynamic";
@@ -46,6 +49,33 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
         select: { id: true, title: true, organisation: true },
       });
       for (const o of oppRows) oppMap[o.id] = { title: o.title, organisation: o.organisation };
+    }
+  } else {
+    const [demoApps, demoUsers] = await Promise.all([getAllDemoApplications(), getAllDemoUsers()]);
+    const filtered = searchParams.status
+      ? demoApps.filter((application) => application.status === searchParams.status)
+      : demoApps;
+    apps = filtered.map((application) => {
+      const user = demoUsers.find((entry) => entry.id === application.userId);
+      return {
+        id: application.id,
+        coverNote: application.coverNote,
+        status: application.status,
+        adminNote: application.adminNote,
+        createdAt: new Date(application.createdAt),
+        user: {
+          id: application.userId,
+          name: user?.name ?? null,
+          email: user?.email ?? "demo@bhaf.example",
+        },
+        opportunityId: application.opportunityId,
+      };
+    });
+    for (const opportunity of mockOpportunities) {
+      oppMap[opportunity.id] = {
+        title: opportunity.title,
+        organisation: opportunity.organisation,
+      };
     }
   }
 
@@ -105,7 +135,14 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
                   <p className="mt-3 rounded-md bg-cream-50 px-3 py-2 text-xs text-charcoal-700">{a.coverNote}</p>
                 )}
                 <div className="mt-4">
-                  <ApplicationActions applicationId={a.id} currentStatus={a.status} />
+                  {DB_ENABLED && prisma ? (
+                    <ApplicationActions applicationId={a.id} currentStatus={a.status} />
+                  ) : (
+                    <p className="rounded-md bg-cream-50 px-3 py-2 text-xs text-charcoal-500">
+                      Demo mode: applications are viewable here and will move once database-backed admin actions are
+                      enabled.
+                    </p>
+                  )}
                 </div>
               </li>
             );

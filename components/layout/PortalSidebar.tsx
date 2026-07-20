@@ -64,10 +64,6 @@ export function PortalSidebar({ currentRole, nav }: PortalSidebarProps) {
                 ))}
             </ul>
           </div>
-
-          <p className="mt-6 hidden text-[10px] text-charcoal-400 lg:block">
-            Demo portal · mock data only · no auth wired
-          </p>
         </details>
       </div>
     </aside>

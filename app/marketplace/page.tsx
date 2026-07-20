@@ -15,6 +15,9 @@ const categories = [
   "Beauty & Wellness",
   "Technology Services",
   "Training",
+  "Crafts & Lifestyle",
+  "Health",
+  "Other",
 ];
 
 export default async function MarketplacePage({
@@ -36,7 +39,7 @@ export default async function MarketplacePage({
 
       <section className="bg-cream-50 py-16">
         <div className="container-edge">
-          <form className="card mb-10 flex flex-wrap items-center gap-3 p-4">
+          <form action="/marketplace" method="GET" className="card mb-10 flex flex-wrap items-center gap-3 p-4">
             <input
               type="text"
               name="q"

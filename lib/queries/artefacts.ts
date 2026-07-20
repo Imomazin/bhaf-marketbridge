@@ -8,6 +8,7 @@ import {
   type ArtefactCheck,
 } from "@/data/artefacts";
 import type { RoleId } from "@/data/roles";
+import { getDemoArtefacts, mapDemoArtefactToUi } from "@/lib/demoState";
 
 const STATUS_MAP: Record<string, ArtefactStatus> = {
   PENDING_UPLOAD: "pending_upload",
@@ -36,6 +37,13 @@ export async function loadMyArtefacts(
     role === "funder" ? mockFunder : role === "corporate" ? mockCorporate : mockEntrepreneur;
 
   if (!DB_ENABLED || !prisma) {
+    const demoArtefacts = await getDemoArtefacts(userId);
+    if (demoArtefacts.length > 0) {
+      return { artefacts: demoArtefacts.map(mapDemoArtefactToUi), isReal: false };
+    }
+    if (userId.startsWith("demo-reg-")) {
+      return { artefacts: [], isReal: false };
+    }
     return { artefacts: fallback, isReal: false };
   }
 

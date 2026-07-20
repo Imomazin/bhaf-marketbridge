@@ -21,7 +21,7 @@ export function OnboardingCard({ state, role }: OnboardingCardProps) {
     {
       done: state.hasProfile,
       title: "Complete your profile",
-      detail: "Add a longer description and any certifications so funders/buyers can find you.",
+      detail: "Finish the main business profile details in Settings so your dashboard can mark this step complete.",
       href: "/settings",
       label: "Edit profile →",
     },

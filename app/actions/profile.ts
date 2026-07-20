@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { writeAudit } from "@/lib/audit";
+import { saveDemoEntrepreneurProfile } from "@/lib/demoState";
 import {
   entrepreneurProfileSchema,
   funderProfileSchema,
@@ -24,10 +25,29 @@ function splitList(raw?: string): string[] {
 export async function saveEntrepreneurProfile(input: EntrepreneurProfileInput): Promise<ProfileResult> {
   const session = await auth();
   if (!session?.user) return { ok: false, message: "Sign-in required." };
-  if (!DB_ENABLED || !prisma) return { ok: false, message: "Database not configured." };
 
   const parsed = entrepreneurProfileSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid input." };
+
+  if (!DB_ENABLED || !prisma) {
+    await saveDemoEntrepreneurProfile(session.user.id, {
+      businessName: parsed.data.businessName,
+      country: parsed.data.country,
+      sector: parsed.data.sector,
+      description: parsed.data.description ?? "",
+      fundingNeed: parsed.data.fundingNeed ?? "",
+      esgActivity: parsed.data.esgActivity ?? "",
+      yearFounded: parsed.data.yearFounded ?? null,
+      womenSupported: parsed.data.womenSupported ?? 0,
+      jobsCreated: parsed.data.jobsCreated ?? 0,
+    });
+
+    revalidatePath("/settings");
+    revalidatePath("/portal/entrepreneur");
+    revalidatePath("/portal/entrepreneur/esg");
+    revalidatePath("/directory");
+    return { ok: true, message: "Profile saved." };
+  }
 
   await prisma.entrepreneurProfile.upsert({
     where: { userId: session.user.id },

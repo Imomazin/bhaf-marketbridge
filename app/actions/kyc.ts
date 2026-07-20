@@ -21,7 +21,25 @@ export async function runKycCheck(input: {
 }): Promise<KycActionResult> {
   const session = await auth();
   if (!session?.user) return { ok: false, message: "Sign-in required." };
-  if (!DB_ENABLED || !prisma) return { ok: false, message: "Database not configured." };
+
+  if (!DB_ENABLED || !prisma) {
+    if (!input.fullName.trim() || !input.idNumber?.trim()) {
+      return { ok: false, message: "Enter the legal name and ID number first." };
+    }
+
+    const cleanId = input.idNumber.replace(/\s+/g, "");
+    const status = cleanId.length >= 6 ? "PASS" : "WARN";
+    revalidatePath("/settings");
+    return {
+      ok: true,
+      status,
+      ref: `demo-kyc-${cleanId.slice(-4).padStart(4, "0")}`,
+      message:
+        status === "PASS"
+          ? "Identity details matched the demo verification checks."
+          : "The demo check completed, but this record would normally need manual review.",
+    };
+  }
 
   const result = await verifyIdentity({
     userId: session.user.id,

@@ -5,8 +5,18 @@ import { Reveal } from "@/components/ui/Reveal";
 import { loadDirectory } from "@/lib/queries/directory";
 import { photos } from "@/data/photos";
 
-const sectors = ["All sectors", "Circular Economy", "Clean Energy", "Agri-Processing", "Health & Beauty", "Technology", "Education"];
-const countries = ["All countries", "Nigeria", "South Africa", "Senegal", "Kenya", "Zimbabwe", "Ghana"];
+const sectors = [
+  "All sectors",
+  "Circular Economy",
+  "Clean Energy",
+  "Agri-Processing",
+  "Health & Beauty",
+  "Technology",
+  "Education",
+  "Fashion & Textiles",
+  "Other",
+];
+const countries = ["All countries", "Nigeria", "South Africa", "Senegal", "Kenya", "Zimbabwe", "Ghana", "DRC", "Other"];
 const readiness = ["All levels", "Emerging", "Developing", "Market-Ready", "Funding-Ready"];
 
 export const dynamic = "force-dynamic";
@@ -30,7 +40,7 @@ export default async function DirectoryPage({
 
       <section className="bg-cream-50 py-16">
         <div className="container-edge">
-          <form className="card mb-10 grid gap-4 p-5 md:grid-cols-4">
+          <form action="/directory" method="GET" className="card mb-10 grid gap-4 p-5 md:grid-cols-4">
             <div>
               <label className="text-[11px] font-semibold uppercase tracking-wide text-charcoal-400">Search</label>
               <input

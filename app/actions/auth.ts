@@ -3,6 +3,9 @@
 import bcrypt from "bcryptjs";
 
 import { prisma, DB_ENABLED } from "@/lib/db";
+import { findDemoAccountByEmail } from "@/lib/demoAccounts";
+import { getDemoRegisteredUsers, saveDemoRegisteredUser } from "@/lib/demoRegistrations";
+import { saveDemoEntrepreneurProfile } from "@/lib/demoState";
 import { writeAudit } from "@/lib/audit";
 import { sendEmail } from "@/lib/email";
 import { signIn } from "@/auth";
@@ -32,11 +35,41 @@ export async function registerAction(raw: RegisterInput & { turnstileToken?: str
   const input = parsed.data;
 
   if (!DB_ENABLED || !prisma) {
-    return {
-      ok: false,
-      message:
-        "The database isn't configured yet. Add DATABASE_URL to your environment to enable real registration.",
-    };
+    const email = input.email.toLowerCase();
+    const existingDemoAccount = findDemoAccountByEmail(email);
+    const existingRegistered = (await getDemoRegisteredUsers()).find((user) => user.email === email);
+
+    if (existingDemoAccount || existingRegistered) {
+      return {
+        ok: false,
+        fieldErrors: { email: "An account with this email already exists." },
+        message: "Email already in use.",
+      };
+    }
+
+    const passwordHash = await bcrypt.hash(input.password, 12);
+    const saved = await saveDemoRegisteredUser({
+      email,
+      name: input.name.trim(),
+      role: input.role,
+      passwordHash,
+    });
+
+    if (input.role === "ENTREPRENEUR" && input.businessName && input.country && input.sector) {
+      await saveDemoEntrepreneurProfile(saved.id, {
+        businessName: input.businessName.trim(),
+        country: input.country.trim(),
+        sector: input.sector.trim(),
+        description: input.description?.trim() ?? "",
+        fundingNeed: "",
+        esgActivity: "",
+        yearFounded: null,
+        womenSupported: 0,
+        jobsCreated: 0,
+      });
+    }
+
+    return { ok: true, message: "Account created. Signing you in…" };
   }
 
   const existing = await prisma.user.findUnique({

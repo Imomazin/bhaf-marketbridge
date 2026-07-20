@@ -1,5 +1,7 @@
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { marketplaceListings as mockListings, type MarketplaceListing } from "@/data/marketplace";
+import { getAllDemoEntrepreneurProfiles, getAllDemoListings } from "@/lib/demoState";
+import { getAllDemoUsers } from "@/lib/demoUsers";
 
 export interface MarketplaceFilters {
   q?: string;
@@ -11,7 +13,7 @@ function applyMockFilters(rows: MarketplaceListing[], f: MarketplaceFilters): Ma
   return rows.filter((r) => {
     if (f.category && f.category !== "All categories" && r.category !== f.category) return false;
     if (q) {
-      const hay = `${r.title} ${r.business} ${r.description} ${r.tags.join(" ")}`.toLowerCase();
+      const hay = `${r.title} ${r.business} ${r.entrepreneur} ${r.country} ${r.description} ${r.esgHighlight} ${r.tags.join(" ")}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -20,7 +22,31 @@ function applyMockFilters(rows: MarketplaceListing[], f: MarketplaceFilters): Ma
 
 export async function loadMarketplace(filters: MarketplaceFilters = {}): Promise<{ listings: MarketplaceListing[]; isReal: boolean }> {
   if (!DB_ENABLED || !prisma) {
-    return { listings: applyMockFilters(mockListings, filters), isReal: false };
+    const [demoListings, demoProfiles, demoUsers] = await Promise.all([
+      getAllDemoListings(),
+      getAllDemoEntrepreneurProfiles(),
+      getAllDemoUsers(),
+    ]);
+
+    const demoRows: MarketplaceListing[] = demoListings.map((listing) => {
+      const owner = demoUsers.find((user) => user.id === listing.ownerId);
+      const profile = demoProfiles.find((entry) => entry.userId === listing.ownerId);
+      return {
+        id: listing.id,
+        title: listing.title,
+        category: listing.category,
+        business: profile?.businessName || owner?.name || "Demo business",
+        entrepreneur: owner?.name ?? "Demo entrepreneur",
+        country: profile?.country || "—",
+        priceRange: listing.priceRange || "On request",
+        minOrder: listing.minOrder || "On request",
+        description: listing.description,
+        tags: listing.tags,
+        esgHighlight: listing.esgHighlight || "ESG activity documented on MarketBridge",
+      };
+    });
+
+    return { listings: applyMockFilters([...demoRows, ...mockListings], filters), isReal: false };
   }
 
   try {
@@ -30,6 +56,8 @@ export async function loadMarketplace(filters: MarketplaceFilters = {}): Promise
       where.OR = [
         { title: { contains: filters.q, mode: "insensitive" } },
         { description: { contains: filters.q, mode: "insensitive" } },
+        { esgHighlight: { contains: filters.q, mode: "insensitive" } },
+        { owner: { name: { contains: filters.q, mode: "insensitive" } } },
       ];
     }
     const rows = await prisma.listing.findMany({

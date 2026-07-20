@@ -231,7 +231,7 @@ cp .env.example .env.local        # then fill in values
 # 2. Push the schema
 npm run db:push
 
-# 3. (optional) Seed sample admin + entrepreneur + funder accounts
+# 3. (optional) Seed sample role accounts
 npm run db:seed
 ```
 
@@ -240,8 +240,14 @@ After seeding you can sign in with:
 - **Admin**: `admin@bhaf.example` / `ChangeMe!123`
 - **Entrepreneur**: `amara@greenweave.example` / `Founder!123`
 - **Funder**: `fund@mosaic.example` / `Funder!123`
+- **Corporate**: `procurement@allied.example` / `Buyer!12345`
+- **Auditor**: `auditor@bhaf.example` / `Audit!12345`
 
 Rotate these immediately after the first sign-in.
+
+If `DATABASE_URL` is not configured, credentials sign-in falls back to these demo accounts so you can still
+walk the role-specific mock flows. Persistence, registration, uploads and other database-backed actions remain disabled
+until a real database is configured.
 
 ### AI assistant (Asha)
 

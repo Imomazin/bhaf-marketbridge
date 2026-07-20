@@ -2,6 +2,7 @@ import crypto from "crypto";
 import bcrypt from "bcryptjs";
 
 import { prisma, DB_ENABLED } from "@/lib/db";
+import { DEMO_ACCOUNTS } from "@/lib/demoAccounts";
 import { seedDemoAccounts } from "@/lib/seed";
 import { INIT_SQL } from "@/lib/initSql";
 
@@ -20,6 +21,7 @@ export const dynamic = "force-dynamic";
  *   status  — public; reports whether SETUP_TOKEN is configured.
  *   push    — token-gated; runs the initial schema migration.
  *   seed    — token-gated; idempotently creates demo accounts.
+ *   rotate  — token-gated; rotates demo account passwords.
  *   verify  — token-gated; reports user counts by role.
  *
  * The token MUST be provided via ?token= AND match SETUP_TOKEN exactly.
@@ -121,31 +123,32 @@ export async function GET(req: Request) {
         ok: true,
         action: "seed",
         message: "Demo accounts seeded (idempotently).",
-        accounts: [
-          { email: "admin@bhaf.example", password: result.passwords.admin, role: "ADMIN" },
-          { email: "amara@greenweave.example", password: result.passwords.entrepreneur, role: "ENTREPRENEUR" },
-          { email: "fund@mosaic.example", password: result.passwords.funder, role: "FUNDER" },
-        ],
+        accounts: DEMO_ACCOUNTS.map((account) => ({
+          email: account.email,
+          password: result.passwords[account.key],
+          role: account.role,
+        })),
         next: "Sign in with any of these accounts at /auth/sign-in, then rotate the passwords immediately.",
       });
     }
 
     if (action === "rotate") {
       // Rotate demo passwords to operator-supplied values.
-      // Usage: ?action=rotate&token=...&admin=NEWPWD&entrepreneur=NEWPWD&funder=NEWPWD
-      // Any of admin/entrepreneur/funder may be omitted to skip that role.
-      const targets: Array<{ key: string; email: string; newPwd: string | null }> = [
-        { key: "admin", email: "admin@bhaf.example", newPwd: url.searchParams.get("admin") },
-        { key: "entrepreneur", email: "amara@greenweave.example", newPwd: url.searchParams.get("entrepreneur") },
-        { key: "funder", email: "fund@mosaic.example", newPwd: url.searchParams.get("funder") },
-      ];
+      // Usage:
+      // ?action=rotate&token=...&admin=NEWPWD&entrepreneur=NEWPWD&funder=NEWPWD&corporate=NEWPWD&auditor=NEWPWD
+      // Any role may be omitted to skip that account.
+      const targets = DEMO_ACCOUNTS.map((account) => ({
+        key: account.key,
+        email: account.email,
+        newPwd: url.searchParams.get(account.key),
+      }));
       const requested = targets.filter((t) => t.newPwd !== null);
       if (requested.length === 0) {
         return jsonResponse(
           {
             ok: false,
             error:
-              "No passwords supplied. Pass at least one of: admin, entrepreneur, funder. Example: ?action=rotate&token=...&admin=MyNewPwd123!",
+              `No passwords supplied. Pass at least one of: ${DEMO_ACCOUNTS.map((account) => account.key).join(", ")}. Example: ?action=rotate&token=...&admin=MyNewPwd123!`,
           },
           400,
         );
@@ -197,11 +200,7 @@ export async function GET(req: Request) {
       const seededAccounts = await prisma.user.findMany({
         where: {
           email: {
-            in: [
-              "admin@bhaf.example",
-              "amara@greenweave.example",
-              "fund@mosaic.example",
-            ],
+            in: DEMO_ACCOUNTS.map((account) => account.email),
           },
         },
         select: { email: true, role: true, status: true, createdAt: true },
@@ -212,8 +211,8 @@ export async function GET(req: Request) {
         totals: { total, admins, entrepreneurs, funders, corporates, auditors },
         seeded: seededAccounts,
         hint:
-          seededAccounts.length === 3
-            ? "All three demo accounts exist. Sign in at /auth/sign-in. After confirming, remove SETUP_TOKEN on Vercel and redeploy."
+          seededAccounts.length === DEMO_ACCOUNTS.length
+            ? "All five demo accounts exist. Sign in at /auth/sign-in. After confirming, remove SETUP_TOKEN on Vercel and redeploy."
             : "Some demo accounts are missing — run ?action=seed.",
       });
     }

@@ -8,6 +8,9 @@ import { EntrepreneurProfileForm } from "@/components/settings/EntrepreneurProfi
 import { FunderProfileForm } from "@/components/settings/FunderProfileForm";
 import { CorporateProfileForm } from "@/components/settings/CorporateProfileForm";
 import { KycSection } from "@/components/settings/KycSection";
+import { getDemoEntrepreneurProfile } from "@/lib/demoState";
+import { getDemoUserById } from "@/lib/demoUsers";
+import { entrepreneurs } from "@/data/entrepreneurs";
 
 export const metadata = { title: "Account settings · BHAF MarketBridge" };
 export const dynamic = "force-dynamic";
@@ -16,8 +19,25 @@ export default async function SettingsPage() {
   const session = await auth();
   if (!session?.user) redirect("/auth/sign-in?next=/settings");
 
-  let user = null;
-  let entrepreneurProfile = null;
+  let user: {
+    id: string;
+    email: string;
+    name: string | null;
+    role: string;
+    createdAt: Date;
+    emailVerified: Date | null;
+  } | null = null;
+  let entrepreneurProfile: {
+    businessName: string;
+    country: string;
+    sector: string;
+    description: string;
+    fundingNeed: string | null;
+    esgActivity: string | null;
+    yearFounded: number | null;
+    womenSupported: number;
+    jobsCreated: number;
+  } | null = null;
   let funderProfile = null;
   let corporateProfile = null;
   if (DB_ENABLED && prisma) {
@@ -39,6 +59,34 @@ export default async function SettingsPage() {
       corporateProfile = await prisma.corporateProfile.findUnique({
         where: { userId: session.user.id },
       });
+    }
+  }
+  if (!DB_ENABLED || !prisma) {
+    const demoUser = await getDemoUserById(session.user.id);
+    const showcase = session.user.id === "demo-entrepreneur" ? entrepreneurs[0] : null;
+    const profile = session.user.role === "ENTREPRENEUR" ? await getDemoEntrepreneurProfile(session.user.id) : null;
+
+    user = {
+      id: session.user.id,
+      email: demoUser?.email ?? session.user.email ?? "",
+      name: demoUser?.name ?? session.user.name ?? null,
+      role: demoUser?.role ?? session.user.role,
+      createdAt: demoUser?.createdAt ? new Date(demoUser.createdAt) : new Date(),
+      emailVerified: new Date(),
+    };
+
+    if (session.user.role === "ENTREPRENEUR") {
+      entrepreneurProfile = {
+        businessName: profile?.businessName ?? showcase?.businessName ?? "",
+        country: profile?.country ?? showcase?.country ?? "",
+        sector: profile?.sector ?? showcase?.sector ?? "",
+        description: profile?.description ?? showcase?.description ?? "",
+        fundingNeed: profile?.fundingNeed ?? showcase?.fundingNeed ?? "",
+        esgActivity: profile?.esgActivity ?? showcase?.esgActivity ?? "",
+        yearFounded: profile?.yearFounded ?? showcase?.yearFounded ?? null,
+        womenSupported: profile?.womenSupported ?? showcase?.womenSupported ?? 0,
+        jobsCreated: profile?.jobsCreated ?? showcase?.jobsCreated ?? 0,
+      };
     }
   }
 
