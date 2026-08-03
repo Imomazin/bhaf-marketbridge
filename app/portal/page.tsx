@@ -1,8 +1,21 @@
+import { redirect } from "next/navigation";
 import Link from "next/link";
+import { auth } from "@/auth";
 import { roles, accentClasses } from "@/data/roles";
+import { getRoleHome } from "@/lib/routeAccess";
+import { resolveUserAccess } from "@/lib/userAccess";
 import { cn } from "@/lib/utils";
 
-export default function PortalIndexPage() {
+export default async function PortalIndexPage() {
+  const session = await auth();
+  if (session?.user?.role) {
+    const access = await resolveUserAccess(session.user);
+    if (access.needsVerification) {
+      redirect(`/auth/verify-email?next=${encodeURIComponent(getRoleHome(access.role))}`);
+    }
+    redirect(getRoleHome(access.role));
+  }
+
   return (
     <section className="bg-cream-50 py-16 md:py-24">
       <div className="container-edge">

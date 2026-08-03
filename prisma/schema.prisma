@@ -25,6 +25,11 @@ model User {
   passwordHash  String?
   role          Role      @default(ENTREPRENEUR)
   status        UserStatus @default(ACTIVE)
+  kycFullName   String?
+  kycCountry    String?
+  kycIdType     String?
+  kycIdNumber   String?   @db.Text
+  kycSavedAt    DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   deletedAt     DateTime?

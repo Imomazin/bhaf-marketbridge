@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { cn } from "@/lib/utils";
+import { getDemoApplications } from "@/lib/demoState";
+import { opportunities as mockOpportunities } from "@/data/opportunities";
 
 export const metadata = { title: "My applications · BHAF MarketBridge" };
 export const dynamic = "force-dynamic";
@@ -42,6 +44,23 @@ export default async function MyApplicationsPage() {
         select: { id: true, title: true, organisation: true },
       });
       for (const o of oppRows) oppMap[o.id] = { title: o.title, organisation: o.organisation };
+    }
+  } else {
+    const demoApps = await getDemoApplications(session.user.id);
+    apps = demoApps.map((app) => ({
+      id: app.id,
+      coverNote: app.coverNote,
+      status: app.status,
+      adminNote: app.adminNote,
+      createdAt: new Date(app.createdAt),
+      decidedAt: app.decidedAt ? new Date(app.decidedAt) : null,
+      opportunityId: app.opportunityId,
+    }));
+    for (const opportunity of mockOpportunities) {
+      oppMap[opportunity.id] = {
+        title: opportunity.title,
+        organisation: opportunity.organisation,
+      };
     }
   }
 

@@ -2,14 +2,16 @@ import Link from "next/link";
 
 export const metadata = { title: "Sandbox checkout · BHAF MarketBridge" };
 
-export default function StubCheckoutPage({
+export default async function StubCheckoutPage({
   params,
   searchParams,
 }: {
-  params: { ref: string };
-  searchParams: { amount?: string; desc?: string };
+  params: Promise<{ ref: string }>;
+  searchParams: Promise<{ amount?: string; desc?: string }>;
 }) {
-  const amount = searchParams.amount ? Number(searchParams.amount) / 100 : 0;
+  const routeParams = await params;
+  const query = await searchParams;
+  const amount = query.amount ? Number(query.amount) / 100 : 0;
   return (
     <section className="bg-cream-50 py-16">
       <div className="container-edge max-w-xl">
@@ -22,9 +24,9 @@ export default function StubCheckoutPage({
 
         <div className="card mt-8 p-6">
           <p className="text-xs text-charcoal-500">Reference</p>
-          <p className="mt-1 font-mono text-sm text-forest-900">{params.ref}</p>
+          <p className="mt-1 font-mono text-sm text-forest-900">{routeParams.ref}</p>
           <p className="mt-4 text-xs text-charcoal-500">Description</p>
-          <p className="mt-1 text-sm text-forest-900">{searchParams.desc ?? "—"}</p>
+          <p className="mt-1 text-sm text-forest-900">{query.desc ?? "—"}</p>
           <p className="mt-4 text-xs text-charcoal-500">Amount</p>
           <p className="mt-1 font-serif text-2xl text-forest-900">${amount.toLocaleString()}</p>
 

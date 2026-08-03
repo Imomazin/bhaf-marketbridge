@@ -6,8 +6,13 @@ import { verifyTransaction } from "@/lib/integrations/paystack";
 export const metadata = { title: "Payment status · BHAF MarketBridge" };
 export const dynamic = "force-dynamic";
 
-export default async function BillingReturnPage({ searchParams }: { searchParams: { ref?: string; reference?: string; trxref?: string } }) {
-  const ref = searchParams.ref ?? searchParams.reference ?? searchParams.trxref;
+export default async function BillingReturnPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ref?: string; reference?: string; trxref?: string }>;
+}) {
+  const query = await searchParams;
+  const ref = query.ref ?? query.reference ?? query.trxref;
   if (!ref) redirect("/billing/dashboard");
 
   let outcome: "success" | "pending" | "failed" | "unknown" = "unknown";

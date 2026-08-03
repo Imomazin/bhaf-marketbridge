@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { writeAudit } from "@/lib/audit";
+import { getDemoCorporateProfile, getDemoSeedCorporateProfile, getDemoRfpsByOwner, saveDemoRfp } from "@/lib/demoCorporate";
 import { sendEmail } from "@/lib/email";
 import { rfpSchema, rfpResponseSchema, type RfpInput, type RfpResponseInput } from "@/lib/schemas/rfp";
 
@@ -13,13 +14,46 @@ export type RfpResult = { ok: true; id: string; message: string } | { ok: false;
 export async function createRfp(input: RfpInput): Promise<RfpResult> {
   const session = await auth();
   if (!session?.user) return { ok: false, message: "Sign-in required." };
-  if (!DB_ENABLED || !prisma) return { ok: false, message: "Database not configured." };
   if (session.user.role !== "CORPORATE" && session.user.role !== "ADMIN") {
     return { ok: false, message: "Only corporate partners can post RFPs." };
   }
 
   const parsed = rfpSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid input." };
+
+  if (!DB_ENABLED || !prisma) {
+    const [demoProfile, existingDemoRfps] = await Promise.all([
+      getDemoCorporateProfile(session.user.id),
+      getDemoRfpsByOwner(session.user.id),
+    ]);
+    const seededProfile = getDemoSeedCorporateProfile(session.user.id);
+    const activeProfile = demoProfile ?? seededProfile;
+
+    const rfp = await saveDemoRfp({
+      ownerId: session.user.id,
+      ownerName: session.user.name ?? activeProfile?.orgName ?? "Corporate partner",
+      ownerOrgName: activeProfile?.orgName ?? "Corporate partner",
+      title: parsed.data.title,
+      category: parsed.data.category,
+      region: parsed.data.region ?? "",
+      budgetUsd: parsed.data.budgetUsd ?? "",
+      deadline: parsed.data.deadline || null,
+      description: parsed.data.description,
+    });
+
+    revalidatePath("/marketplace/rfps");
+    revalidatePath(`/marketplace/rfps/${rfp.id}`);
+    revalidatePath("/portal/corporate");
+    revalidatePath(`/portal/corporate/rfps/${rfp.id}`);
+    return {
+      ok: true,
+      id: rfp.id,
+      message:
+        existingDemoRfps.length === 0
+          ? "RFP published. It now appears on the marketplace RFP board."
+          : "RFP published and added to your demo procurement flow.",
+    };
+  }
 
   const rfp = await prisma.rfp.create({
     data: {

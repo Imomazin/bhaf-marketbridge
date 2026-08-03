@@ -1,74 +1,173 @@
 "use server";
 
 import crypto from "crypto";
+import { auth, unstable_update } from "@/auth";
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { sendEmail } from "@/lib/email";
 import { writeAudit } from "@/lib/audit";
 
 const PURPOSE = "email-verify";
-const TOKEN_TTL_MS = 1000 * 60 * 60 * 24; // 24h
+const CODE_TTL_MS = 1000 * 60 * 15; // 15 minutes
+const RESEND_COOLDOWN_MS = 1000 * 60; // 60 seconds
 
 export interface ActionResult {
   ok: boolean;
   message: string;
+  resendAvailableInSeconds?: number;
 }
 
-export async function sendVerificationEmail(userId: string): Promise<ActionResult> {
+function identifierFor(userId: string) {
+  return `${PURPOSE}:${userId}`;
+}
+
+function buildOtpToken(code: string) {
+  return `${code}.${crypto.randomBytes(8).toString("hex")}`;
+}
+
+function generateOtpCode() {
+  return crypto.randomInt(0, 1_000_000).toString().padStart(6, "0");
+}
+
+export async function sendVerificationEmailToUser(userId: string): Promise<ActionResult> {
   if (!DB_ENABLED || !prisma) return { ok: false, message: "Database not configured." };
+
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) return { ok: false, message: "User not found." };
   if (user.emailVerified) return { ok: true, message: "Already verified." };
 
-  const token = crypto.randomBytes(32).toString("hex");
-  const expires = new Date(Date.now() + TOKEN_TTL_MS);
+  const identifier = identifierFor(user.id);
+  const existing = await prisma.verificationToken.findFirst({
+    where: { identifier },
+    orderBy: { expires: "desc" },
+  });
+
+  if (existing) {
+    const cooldownRemainingMs =
+      existing.expires.getTime() - Date.now() - (CODE_TTL_MS - RESEND_COOLDOWN_MS);
+
+    if (cooldownRemainingMs > 0) {
+      const resendAvailableInSeconds = Math.ceil(cooldownRemainingMs / 1000);
+      return {
+        ok: false,
+        message: `Please wait ${resendAvailableInSeconds} seconds before requesting another code.`,
+        resendAvailableInSeconds,
+      };
+    }
+  }
+
+  const code = generateOtpCode();
+  const expires = new Date(Date.now() + CODE_TTL_MS);
+
+  await prisma.verificationToken.deleteMany({
+    where: { identifier },
+  });
 
   await prisma.verificationToken.create({
     data: {
-      identifier: `${PURPOSE}:${user.id}`,
-      token,
+      identifier,
+      token: buildOtpToken(code),
       expires,
     },
   });
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://bhaf-marketbridge.vercel.app";
-  const link = `${baseUrl}/auth/verify-email?token=${token}&uid=${user.id}`;
+  if (process.env.NODE_ENV !== "production") {
+    console.info(
+      `[email:otp] purpose=email-verify email=${user.email} code=${code} expires=${expires.toISOString()}`,
+    );
+  }
 
-  await sendEmail({
+  const delivered = await sendEmail({
     to: user.email,
-    subject: "Confirm your BHAF MarketBridge email",
-    body: `Hi ${user.name ?? "there"},\n\nClick the link below within the next 24 hours to confirm your email and activate your account.\n\n${link}\n\nIf you didn't sign up, you can safely ignore this email.\n\n— BHAF Circular Academy`,
+    subject: "Your BHAF MarketBridge verification code",
+    body:
+      `Hi ${user.name ?? "there"},\n\n` +
+      `Your BHAF MarketBridge verification code is ${code}.\n\n` +
+      `It expires in 15 minutes.\n\n` +
+      `If you didn't create this account, you can safely ignore this email.\n\n` +
+      `— BHAF Circular Academy`,
   });
 
-  return { ok: true, message: "Verification email sent." };
+  if (!delivered) {
+    if (process.env.NODE_ENV !== "production") {
+      return {
+        ok: true,
+        message: "Email delivery failed, but the verification code was logged in the server terminal for local testing.",
+        resendAvailableInSeconds: Math.ceil(RESEND_COOLDOWN_MS / 1000),
+      };
+    }
+
+    return {
+      ok: false,
+      message: "We couldn't send the verification code right now. Check the email provider setup and try again.",
+    };
+  }
+
+  return {
+    ok: true,
+    message: "Verification code sent.",
+    resendAvailableInSeconds: Math.ceil(RESEND_COOLDOWN_MS / 1000),
+  };
 }
 
-export async function performEmailVerification(token: string, uid: string): Promise<ActionResult> {
+export async function sendVerificationEmail(): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, message: "Sign-in required." };
+  return sendVerificationEmailToUser(session.user.id);
+}
+
+export async function verifyEmailOtp(code: string): Promise<ActionResult> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, message: "Sign-in required." };
   if (!DB_ENABLED || !prisma) return { ok: false, message: "Database not configured." };
 
-  const record = await prisma.verificationToken.findUnique({ where: { token } });
-  if (!record) return { ok: false, message: "Invalid or already-used verification link." };
-  if (record.expires < new Date()) {
-    await prisma.verificationToken.delete({ where: { token } });
-    return { ok: false, message: "Verification link expired. Sign in and request a new one." };
+  const normalized = code.trim();
+  if (!/^\d{6}$/.test(normalized)) {
+    return { ok: false, message: "Enter the 6-digit verification code." };
   }
-  if (record.identifier !== `${PURPOSE}:${uid}`) {
-    return { ok: false, message: "Token mismatch." };
+
+  const identifier = identifierFor(session.user.id);
+  const record = await prisma.verificationToken.findFirst({
+    where: { identifier },
+    orderBy: { expires: "desc" },
+  });
+
+  if (!record) {
+    return { ok: false, message: "No active verification code was found. Request a new code." };
+  }
+
+  if (record.expires < new Date()) {
+    await prisma.verificationToken.deleteMany({ where: { identifier } });
+    return { ok: false, message: "That code has expired. Request a new one." };
+  }
+
+  if (!record.token.startsWith(`${normalized}.`)) {
+    return { ok: false, message: "That verification code is not valid." };
   }
 
   await prisma.$transaction([
     prisma.user.update({
-      where: { id: uid },
+      where: { id: session.user.id },
       data: { emailVerified: new Date(), status: "ACTIVE" },
     }),
-    prisma.verificationToken.delete({ where: { token } }),
+    prisma.verificationToken.deleteMany({
+      where: { identifier },
+    }),
   ]);
 
   await writeAudit({
-    actorId: uid,
-    actorLabel: "User",
-    action: "Email verified",
+    actorId: session.user.id,
+    actorLabel: session.user.email ?? session.user.id,
+    action: "Email verified with OTP",
     entityType: "User",
-    entityId: uid,
+    entityId: session.user.id,
+  });
+
+  await unstable_update({
+    user: {
+      id: session.user.id,
+      role: session.user.role,
+      status: "ACTIVE",
+    },
   });
 
   return { ok: true, message: "Email verified — your account is fully active." };

@@ -7,6 +7,8 @@ import { prisma, DB_ENABLED } from "@/lib/db";
 import { writeAudit } from "@/lib/audit";
 import { sendEmail } from "@/lib/email";
 import { opportunitySchema, type OpportunityInput } from "@/lib/schemas/opportunity";
+import { opportunities as mockOpportunities } from "@/data/opportunities";
+import { findDemoApplication, saveDemoApplication } from "@/lib/demoState";
 
 export type OpportunityResult = { ok: true; id: string; message: string } | { ok: false; message: string };
 
@@ -59,7 +61,23 @@ export async function createOpportunity(input: OpportunityInput): Promise<Opport
 export async function applyToOpportunity(opportunityId: string, note?: string): Promise<OpportunityResult> {
   const session = await auth();
   if (!session?.user) return { ok: false, message: "Sign-in required." };
-  if (!DB_ENABLED || !prisma) return { ok: false, message: "Database not configured." };
+
+  if (!DB_ENABLED || !prisma) {
+    const opp = mockOpportunities.find((entry) => entry.id === opportunityId);
+    if (!opp) return { ok: false, message: "Opportunity not found." };
+
+    const existing = await findDemoApplication(session.user.id, opportunityId);
+    if (existing) {
+      return { ok: false, message: "You've already applied to this opportunity." };
+    }
+
+    await saveDemoApplication(session.user.id, opportunityId, note);
+    revalidatePath("/opportunities");
+    revalidatePath("/portal/entrepreneur");
+    revalidatePath("/portal/entrepreneur/applications");
+    revalidatePath("/admin/applications");
+    return { ok: true, id: opportunityId, message: "Application sent." };
+  }
 
   const opp = await prisma.opportunity.findUnique({ where: { id: opportunityId } });
   if (!opp || !opp.published) return { ok: false, message: "Opportunity not found." };

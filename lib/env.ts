@@ -11,6 +11,10 @@ const ServerEnv = z.object({
   AUTH_SECRET: z.string().min(32).optional(),
   AUTH_URL: z.string().url().optional(),
   RESEND_API_KEY: z.string().optional(),
+  MAILTRAP_API_TOKEN: z.string().optional(),
+  MAILTRAP_FROM_EMAIL: z.string().email().optional(),
+  MAILTRAP_FROM_NAME: z.string().optional(),
+  EMAIL_PROVIDER: z.enum(["auto", "resend", "mailtrap"]).optional(),
   ANTHROPIC_API_KEY: z.string().optional(),
   PAYSTACK_SECRET_KEY: z.string().optional(),
   BLOB_READ_WRITE_TOKEN: z.string().optional(),
@@ -69,7 +73,7 @@ export function hasIntegration(feature: "ai" | "email" | "payments" | "kyc" | "a
     case "ai":
       return !!env.ANTHROPIC_API_KEY;
     case "email":
-      return !!env.RESEND_API_KEY;
+      return !!env.RESEND_API_KEY || !!env.MAILTRAP_API_TOKEN;
     case "payments":
       return !!env.PAYSTACK_SECRET_KEY;
     case "kyc":

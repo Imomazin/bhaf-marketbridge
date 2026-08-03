@@ -10,6 +10,7 @@ import { writeAudit } from "@/lib/audit";
 import { sendEmail } from "@/lib/email";
 import { rateLimit } from "@/lib/ratelimit";
 import { checkBySha256 } from "@/lib/integrations/virusTotal";
+import { saveDemoArtefact } from "@/lib/demoState";
 
 const uploadSchema = z.object({
   name: z.string().min(2).max(160),
@@ -24,14 +25,6 @@ export type ArtefactActionResult =
 export async function uploadArtefact(formData: FormData): Promise<ArtefactActionResult> {
   const session = await auth();
   if (!session?.user) return { ok: false, message: "You must be signed in to upload." };
-  if (!DB_ENABLED || !prisma) {
-    return { ok: false, message: "Database not configured — cannot persist uploads yet." };
-  }
-
-  const rl = await rateLimit("upload", session.user.id);
-  if (!rl.success) {
-    return { ok: false, message: "Too many uploads. Slow down and try again in a minute." };
-  }
 
   const parsed = uploadSchema.safeParse({
     name: formData.get("name"),
@@ -45,6 +38,33 @@ export async function uploadArtefact(formData: FormData): Promise<ArtefactAction
   const file = formData.get("file");
   if (!(file instanceof File)) {
     return { ok: false, message: "No file received." };
+  }
+
+  if (!DB_ENABLED || !prisma) {
+    const artefact = await saveDemoArtefact({
+      userId: session.user.id,
+      name: parsed.data.name,
+      category: parsed.data.category,
+      required: parsed.data.required,
+      fileName: file.name,
+      fileSizeBytes: file.size,
+    });
+
+    revalidatePath("/portal/entrepreneur");
+    revalidatePath("/portal/entrepreneur/esg");
+    revalidatePath("/portal/funder");
+    revalidatePath("/portal/funder/vault");
+    revalidatePath("/portal/funder/pipeline");
+    revalidatePath("/portal/funder/impact");
+    revalidatePath("/portal/corporate");
+    revalidatePath("/settings");
+    revalidatePath("/admin");
+    return { ok: true, id: artefact.id, sha256: artefact.sha256, status: artefact.status };
+  }
+
+  const rl = await rateLimit("upload", session.user.id);
+  if (!rl.success) {
+    return { ok: false, message: "Too many uploads. Slow down and try again in a minute." };
   }
 
   const result = await uploadFileToStorage(file, session.user.id);
@@ -90,7 +110,11 @@ export async function uploadArtefact(formData: FormData): Promise<ArtefactAction
   });
 
   revalidatePath("/portal/entrepreneur");
+  revalidatePath("/portal/entrepreneur/esg");
   revalidatePath("/portal/funder");
+  revalidatePath("/portal/funder/vault");
+  revalidatePath("/portal/funder/pipeline");
+  revalidatePath("/portal/funder/impact");
   revalidatePath("/portal/corporate");
   revalidatePath("/admin");
 

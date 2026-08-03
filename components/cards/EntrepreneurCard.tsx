@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Entrepreneur } from "@/data/entrepreneurs";
 import { ReadinessBadge } from "@/components/ui/ReadinessBadge";
 
@@ -61,9 +62,12 @@ export function EntrepreneurCard({ entrepreneur }: EntrepreneurCardProps) {
         )}
       </div>
 
-      <button className="mt-6 w-full rounded-md border border-forest-800/15 px-4 py-2.5 text-xs font-medium text-forest-900 transition hover:border-forest-800 hover:bg-forest-50">
+      <Link
+        href={`/directory/${encodeURIComponent(entrepreneur.id)}`}
+        className="mt-6 block w-full rounded-md border border-forest-800/15 px-4 py-2.5 text-center text-xs font-medium text-forest-900 transition hover:border-forest-800 hover:bg-forest-50"
+      >
         View profile
-      </button>
+      </Link>
     </article>
   );
 }

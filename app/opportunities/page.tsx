@@ -4,6 +4,7 @@ import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
 import { Reveal } from "@/components/ui/Reveal";
 import { loadOpportunities } from "@/lib/queries/opportunities";
 import { photos } from "@/data/photos";
+import { normalizeSearchParam } from "@/lib/searchParams";
 
 export const dynamic = "force-dynamic";
 
@@ -12,9 +13,14 @@ const types = ["All types", "Grant", "Investment", "Procurement", "Programme", "
 export default async function OpportunitiesPage({
   searchParams,
 }: {
-  searchParams: { q?: string; type?: string };
+  searchParams: Promise<{ q?: string | string[]; type?: string | string[] }>;
 }) {
-  const { opportunities, isReal } = await loadOpportunities(searchParams);
+  const resolved = await searchParams;
+  const filters = {
+    q: normalizeSearchParam(resolved.q),
+    type: normalizeSearchParam(resolved.type),
+  };
+  const { opportunities, isReal } = await loadOpportunities(filters);
 
   return (
     <>
@@ -28,17 +34,17 @@ export default async function OpportunitiesPage({
 
       <section className="bg-cream-50 py-16">
         <div className="container-edge">
-          <form className="card mb-10 flex flex-wrap items-center gap-3 p-4">
+          <form action="/opportunities" method="GET" className="card mb-10 flex flex-wrap items-center gap-3 p-4">
             <input
               type="text"
               name="q"
-              defaultValue={searchParams.q ?? ""}
+              defaultValue={filters.q ?? ""}
               placeholder="Search opportunities"
               className="flex-1 min-w-[200px] rounded-md border border-cream-300 bg-cream-50 px-3 py-2 text-sm text-forest-900 placeholder:text-charcoal-300 focus:border-forest-700 focus:outline-none"
             />
             <select
               name="type"
-              defaultValue={searchParams.type ?? "All types"}
+              defaultValue={filters.type ?? "All types"}
               className="rounded-md border border-cream-300 bg-cream-50 px-3 py-2 text-sm text-forest-900 focus:border-forest-700 focus:outline-none"
             >
               {types.map((t) => (

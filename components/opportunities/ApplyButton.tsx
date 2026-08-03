@@ -8,13 +8,15 @@ export function ApplyButton({ opportunityId, title }: { opportunityId: string; t
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<{ ok: boolean; message: string } | null>(null);
+  const [sent, setSent] = useState(false);
 
   async function submit() {
     setSubmitting(true);
     const res = await applyToOpportunity(opportunityId, note || undefined);
     setSubmitting(false);
     setStatus(res);
-    if (res.ok) {
+    if (res.ok || res.message.toLowerCase().includes("already applied")) {
+      setSent(true);
       setNote("");
       setOpen(false);
     }
@@ -23,10 +25,13 @@ export function ApplyButton({ opportunityId, title }: { opportunityId: string; t
   return (
     <div>
       <button
-        onClick={() => setOpen((o) => !o)}
-        className="mt-6 w-full rounded-md bg-forest-800 px-4 py-2.5 text-xs font-medium text-cream-50 transition hover:bg-forest-700"
+        onClick={() => {
+          if (!sent) setOpen((o) => !o);
+        }}
+        disabled={sent}
+        className="mt-6 w-full rounded-md bg-forest-800 px-4 py-2.5 text-xs font-medium text-cream-50 transition hover:bg-forest-700 disabled:cursor-default disabled:bg-forest-600"
       >
-        Apply through MarketBridge
+        {sent ? "Sent" : "Apply through MarketBridge"}
       </button>
 
       {open && (

@@ -1,12 +1,24 @@
+import Link from "next/link";
 import { PageHero } from "@/components/ui/PageHero";
 import { EntrepreneurCard } from "@/components/cards/EntrepreneurCard";
 import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
 import { Reveal } from "@/components/ui/Reveal";
 import { loadDirectory } from "@/lib/queries/directory";
 import { photos } from "@/data/photos";
+import { normalizeSearchParam } from "@/lib/searchParams";
 
-const sectors = ["All sectors", "Circular Economy", "Clean Energy", "Agri-Processing", "Health & Beauty", "Technology", "Education"];
-const countries = ["All countries", "Nigeria", "South Africa", "Senegal", "Kenya", "Zimbabwe", "Ghana"];
+const sectors = [
+  "All sectors",
+  "Circular Economy",
+  "Clean Energy",
+  "Agri-Processing",
+  "Health & Beauty",
+  "Technology",
+  "Education",
+  "Fashion & Textiles",
+  "Other",
+];
+const countries = ["All countries", "Nigeria", "South Africa", "Senegal", "Kenya", "Zimbabwe", "Ghana", "DRC", "Other"];
 const readiness = ["All levels", "Emerging", "Developing", "Market-Ready", "Funding-Ready"];
 
 export const dynamic = "force-dynamic";
@@ -14,9 +26,21 @@ export const dynamic = "force-dynamic";
 export default async function DirectoryPage({
   searchParams,
 }: {
-  searchParams: { q?: string; sector?: string; country?: string; readiness?: string };
+  searchParams: Promise<{
+    q?: string | string[];
+    sector?: string | string[];
+    country?: string | string[];
+    readiness?: string | string[];
+  }>;
 }) {
-  const { entrepreneurs, isReal } = await loadDirectory(searchParams);
+  const resolved = await searchParams;
+  const filters = {
+    q: normalizeSearchParam(resolved.q),
+    sector: normalizeSearchParam(resolved.sector),
+    country: normalizeSearchParam(resolved.country),
+    readiness: normalizeSearchParam(resolved.readiness),
+  };
+  const { entrepreneurs, isReal } = await loadDirectory(filters);
 
   return (
     <>
@@ -30,21 +54,21 @@ export default async function DirectoryPage({
 
       <section className="bg-cream-50 py-16">
         <div className="container-edge">
-          <form className="card mb-10 grid gap-4 p-5 md:grid-cols-4">
+          <form action="/directory" method="GET" className="card mb-10 grid gap-4 p-5 md:grid-cols-4">
             <div>
               <label className="text-[11px] font-semibold uppercase tracking-wide text-charcoal-400">Search</label>
               <input
                 type="text"
                 name="q"
-                defaultValue={searchParams.q ?? ""}
+                defaultValue={filters.q ?? ""}
                 placeholder="Name, business or product"
                 className="mt-1.5 w-full rounded-md border border-cream-200 bg-cream-50 px-3 py-2 text-sm text-forest-900 placeholder:text-charcoal-300 focus:border-forest-700 focus:outline-none"
               />
             </div>
             {[
-              { label: "Sector", name: "sector", options: sectors, value: searchParams.sector },
-              { label: "Country", name: "country", options: countries, value: searchParams.country },
-              { label: "Readiness", name: "readiness", options: readiness, value: searchParams.readiness },
+              { label: "Sector", name: "sector", options: sectors, value: filters.sector },
+              { label: "Country", name: "country", options: countries, value: filters.country },
+              { label: "Readiness", name: "readiness", options: readiness, value: filters.readiness },
             ].map((filter) => (
               <div key={filter.label}>
                 <label className="text-[11px] font-semibold uppercase tracking-wide text-charcoal-400">
@@ -63,7 +87,7 @@ export default async function DirectoryPage({
             ))}
             <div className="md:col-span-4 flex gap-2">
               <button type="submit" className="btn-primary !py-2 !px-4 text-xs">Apply filters</button>
-              <a href="/directory" className="btn-secondary !py-2 !px-4 text-xs">Reset</a>
+              <Link href="/directory" className="btn-secondary !py-2 !px-4 text-xs">Reset</Link>
             </div>
           </form>
 

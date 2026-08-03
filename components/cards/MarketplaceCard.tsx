@@ -1,4 +1,5 @@
 import type { MarketplaceListing } from "@/data/marketplace";
+import { MarketplaceEnquiryButton } from "@/components/marketplace/MarketplaceEnquiryButton";
 
 interface MarketplaceCardProps {
   listing: MarketplaceListing;
@@ -52,7 +53,7 @@ export function MarketplaceCard({ listing }: MarketplaceCardProps) {
         </div>
 
         <div className="mt-6 flex items-center gap-2">
-          <button className="btn-primary !py-2 !px-4 text-xs">Request enquiry</button>
+          <MarketplaceEnquiryButton listingId={listing.id} listingTitle={listing.title} />
           <button className="btn-secondary !py-2 !px-4 text-xs">Save</button>
         </div>
       </div>

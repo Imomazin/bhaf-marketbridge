@@ -10,31 +10,47 @@ interface OnboardingCardProps {
 export function OnboardingCard({ state, role }: OnboardingCardProps) {
   if (state.percent === 100) return null;
 
+  const profileDetail =
+    role === "entrepreneur"
+      ? "Finish the main business profile details in Settings so your dashboard can mark this step complete."
+      : role === "funder"
+      ? "Add your mandate, focus geographies, sectors and ticket size so your investment desk is ready."
+      : "Add your organisation profile so sourcing and ESG reporting can be tailored to your team.";
+
+  const artefactDetail =
+    role === "entrepreneur"
+      ? "Business registration, KYC, or ESG evidence — anything you can verify with."
+      : role === "funder"
+      ? "Upload your mandate letter, KYC or impact-policy documents before introductions are shared."
+      : "Upload procurement policy, KYC or ESG evidence to support supplier engagement.";
+
+  const artefactHref =
+    role === "entrepreneur"
+      ? "/portal/entrepreneur/esg"
+      : role === "funder"
+      ? "/portal/funder/vault"
+      : "/portal/corporate";
+
   const tasks = [
     {
       done: state.emailVerified,
       title: "Verify your email",
-      detail: "Check your inbox for the verification link. Resend from Settings if needed.",
+      detail: "Check your inbox for the 6-digit code. You can enter it or resend a new code from Settings.",
       href: "/settings",
       label: "Open settings →",
     },
     {
       done: state.hasProfile,
       title: "Complete your profile",
-      detail: "Add a longer description and any certifications so funders/buyers can find you.",
+      detail: profileDetail,
       href: "/settings",
       label: "Edit profile →",
     },
     {
       done: state.hasFirstArtefact,
       title: "Upload your first artefact",
-      detail: "Business registration, KYC, or ESG evidence — anything you can verify with.",
-      href:
-        role === "entrepreneur"
-          ? "/portal/entrepreneur#vault"
-          : role === "funder"
-          ? "/portal/funder#vault"
-          : "/portal/corporate#vault",
+      detail: artefactDetail,
+      href: artefactHref,
       label: "Open document vault →",
     },
   ];

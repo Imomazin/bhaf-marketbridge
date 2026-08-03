@@ -8,17 +8,12 @@ import { entrepreneurs } from "@/data/entrepreneurs";
 import { opportunities } from "@/data/opportunities";
 import { photos } from "@/data/photos";
 import { loadAdminData } from "@/lib/queries/admin";
+import { DB_ENABLED } from "@/lib/db";
+import { getAllDemoApplications, getAllDemoEnquiries, getAllDemoEntrepreneurProfiles } from "@/lib/demoState";
+import { getDemoUsersByRole } from "@/lib/demoUsers";
+import { buildInitials, getReadinessLevel } from "@/lib/demoPresentation";
 
 export const dynamic = "force-dynamic";
-
-const overviewStats = [
-  { label: "Pending approvals", value: "12", trend: "+3 this week", tone: "gold" as const },
-  { label: "Verified entrepreneurs", value: "165", trend: "+8 this month", tone: "forest" as const },
-  { label: "Active opportunities", value: "24", trend: "6 closing this week", tone: "neutral" as const },
-  { label: "Marketplace enquiries", value: "318", trend: "+42 last 7 days", tone: "neutral" as const },
-];
-
-const pendingProfiles = entrepreneurs.slice(0, 4);
 const activity = [
   { time: "08:42", actor: "Amara Okafor", action: "Uploaded ESG documentation pack" },
   { time: "Yesterday", actor: "Mosaic Impact Partners", action: "Shortlisted 6 entrepreneurs for review" },
@@ -29,6 +24,65 @@ const activity = [
 
 export default async function AdminPage() {
   const adminData = await loadAdminData();
+  const [demoEntrepreneurs, demoProfiles, demoApplications, demoEnquiries] =
+    !DB_ENABLED
+      ? await Promise.all([
+          getDemoUsersByRole("ENTREPRENEUR"),
+          getAllDemoEntrepreneurProfiles(),
+          getAllDemoApplications(),
+          getAllDemoEnquiries(),
+        ])
+      : [[], [], [], []];
+
+  const pendingProfiles =
+    !DB_ENABLED
+      ? demoEntrepreneurs.map((user) => {
+          const profile = demoProfiles.find((entry) => entry.userId === user.id);
+          const sample = user.id === "demo-entrepreneur" ? entrepreneurs[0] : null;
+          const score = [
+            Boolean(profile?.description?.trim() || sample?.description),
+            Boolean(profile?.esgActivity?.trim() || sample?.esgActivity),
+            Boolean(profile?.businessName || sample?.businessName),
+          ].filter(Boolean).length;
+          return {
+            id: user.id,
+            initials: buildInitials(user.name),
+            name: user.name,
+            businessName: profile?.businessName || sample?.businessName || "Business registration started",
+            country: profile?.country || sample?.country || "Pending country",
+            sector: profile?.sector || sample?.sector || "Pending sector",
+            readinessLevel: getReadinessLevel(score),
+          };
+        })
+      : entrepreneurs.slice(0, 4);
+
+  const overviewStats = [
+    {
+      label: "Pending approvals",
+      value: String(DB_ENABLED ? adminData.pendingCount : pendingProfiles.length),
+      trend: DB_ENABLED ? `${adminData.pendingCount} in verification queue` : "Demo registrations awaiting review",
+      tone: "gold" as const,
+    },
+    {
+      label: "Verified entrepreneurs",
+      value: String(DB_ENABLED ? 165 : demoEntrepreneurs.length),
+      trend: DB_ENABLED ? "+8 this month" : "Visible in this demo browser session",
+      tone: "forest" as const,
+    },
+    {
+      label: "Active opportunities",
+      value: String(opportunities.length),
+      trend: "Curated opportunity board",
+      tone: "neutral" as const,
+    },
+    {
+      label: "Marketplace enquiries",
+      value: String(DB_ENABLED ? 318 : demoEnquiries.length),
+      trend: DB_ENABLED ? "+42 last 7 days" : `${demoApplications.length} demo applications submitted`,
+      tone: "neutral" as const,
+    },
+  ];
+
   return (
     <>
       <PortalWorkflowStrip roleId="admin" currentStep={2} />

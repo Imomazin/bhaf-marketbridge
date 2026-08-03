@@ -1,5 +1,6 @@
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { auditTrail as mockAudit, verificationQueue as mockQueue, type QueueItem, type AuditEntry } from "@/data/artefacts";
+import { getAllDemoUsers } from "@/lib/demoUsers";
 
 export async function loadAdminData(): Promise<{
   queue: QueueItem[];
@@ -9,12 +10,13 @@ export async function loadAdminData(): Promise<{
   totalUsers: number;
 }> {
   if (!DB_ENABLED || !prisma) {
+    const demoUsers = await getAllDemoUsers();
     return {
       queue: mockQueue,
       audit: mockAudit,
       isReal: false,
       pendingCount: mockQueue.length,
-      totalUsers: 0,
+      totalUsers: demoUsers.length,
     };
   }
 

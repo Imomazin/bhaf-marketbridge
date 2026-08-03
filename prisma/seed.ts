@@ -8,9 +8,11 @@ async function main() {
   const result = await seedDemoAccounts(prisma);
   console.log("Seed complete:", result.created);
   console.log("Demo credentials (rotate immediately after first sign-in):");
-  console.log("  admin@bhaf.example          / ChangeMe!123");
-  console.log("  amara@greenweave.example    / Founder!123");
-  console.log("  fund@mosaic.example         / Funder!123");
+  console.log(`  admin@bhaf.example          / ${result.passwords.admin}`);
+  console.log(`  amara@greenweave.example    / ${result.passwords.entrepreneur}`);
+  console.log(`  fund@mosaic.example         / ${result.passwords.funder}`);
+  console.log(`  procurement@allied.example  / ${result.passwords.corporate}`);
+  console.log(`  auditor@bhaf.example        / ${result.passwords.auditor}`);
 }
 
 main()

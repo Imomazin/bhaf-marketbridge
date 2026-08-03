@@ -4,6 +4,9 @@ import { auth } from "@/auth";
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { ApplicationActions } from "@/components/admin/ApplicationActions";
 import { cn } from "@/lib/utils";
+import { getAllDemoApplications } from "@/lib/demoState";
+import { getAllDemoUsers } from "@/lib/demoUsers";
+import { opportunities as mockOpportunities } from "@/data/opportunities";
 
 export const metadata = { title: "Applications · BHAF Admin" };
 export const dynamic = "force-dynamic";
@@ -17,10 +20,15 @@ const statusTone: Record<string, string> = {
   AWARDED: "bg-forest-50 text-forest-800 border-forest-200",
 };
 
-export default async function AdminApplicationsPage({ searchParams }: { searchParams: { status?: string } }) {
+export default async function AdminApplicationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
   const session = await auth();
   if (!session?.user) redirect("/auth/sign-in?next=/admin/applications");
   if (session.user.role !== "ADMIN" && session.user.role !== "AUDITOR") redirect("/");
+  const query = await searchParams;
 
   let apps: Array<{
     id: string;
@@ -35,7 +43,7 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
 
   if (DB_ENABLED && prisma) {
     apps = await prisma.application.findMany({
-      where: searchParams.status ? { status: searchParams.status as never } : {},
+      where: query.status ? { status: query.status as never } : {},
       include: { user: { select: { id: true, name: true, email: true } } },
       orderBy: { createdAt: "desc" },
       take: 100,
@@ -46,6 +54,33 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
         select: { id: true, title: true, organisation: true },
       });
       for (const o of oppRows) oppMap[o.id] = { title: o.title, organisation: o.organisation };
+    }
+  } else {
+    const [demoApps, demoUsers] = await Promise.all([getAllDemoApplications(), getAllDemoUsers()]);
+    const filtered = query.status
+      ? demoApps.filter((application) => application.status === query.status)
+      : demoApps;
+    apps = filtered.map((application) => {
+      const user = demoUsers.find((entry) => entry.id === application.userId);
+      return {
+        id: application.id,
+        coverNote: application.coverNote,
+        status: application.status,
+        adminNote: application.adminNote,
+        createdAt: new Date(application.createdAt),
+        user: {
+          id: application.userId,
+          name: user?.name ?? null,
+          email: user?.email ?? "demo@bhaf.example",
+        },
+        opportunityId: application.opportunityId,
+      };
+    });
+    for (const opportunity of mockOpportunities) {
+      oppMap[opportunity.id] = {
+        title: opportunity.title,
+        organisation: opportunity.organisation,
+      };
     }
   }
 
@@ -68,7 +103,7 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
               href={s ? `/admin/applications?status=${s}` : "/admin/applications"}
               className={cn(
                 "rounded-full px-3 py-1 text-[10px] font-medium uppercase tracking-wider",
-                searchParams.status === s || (!s && !searchParams.status)
+                query.status === s || (!s && !query.status)
                   ? "bg-forest-800 text-cream-50"
                   : "border border-cream-300 text-charcoal-600 hover:border-forest-700",
               )}
@@ -105,7 +140,14 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
                   <p className="mt-3 rounded-md bg-cream-50 px-3 py-2 text-xs text-charcoal-700">{a.coverNote}</p>
                 )}
                 <div className="mt-4">
-                  <ApplicationActions applicationId={a.id} currentStatus={a.status} />
+                  {DB_ENABLED && prisma ? (
+                    <ApplicationActions applicationId={a.id} currentStatus={a.status} />
+                  ) : (
+                    <p className="rounded-md bg-cream-50 px-3 py-2 text-xs text-charcoal-500">
+                      Demo mode: applications are viewable here and will move once database-backed admin actions are
+                      enabled.
+                    </p>
+                  )}
                 </div>
               </li>
             );

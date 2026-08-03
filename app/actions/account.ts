@@ -3,6 +3,9 @@
 import { auth, signOut } from "@/auth";
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { writeAudit } from "@/lib/audit";
+import { getDemoUserById } from "@/lib/demoUsers";
+import { deleteDemoUserState, exportDemoUserState } from "@/lib/demoState";
+import { removeDemoRegisteredUser } from "@/lib/demoRegistrations";
 
 export interface AccountActionResult {
   ok: boolean;
@@ -17,7 +20,18 @@ export interface AccountActionResult {
 export async function exportMyData(): Promise<AccountActionResult> {
   const session = await auth();
   if (!session?.user) return { ok: false, message: "Sign-in required." };
-  if (!DB_ENABLED || !prisma) return { ok: false, message: "Database not configured." };
+
+  if (!DB_ENABLED || !prisma) {
+    const user = await getDemoUserById(session.user.id);
+    return {
+      ok: true,
+      message: "Data export prepared.",
+      data: {
+        user,
+        ...(await exportDemoUserState(session.user.id)),
+      },
+    };
+  }
 
   const userId = session.user.id;
   const user = await prisma.user.findUnique({
@@ -55,7 +69,18 @@ export async function exportMyData(): Promise<AccountActionResult> {
 export async function requestAccountDeletion(): Promise<AccountActionResult> {
   const session = await auth();
   if (!session?.user) return { ok: false, message: "Sign-in required." };
-  if (!DB_ENABLED || !prisma) return { ok: false, message: "Database not configured." };
+
+  if (!DB_ENABLED || !prisma) {
+    const user = await getDemoUserById(session.user.id);
+    if (!user || user.source !== "registered") {
+      return { ok: false, message: "Seeded demo accounts cannot be deleted." };
+    }
+
+    await deleteDemoUserState(session.user.id);
+    await removeDemoRegisteredUser(session.user.id);
+    await signOut({ redirect: false });
+    return { ok: true, message: "Account deleted from this demo browser session. You've been signed out." };
+  }
 
   await prisma.user.update({
     where: { id: session.user.id },

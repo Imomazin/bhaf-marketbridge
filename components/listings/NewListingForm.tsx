@@ -50,7 +50,7 @@ export function NewListingForm({ onDone }: { onDone?: () => void }) {
       setMinOrder("");
       setEsgHighlight("");
       setTags("");
-      router.refresh();
+      router.push(`/portal/entrepreneur/listings?created=${encodeURIComponent(res.id)}`);
       onDone?.();
     }
   }
@@ -106,7 +106,7 @@ export function NewListingForm({ onDone }: { onDone?: () => void }) {
       )}
 
       <button type="submit" disabled={submitting} className="btn-primary disabled:opacity-60">
-        {submitting ? "Submitting…" : "Submit for review"}
+        {submitting ? "Submitting…" : "Create listing"}
       </button>
     </form>
   );
