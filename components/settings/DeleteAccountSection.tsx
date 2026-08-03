@@ -6,6 +6,7 @@ import { requestAccountDeletion, exportMyData } from "@/app/actions/account";
 
 export function DeleteAccountSection() {
   const router = useRouter();
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [status, setStatus] = useState<{ ok: boolean; message: string } | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -42,6 +43,17 @@ export function DeleteAccountSection() {
     }
   }
 
+  function openConfirm() {
+    setStatus(null);
+    setConfirmText("");
+    setConfirmOpen(true);
+  }
+
+  function closeConfirm() {
+    if (submitting) return;
+    setConfirmOpen(false);
+  }
+
   return (
     <section className="card border-red-200 p-6">
       <h2 className="font-serif text-lg text-forest-900">Danger zone</h2>
@@ -63,25 +75,20 @@ export function DeleteAccountSection() {
           </button>
         </div>
 
-        <form onSubmit={onDelete}>
+        <div>
           <h3 className="text-sm font-semibold text-red-700">Delete my account</h3>
           <p className="mt-1 text-xs text-charcoal-500">
-            Type <code className="rounded bg-cream-100 px-1">DELETE</code> to confirm. Irreversible.
+            This uses the backend delete action and signs you out right after confirmation.
           </p>
-          <input
-            value={confirmText}
-            onChange={(e) => setConfirmText(e.target.value)}
-            placeholder="DELETE"
-            className="mt-2 block w-full rounded-md border border-red-200 bg-red-50/40 px-3 py-2 text-sm text-red-900 focus:border-red-500 focus:outline-none"
-          />
           <button
-            type="submit"
-            disabled={submitting || confirmText !== "DELETE"}
+            type="button"
+            onClick={openConfirm}
+            disabled={submitting}
             className="mt-3 inline-flex items-center justify-center rounded-md border border-red-300 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
           >
-            {submitting ? "Deleting…" : "Delete account"}
+            Delete account
           </button>
-        </form>
+        </div>
       </div>
 
       {status && (
@@ -94,6 +101,52 @@ export function DeleteAccountSection() {
         >
           {status.message}
         </p>
+      )}
+
+      {confirmOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Delete account confirmation"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+          <button
+            type="button"
+            aria-label="Close delete confirmation"
+            onClick={closeConfirm}
+            className="absolute inset-0 bg-charcoal-900/45"
+          />
+          <form onSubmit={onDelete} className="relative z-10 w-full max-w-md rounded-2xl border border-red-200 bg-white p-6 shadow-soft">
+            <h3 className="font-serif text-xl text-forest-900">Delete account?</h3>
+            <p className="mt-2 text-sm text-charcoal-600">
+              This will mark your account as deleted and sign you out immediately. Type{" "}
+              <code className="rounded bg-cream-100 px-1">DELETE</code> to confirm.
+            </p>
+            <input
+              value={confirmText}
+              onChange={(e) => setConfirmText(e.target.value)}
+              placeholder="DELETE"
+              className="mt-4 block w-full rounded-md border border-red-200 bg-red-50/40 px-3 py-2 text-sm text-red-900 focus:border-red-500 focus:outline-none"
+            />
+            <div className="mt-5 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeConfirm}
+                disabled={submitting}
+                className="rounded-md border border-cream-300 px-3 py-2 text-xs font-medium text-charcoal-600 hover:border-forest-700 hover:text-forest-900 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submitting || confirmText !== "DELETE"}
+                className="inline-flex items-center justify-center rounded-md border border-red-300 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-50 disabled:opacity-60"
+              >
+                {submitting ? "Deleting…" : "Confirm delete"}
+              </button>
+            </div>
+          </form>
+        </div>
       )}
     </section>
   );

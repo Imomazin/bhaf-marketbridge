@@ -11,6 +11,7 @@ const COOKIE_OPTIONS = {
 };
 
 const DEMO_PROFILE_COOKIE = "bhaf-demo-profiles";
+const DEMO_FUNDER_PROFILE_COOKIE = "bhaf-demo-funder-profiles";
 const DEMO_ARTEFACT_COOKIE = "bhaf-demo-artefacts";
 const DEMO_LISTING_COOKIE = "bhaf-demo-listings";
 const DEMO_APPLICATION_COOKIE = "bhaf-demo-applications";
@@ -29,6 +30,17 @@ export interface DemoEntrepreneurProfile {
   yearFounded: number | null;
   womenSupported: number;
   jobsCreated: number;
+  updatedAt: string;
+}
+
+export interface DemoFunderProfile {
+  userId: string;
+  orgName: string;
+  mandate: string;
+  geoFocus: string[];
+  sectorFocus: string[];
+  ticketMin: number | null;
+  ticketMax: number | null;
   updatedAt: string;
 }
 
@@ -158,6 +170,21 @@ function parseProfile(entry: JsonRecord): DemoEntrepreneurProfile | null {
     yearFounded: numberOrNull(entry.yearFounded),
     womenSupported: numberOrZero(entry.womenSupported),
     jobsCreated: numberOrZero(entry.jobsCreated),
+    updatedAt: stringOrEmpty(entry.updatedAt) || nowIso(),
+  };
+}
+
+function parseFunderProfile(entry: JsonRecord): DemoFunderProfile | null {
+  const userId = stringOrEmpty(entry.userId);
+  if (!userId) return null;
+  return {
+    userId,
+    orgName: stringOrEmpty(entry.orgName),
+    mandate: stringOrEmpty(entry.mandate),
+    geoFocus: stringArray(entry.geoFocus),
+    sectorFocus: stringArray(entry.sectorFocus),
+    ticketMin: numberOrNull(entry.ticketMin),
+    ticketMax: numberOrNull(entry.ticketMax),
     updatedAt: stringOrEmpty(entry.updatedAt) || nowIso(),
   };
 }
@@ -312,6 +339,30 @@ export async function saveDemoEntrepreneurProfile(
   };
   const next = [nextProfile, ...profiles.filter((profile) => profile.userId !== userId)].slice(0, 24);
   await writeCookieArray(DEMO_PROFILE_COOKIE, next);
+  return nextProfile;
+}
+
+export async function getAllDemoFunderProfiles(): Promise<DemoFunderProfile[]> {
+  return readCookieArray(DEMO_FUNDER_PROFILE_COOKIE, parseFunderProfile);
+}
+
+export async function getDemoFunderProfile(userId: string): Promise<DemoFunderProfile | null> {
+  const profiles = await getAllDemoFunderProfiles();
+  return profiles.find((profile) => profile.userId === userId) ?? null;
+}
+
+export async function saveDemoFunderProfile(
+  userId: string,
+  input: Omit<DemoFunderProfile, "userId" | "updatedAt">,
+): Promise<DemoFunderProfile> {
+  const profiles = await getAllDemoFunderProfiles();
+  const nextProfile: DemoFunderProfile = {
+    userId,
+    ...input,
+    updatedAt: nowIso(),
+  };
+  const next = [nextProfile, ...profiles.filter((profile) => profile.userId !== userId)].slice(0, 24);
+  await writeCookieArray(DEMO_FUNDER_PROFILE_COOKIE, next);
   return nextProfile;
 }
 
@@ -485,8 +536,9 @@ export async function saveDemoEnquiry(input: {
 }
 
 export async function deleteDemoUserState(userId: string): Promise<void> {
-  const [profiles, artefacts, listings, applications, enquiries] = await Promise.all([
+  const [profiles, funderProfiles, artefacts, listings, applications, enquiries] = await Promise.all([
     getAllDemoEntrepreneurProfiles(),
+    getAllDemoFunderProfiles(),
     getAllDemoArtefacts(),
     getAllDemoListings(),
     getAllDemoApplications(),
@@ -496,6 +548,10 @@ export async function deleteDemoUserState(userId: string): Promise<void> {
   await writeCookieArray(
     DEMO_PROFILE_COOKIE,
     profiles.filter((profile) => profile.userId !== userId),
+  );
+  await writeCookieArray(
+    DEMO_FUNDER_PROFILE_COOKIE,
+    funderProfiles.filter((profile) => profile.userId !== userId),
   );
   await writeCookieArray(
     DEMO_ARTEFACT_COOKIE,
@@ -516,8 +572,9 @@ export async function deleteDemoUserState(userId: string): Promise<void> {
 }
 
 export async function exportDemoUserState(userId: string) {
-  const [profile, artefacts, listings, applications, enquiries] = await Promise.all([
+  const [profile, funderProfile, artefacts, listings, applications, enquiries] = await Promise.all([
     getDemoEntrepreneurProfile(userId),
+    getDemoFunderProfile(userId),
     getDemoArtefacts(userId),
     getDemoListings(userId),
     getDemoApplications(userId),
@@ -527,6 +584,7 @@ export async function exportDemoUserState(userId: string) {
   return {
     userId,
     profile,
+    funderProfile,
     artefacts,
     listings,
     applications,
@@ -536,6 +594,7 @@ export async function exportDemoUserState(userId: string) {
 
 export async function clearAllDemoState(): Promise<void> {
   await deleteCookie(DEMO_PROFILE_COOKIE);
+  await deleteCookie(DEMO_FUNDER_PROFILE_COOKIE);
   await deleteCookie(DEMO_ARTEFACT_COOKIE);
   await deleteCookie(DEMO_LISTING_COOKIE);
   await deleteCookie(DEMO_APPLICATION_COOKIE);

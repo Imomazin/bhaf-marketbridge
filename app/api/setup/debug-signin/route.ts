@@ -49,7 +49,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
 
   const emailParam = (url.searchParams.get("email") ?? "admin@bhaf.example").trim().toLowerCase();
-  const passwordParam = url.searchParams.get("password") ?? DEMO_PASSWORDS_BY_EMAIL[emailParam] ?? "ChangeMe!123";
+  const passwordParam = url.searchParams.get("password") ?? DEMO_PASSWORDS_BY_EMAIL[emailParam] ?? "Test1234@@";
 
   const envSummary = {
     NODE_ENV: process.env.NODE_ENV,

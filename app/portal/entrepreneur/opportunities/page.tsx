@@ -5,6 +5,7 @@ import { PortalSidebar } from "@/components/layout/PortalSidebar";
 import { OpportunityCard } from "@/components/cards/OpportunityCard";
 import { loadOpportunities } from "@/lib/queries/opportunities";
 import { getEntrepreneurNav } from "@/lib/portalNav";
+import { normalizeSearchParam } from "@/lib/searchParams";
 
 export const metadata = { title: "Opportunities · BHAF MarketBridge" };
 export const dynamic = "force-dynamic";
@@ -14,12 +15,17 @@ const types = ["All types", "Grant", "Investment", "Procurement", "Programme", "
 export default async function EntrepreneurOpportunitiesPage({
   searchParams,
 }: {
-  searchParams: { q?: string; type?: string };
+  searchParams: Promise<{ q?: string | string[]; type?: string | string[] }>;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/auth/sign-in?next=/portal/entrepreneur/opportunities");
 
-  const { opportunities } = await loadOpportunities(searchParams);
+  const resolved = await searchParams;
+  const filters = {
+    q: normalizeSearchParam(resolved.q),
+    type: normalizeSearchParam(resolved.type),
+  };
+  const { opportunities } = await loadOpportunities(filters);
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
@@ -41,17 +47,17 @@ export default async function EntrepreneurOpportunitiesPage({
             </Link>
           </div>
 
-          <form className="card mt-8 flex flex-wrap items-center gap-3 p-4">
+          <form action="/portal/entrepreneur/opportunities" method="GET" className="card mt-8 flex flex-wrap items-center gap-3 p-4">
             <input
               type="text"
               name="q"
-              defaultValue={searchParams.q ?? ""}
+              defaultValue={filters.q ?? ""}
               placeholder="Search opportunities"
               className="min-w-[200px] flex-1 rounded-md border border-cream-300 bg-cream-50 px-3 py-2 text-sm text-forest-900 placeholder:text-charcoal-300 focus:border-forest-700 focus:outline-none"
             />
             <select
               name="type"
-              defaultValue={searchParams.type ?? "All types"}
+              defaultValue={filters.type ?? "All types"}
               className="rounded-md border border-cream-300 bg-cream-50 px-3 py-2 text-sm text-forest-900 focus:border-forest-700 focus:outline-none"
             >
               {types.map((type) => (

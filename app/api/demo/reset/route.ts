@@ -1,4 +1,5 @@
 import { clearAllDemoState } from "@/lib/demoState";
+import { clearCorporateDemoState } from "@/lib/demoCorporate";
 import { clearDemoRegisteredUsers } from "@/lib/demoRegistrations";
 import { cookies } from "next/headers";
 
@@ -33,6 +34,7 @@ function jsonResponse(body: unknown, status = 200): Response {
 
 export async function POST() {
   await clearAllDemoState();
+  await clearCorporateDemoState();
   await clearDemoRegisteredUsers();
 
   const cookieStore = await cookies();

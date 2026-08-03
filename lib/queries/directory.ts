@@ -169,3 +169,52 @@ export async function loadDirectory(filters: DirectoryFilters = {}): Promise<{ e
     return { entrepreneurs: sortByReadiness(mockEntrepreneurs), isReal: false };
   }
 }
+
+export async function loadDirectoryEntrepreneurById(id: string): Promise<Entrepreneur | null> {
+  if (!DB_ENABLED || !prisma) {
+    const { entrepreneurs } = await loadDirectory();
+    return entrepreneurs.find((entrepreneur) => entrepreneur.id === id) ?? null;
+  }
+
+  try {
+    const row = await prisma.entrepreneurProfile.findUnique({
+      where: { id },
+      include: {
+        user: { select: { name: true, email: true } },
+        products: { select: { name: true } },
+        certifications: { select: { name: true } },
+      },
+    });
+
+    if (!row || !row.verified) return null;
+
+    const name = row.user.name ?? row.user.email;
+    const initials = name
+      .split(/\s+/)
+      .map((part) => part.charAt(0).toUpperCase())
+      .slice(0, 2)
+      .join("");
+
+    return {
+      id: row.id,
+      name,
+      country: row.country,
+      sector: row.sector,
+      businessName: row.businessName,
+      description: row.description,
+      fundingNeed: row.fundingNeed ?? "—",
+      esgActivity: row.esgActivity ?? "—",
+      readinessLevel: READINESS_MAP[row.readinessLevel] ?? "Emerging",
+      products: row.products.map((product) => product.name),
+      certifications: row.certifications.map((certification) => certification.name),
+      womenSupported: row.womenSupported,
+      jobsCreated: row.jobsCreated,
+      yearFounded: row.yearFounded ?? new Date().getFullYear(),
+      initials,
+    };
+  } catch (err) {
+    console.error("[directory] profile load failed, falling back to mock", err);
+    const { entrepreneurs } = await loadDirectory();
+    return entrepreneurs.find((entrepreneur) => entrepreneur.id === id) ?? null;
+  }
+}

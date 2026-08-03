@@ -36,6 +36,7 @@ export default async function EntrepreneurListingsPage({
           meta: "Showcase listing from the seeded entrepreneur demo account",
         }))
       : [];
+  const created = searchParams?.created;
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
@@ -62,7 +63,7 @@ export default async function EntrepreneurListingsPage({
             </div>
           </div>
 
-          {searchParams.created && (
+          {created && (
             <div className="mt-6 rounded-xl border border-forest-200 bg-forest-50 px-4 py-3 text-sm text-forest-800">
               Listing created successfully. It is now visible in this demo account and on the marketplace.
             </div>

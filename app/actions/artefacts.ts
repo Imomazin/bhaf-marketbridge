@@ -52,6 +52,11 @@ export async function uploadArtefact(formData: FormData): Promise<ArtefactAction
 
     revalidatePath("/portal/entrepreneur");
     revalidatePath("/portal/entrepreneur/esg");
+    revalidatePath("/portal/funder");
+    revalidatePath("/portal/funder/vault");
+    revalidatePath("/portal/funder/pipeline");
+    revalidatePath("/portal/funder/impact");
+    revalidatePath("/portal/corporate");
     revalidatePath("/settings");
     revalidatePath("/admin");
     return { ok: true, id: artefact.id, sha256: artefact.sha256, status: artefact.status };
@@ -105,7 +110,11 @@ export async function uploadArtefact(formData: FormData): Promise<ArtefactAction
   });
 
   revalidatePath("/portal/entrepreneur");
+  revalidatePath("/portal/entrepreneur/esg");
   revalidatePath("/portal/funder");
+  revalidatePath("/portal/funder/vault");
+  revalidatePath("/portal/funder/pipeline");
+  revalidatePath("/portal/funder/impact");
   revalidatePath("/portal/corporate");
   revalidatePath("/admin");
 

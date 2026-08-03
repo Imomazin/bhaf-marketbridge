@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma, DB_ENABLED } from "@/lib/db";
+import { getAllDemoRfps } from "@/lib/demoCorporate";
 
 export const metadata = { title: "Open RFPs · BHAF MarketBridge" };
 export const dynamic = "force-dynamic";
@@ -15,6 +16,30 @@ export default async function RfpsBrowsePage() {
     description: string;
     owner: { name: string | null; corporateProfile: { orgName: string } | null };
   }> = [];
+  let demoRfps: Array<{
+    id: string;
+    title: string;
+    category: string;
+    region: string | null;
+    budgetUsd: string | null;
+    deadline: Date | null;
+    description: string;
+    owner: { name: string | null; corporateProfile: { orgName: string } | null };
+  }> = [];
+
+  if (!DB_ENABLED || !prisma) {
+    const rows = await getAllDemoRfps();
+    demoRfps = rows.map((rfp) => ({
+      id: rfp.id,
+      title: rfp.title,
+      category: rfp.category,
+      region: rfp.region || null,
+      budgetUsd: rfp.budgetUsd || null,
+      deadline: rfp.deadline ? new Date(rfp.deadline) : null,
+      description: rfp.description,
+      owner: { name: rfp.ownerName, corporateProfile: { orgName: rfp.ownerOrgName } },
+    }));
+  }
 
   if (DB_ENABLED && prisma) {
     rfps = await prisma.rfp.findMany({
@@ -42,14 +67,14 @@ export default async function RfpsBrowsePage() {
           BHAF tracks shortlisting and award.
         </p>
 
-        {rfps.length === 0 && (
+        {rfps.length === 0 && demoRfps.length === 0 && (
           <div className="card mt-8 p-10 text-center text-sm text-charcoal-500">
             No open RFPs right now. Check back soon, or sign up to receive alerts when corporates publish.
           </div>
         )}
 
         <ul className="mt-8 grid gap-4 md:grid-cols-2">
-          {rfps.map((r) => (
+          {[...demoRfps, ...rfps].map((r) => (
             <li key={r.id}>
               <Link href={`/marketplace/rfps/${r.id}`} className="card block p-5 transition hover:-translate-y-0.5 hover:shadow-soft">
                 <div className="flex flex-wrap items-start justify-between gap-2">

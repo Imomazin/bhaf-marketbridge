@@ -24,7 +24,7 @@ export function DocumentVault({
   const completion = requiredTotal === 0 ? 0 : Math.round((requiredValidated / requiredTotal) * 100);
 
   return (
-    <section>
+    <section id="vault">
       <header className="flex flex-wrap items-end justify-between gap-4 border-b border-cream-200 pb-5">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-700">

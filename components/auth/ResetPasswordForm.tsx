@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { performPasswordReset } from "@/app/actions/password";
+import { PasswordField } from "@/components/ui/PasswordField";
 
 interface ResetPasswordFormProps {
   token: string;
@@ -33,31 +34,21 @@ export function ResetPasswordForm({ token, uid }: ResetPasswordFormProps) {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <label className="block">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-charcoal-500">New password</span>
-        <input
-          type="password"
-          required
-          autoComplete="new-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="mt-1.5 block w-full rounded-md border border-cream-300 bg-cream-50 px-3 py-2 text-sm text-forest-900 focus:border-forest-700 focus:outline-none"
-        />
-        <span className="mt-1 block text-[10px] text-charcoal-400">
-          At least 10 characters with a capital letter and a number.
-        </span>
-      </label>
-      <label className="block">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-charcoal-500">Confirm password</span>
-        <input
-          type="password"
-          required
-          autoComplete="new-password"
-          value={confirm}
-          onChange={(e) => setConfirm(e.target.value)}
-          className="mt-1.5 block w-full rounded-md border border-cream-300 bg-cream-50 px-3 py-2 text-sm text-forest-900 focus:border-forest-700 focus:outline-none"
-        />
-      </label>
+      <PasswordField
+        label="New password"
+        required
+        autoComplete="new-password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        hint="At least 10 characters with a capital letter and a number."
+      />
+      <PasswordField
+        label="Confirm password"
+        required
+        autoComplete="new-password"
+        value={confirm}
+        onChange={(e) => setConfirm(e.target.value)}
+      />
 
       {status && (
         <p

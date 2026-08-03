@@ -2,8 +2,13 @@ import Link from "next/link";
 
 export const metadata = { title: "Sign-in error · BHAF MarketBridge" };
 
-export default function AuthErrorPage({ searchParams }: { searchParams: { error?: string } }) {
-  const code = searchParams.error ?? "Default";
+export default async function AuthErrorPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const query = await searchParams;
+  const code = query.error ?? "Default";
   const message: Record<string, string> = {
     Configuration: "Authentication isn't fully configured yet. Ask the BHAF admin to set up the auth env vars.",
     AccessDenied: "Your account doesn't have access to that area.",

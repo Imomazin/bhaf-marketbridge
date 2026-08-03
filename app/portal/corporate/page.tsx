@@ -5,6 +5,7 @@ import { PortalWorkflowStrip } from "@/components/layout/PortalWorkflowStrip";
 import { DashboardCard } from "@/components/cards/DashboardCard";
 import { DocumentVault } from "@/components/sections/DocumentVault";
 import { marketplaceListings } from "@/data/marketplace";
+import { getDemoRfpsByOwner } from "@/lib/demoCorporate";
 import { loadMyArtefacts } from "@/lib/queries/artefacts";
 
 export const dynamic = "force-dynamic";
@@ -32,9 +33,22 @@ const diversityStats = [
 
 export default async function CorporatePortalPage() {
   const session = await auth();
-  const { artefacts: myArtefacts } = session?.user
-    ? await loadMyArtefacts(session.user.id, "corporate")
-    : { artefacts: [] };
+  const [{ artefacts: myArtefacts }, demoRfps] = session?.user
+    ? await Promise.all([loadMyArtefacts(session.user.id, "corporate"), getDemoRfpsByOwner(session.user.id)])
+    : [{ artefacts: [] }, []];
+  const activeRfps = [
+    ...demoRfps.map((rfp) => ({
+      title: rfp.title,
+      responses: 0,
+      deadline: rfp.deadline ? rfp.deadline.slice(0, 10) : "No deadline",
+      category: rfp.category,
+      reviewHref: `/marketplace/rfps/${rfp.id}`,
+    })),
+    ...rfps.map((rfp) => ({
+      ...rfp,
+      reviewHref: "/marketplace/rfps",
+    })),
+  ].slice(0, 6);
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
@@ -93,10 +107,11 @@ export default async function CorporatePortalPage() {
               title="Active RFPs & sourcing"
               description="Open requests visible to verified women-led suppliers"
               action="Post new"
+              actionHref="/portal/corporate/rfps/new"
               className="lg:col-span-2"
             >
               <ul className="divide-y divide-cream-200">
-                {rfps.map((r) => (
+                {activeRfps.map((r) => (
                   <li key={r.title} className="flex flex-wrap items-center gap-4 py-4">
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-forest-900">{r.title}</p>
@@ -106,7 +121,7 @@ export default async function CorporatePortalPage() {
                       <p className="font-medium text-forest-900">{r.responses} responses</p>
                       <p className="text-charcoal-400">Closes {r.deadline}</p>
                     </div>
-                    <Link href="/marketplace" className="rounded-md border border-cream-300 px-3 py-1.5 text-xs font-medium text-charcoal-600 hover:border-forest-700 hover:text-forest-900">
+                    <Link href={r.reviewHref} className="rounded-md border border-cream-300 px-3 py-1.5 text-xs font-medium text-charcoal-600 hover:border-forest-700 hover:text-forest-900">
                       Review
                     </Link>
                   </li>

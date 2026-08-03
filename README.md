@@ -237,11 +237,11 @@ npm run db:seed
 
 After seeding you can sign in with:
 
-- **Admin**: `admin@bhaf.example` / `ChangeMe!123`
-- **Entrepreneur**: `amara@greenweave.example` / `Founder!123`
-- **Funder**: `fund@mosaic.example` / `Funder!123`
-- **Corporate**: `procurement@allied.example` / `Buyer!12345`
-- **Auditor**: `auditor@bhaf.example` / `Audit!12345`
+- **Admin**: `admin@bhaf.example` / `Test1234@@`
+- **Entrepreneur**: `amara@greenweave.example` / `Test1234@@`
+- **Funder**: `fund@mosaic.example` / `Test1234@@`
+- **Corporate**: `procurement@allied.example` / `Test1234@@`
+- **Auditor**: `auditor@bhaf.example` / `Test1234@@`
 
 Rotate these immediately after the first sign-in.
 

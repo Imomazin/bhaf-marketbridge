@@ -33,10 +33,9 @@ export async function loadMyArtefacts(
   userId: string,
   role: RoleId,
 ): Promise<{ artefacts: Artefact[]; isReal: boolean }> {
-  const fallback: Artefact[] =
-    role === "funder" ? mockFunder : role === "corporate" ? mockCorporate : mockEntrepreneur;
-
   if (!DB_ENABLED || !prisma) {
+    const fallback: Artefact[] =
+      role === "funder" ? mockFunder : role === "corporate" ? mockCorporate : mockEntrepreneur;
     const demoArtefacts = await getDemoArtefacts(userId);
     if (demoArtefacts.length > 0) {
       return { artefacts: demoArtefacts.map(mapDemoArtefactToUi), isReal: false };
@@ -55,7 +54,7 @@ export async function loadMyArtefacts(
     });
 
     if (rows.length === 0) {
-      return { artefacts: fallback, isReal: false };
+      return { artefacts: [], isReal: true };
     }
 
     const real: Artefact[] = rows.map((r) => ({
@@ -83,6 +82,6 @@ export async function loadMyArtefacts(
     return { artefacts: real, isReal: true };
   } catch (err) {
     console.error("[artefacts] DB load failed", err);
-    return { artefacts: fallback, isReal: false };
+    return { artefacts: [], isReal: false };
   }
 }

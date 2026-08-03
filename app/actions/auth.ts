@@ -5,9 +5,9 @@ import bcrypt from "bcryptjs";
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { findDemoAccountByEmail } from "@/lib/demoAccounts";
 import { getDemoRegisteredUsers, saveDemoRegisteredUser } from "@/lib/demoRegistrations";
-import { saveDemoEntrepreneurProfile } from "@/lib/demoState";
+import { saveDemoEntrepreneurProfile, saveDemoFunderProfile } from "@/lib/demoState";
+import { saveDemoCorporateProfile } from "@/lib/demoCorporate";
 import { writeAudit } from "@/lib/audit";
-import { sendEmail } from "@/lib/email";
 import { signIn } from "@/auth";
 import { registerSchema, type RegisterInput } from "@/lib/schemas/auth";
 import { verifyTurnstile } from "@/lib/integrations/turnstile";
@@ -68,6 +68,24 @@ export async function registerAction(raw: RegisterInput & { turnstileToken?: str
         jobsCreated: 0,
       });
     }
+    if (input.role === "FUNDER" && input.orgName) {
+      await saveDemoFunderProfile(saved.id, {
+        orgName: input.orgName.trim(),
+        mandate: "",
+        geoFocus: [],
+        sectorFocus: [],
+        ticketMin: null,
+        ticketMax: null,
+      });
+    }
+    if (input.role === "CORPORATE" && input.orgName) {
+      await saveDemoCorporateProfile(saved.id, {
+        orgName: input.orgName.trim(),
+        industry: "",
+        procurementGeo: [],
+        esgFramework: "",
+      });
+    }
 
     return { ok: true, message: "Account created. Signing you in…" };
   }
@@ -125,22 +143,6 @@ export async function registerAction(raw: RegisterInput & { turnstileToken?: str
     entityId: user.id,
     metadata: { role: input.role },
   });
-
-  // Welcome email
-  await sendEmail({
-    to: user.email,
-    subject: "Welcome to BHAF MarketBridge",
-    body: `Hi ${user.name ?? "there"},\n\nWelcome to MarketBridge. Your account is created and you can sign in now. We'll guide you through profile setup and document verification step by step.\n\n— BHAF Circular Academy`,
-  });
-
-  // Email verification (best-effort — registration succeeds even if it
-  // can't be sent, e.g. when RESEND_API_KEY isn't set)
-  try {
-    const { sendVerificationEmail } = await import("@/app/actions/verify-email");
-    await sendVerificationEmail(user.id);
-  } catch (err) {
-    console.error("[register] verification email failed", err);
-  }
 
   return { ok: true, message: "Account created. Signing you in…" };
 }

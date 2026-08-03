@@ -8,6 +8,7 @@ import { signIn } from "next-auth/react";
 
 import { registerAction } from "@/app/actions/auth";
 import { registerSchema, type RegisterInput } from "@/lib/schemas/auth";
+import { PasswordField } from "@/components/ui/PasswordField";
 import { cn } from "@/lib/utils";
 
 const SECTORS = [
@@ -109,7 +110,7 @@ export function SignUpWizard() {
         : values.role === "FUNDER"
         ? "/portal/funder"
         : "/portal/corporate";
-    router.push(destination);
+    router.push(`/auth/verify-email?next=${encodeURIComponent(destination)}&auto=1`);
     router.refresh();
   };
 
@@ -223,13 +224,13 @@ export function SignUpWizard() {
           <fieldset className="space-y-4">
             <legend className="text-sm font-medium text-forest-900">Set up sign-in</legend>
             <Input label="Email" type="email" autoComplete="email" {...register("email")} error={errors.email?.message} />
-            <Input
+            <PasswordField
               label="Password"
-              type="password"
               autoComplete="new-password"
               {...register("password")}
               error={errors.password?.message}
               hint="At least 10 characters with a capital letter and a number."
+              inputClassName={inputClass}
             />
             <label className="flex items-start gap-3 rounded-md border border-cream-200 bg-cream-50 p-3 text-xs text-charcoal-600">
               <input

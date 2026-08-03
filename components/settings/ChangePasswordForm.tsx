@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { changePassword } from "@/app/actions/settings";
+import { PasswordField } from "@/components/ui/PasswordField";
 
 export function ChangePasswordForm() {
   const [currentPassword, setCurrent] = useState("");
@@ -25,9 +26,27 @@ export function ChangePasswordForm() {
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <Field label="Current password" type="password" autoComplete="current-password" value={currentPassword} onChange={setCurrent} />
-      <Field label="New password" type="password" autoComplete="new-password" value={newPassword} onChange={setNew} />
-      <Field label="Confirm new password" type="password" autoComplete="new-password" value={confirm} onChange={setConfirm} />
+      <PasswordField
+        label="Current password"
+        required
+        autoComplete="current-password"
+        value={currentPassword}
+        onChange={(e) => setCurrent(e.target.value)}
+      />
+      <PasswordField
+        label="New password"
+        required
+        autoComplete="new-password"
+        value={newPassword}
+        onChange={(e) => setNew(e.target.value)}
+      />
+      <PasswordField
+        label="Confirm new password"
+        required
+        autoComplete="new-password"
+        value={confirm}
+        onChange={(e) => setConfirm(e.target.value)}
+      />
 
       {status && (
         <p
@@ -45,33 +64,5 @@ export function ChangePasswordForm() {
         {submitting ? "Updating…" : "Update password"}
       </button>
     </form>
-  );
-}
-
-function Field({
-  label,
-  type,
-  value,
-  onChange,
-  autoComplete,
-}: {
-  label: string;
-  type: string;
-  value: string;
-  onChange: (v: string) => void;
-  autoComplete?: string;
-}) {
-  return (
-    <label className="block">
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-charcoal-500">{label}</span>
-      <input
-        type={type}
-        required
-        autoComplete={autoComplete}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="mt-1.5 block w-full rounded-md border border-cream-300 bg-cream-50 px-3 py-2 text-sm text-forest-900 focus:border-forest-700 focus:outline-none"
-      />
-    </label>
   );
 }

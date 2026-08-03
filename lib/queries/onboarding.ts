@@ -1,5 +1,6 @@
 import { prisma, DB_ENABLED } from "@/lib/db";
-import { getDemoArtefacts, getDemoEntrepreneurProfile, getDemoListings } from "@/lib/demoState";
+import { getDemoArtefacts, getDemoEntrepreneurProfile, getDemoFunderProfile, getDemoListings } from "@/lib/demoState";
+import { getDemoSeedFunderProfile } from "@/lib/funderPortal";
 
 export interface OnboardingState {
   hasProfile: boolean;
@@ -44,8 +45,46 @@ function isEntrepreneurProfileComplete(profile: {
   return detailSignals.filter(Boolean).length >= 2;
 }
 
+function isFunderProfileComplete(profile: {
+  orgName?: string | null;
+  mandate?: string | null;
+  geoFocus?: string[] | null;
+  sectorFocus?: string[] | null;
+  ticketMin?: number | null;
+  ticketMax?: number | null;
+}) {
+  if (!profile.orgName?.trim()) return false;
+
+  const detailSignals = [
+    Boolean(profile.mandate?.trim()),
+    (profile.geoFocus ?? []).length > 0,
+    (profile.sectorFocus ?? []).length > 0,
+    profile.ticketMin != null,
+    profile.ticketMax != null,
+  ];
+
+  return detailSignals.filter(Boolean).length >= 2;
+}
+
 export async function loadOnboardingState(userId: string, role: string): Promise<OnboardingState> {
   if (!DB_ENABLED || !prisma) {
+    if (role === "FUNDER") {
+      const [profile, artefacts] = await Promise.all([
+        getDemoFunderProfile(userId),
+        getDemoArtefacts(userId),
+      ]);
+
+      const effectiveProfile = profile ?? getDemoSeedFunderProfile(userId);
+      const hasProfile = isFunderProfileComplete(effectiveProfile ?? {});
+      const hasFirstArtefact = artefacts.length > 0 || userId === "demo-funder";
+      const hasFirstListing = true;
+      const emailVerified = true;
+      const steps = [hasProfile, hasFirstArtefact, emailVerified];
+      const completed = steps.filter(Boolean).length;
+      const percent = Math.round((completed / steps.length) * 100);
+
+      return { hasProfile, hasFirstArtefact, hasFirstListing, emailVerified, percent };
+    }
     if (role !== "ENTREPRENEUR") {
       return { hasProfile: true, hasFirstArtefact: true, hasFirstListing: true, emailVerified: true, percent: 100 };
     }
@@ -106,7 +145,7 @@ export async function loadOnboardingState(userId: string, role: string): Promise
     role === "ENTREPRENEUR"
       ? isEntrepreneurProfileComplete(user.entrepreneurProfile ?? {})
       : role === "FUNDER"
-      ? Boolean(user.funderProfile?.mandate && user.funderProfile.mandate.length > 20)
+      ? isFunderProfileComplete(user.funderProfile ?? {})
       : role === "CORPORATE"
       ? Boolean(user.corporateProfile?.industry && user.corporateProfile.industry.length > 1)
       : true;
@@ -115,7 +154,10 @@ export async function loadOnboardingState(userId: string, role: string): Promise
   const hasFirstListing = role === "ENTREPRENEUR" ? user._count.listings > 0 : true;
   const emailVerified = Boolean(user.emailVerified);
 
-  const steps = [hasProfile, hasFirstArtefact, hasFirstListing, emailVerified];
+  const steps =
+    role === "ENTREPRENEUR"
+      ? [hasProfile, hasFirstArtefact, hasFirstListing, emailVerified]
+      : [hasProfile, hasFirstArtefact, emailVerified];
   const completed = steps.filter(Boolean).length;
   const percent = Math.round((completed / steps.length) * 100);
 

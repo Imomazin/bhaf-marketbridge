@@ -16,10 +16,12 @@ declare module "next-auth" {
     user: {
       id: string;
       role: "ENTREPRENEUR" | "FUNDER" | "CORPORATE" | "ADMIN" | "AUDITOR";
+      status?: "ACTIVE" | "SUSPENDED" | "PENDING_VERIFICATION" | "DELETED";
     } & DefaultSession["user"];
   }
   interface User {
     role?: "ENTREPRENEUR" | "FUNDER" | "CORPORATE" | "ADMIN" | "AUDITOR";
+    status?: "ACTIVE" | "SUSPENDED" | "PENDING_VERIFICATION" | "DELETED";
   }
 }
 
@@ -47,6 +49,7 @@ const providers: NextAuthConfig["providers"] = [
             email: demo.email,
             name: demo.name,
             role: demo.role,
+            status: "ACTIVE",
           };
         }
 
@@ -64,6 +67,7 @@ const providers: NextAuthConfig["providers"] = [
           email: registered.email,
           name: registered.name,
           role: registered.role,
+          status: "ACTIVE",
         };
       }
       if (!prisma) return null;
@@ -79,6 +83,7 @@ const providers: NextAuthConfig["providers"] = [
         email: user.email,
         name: user.name ?? undefined,
         role: user.role,
+        status: user.status,
       };
     },
   }),
@@ -102,7 +107,7 @@ if (process.env.AUTH_RESEND_KEY) {
   );
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
   ...authConfig,
   adapter: DB_ENABLED && prisma ? PrismaAdapter(prisma) : undefined,
   providers,

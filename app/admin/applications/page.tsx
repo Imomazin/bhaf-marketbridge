@@ -20,10 +20,15 @@ const statusTone: Record<string, string> = {
   AWARDED: "bg-forest-50 text-forest-800 border-forest-200",
 };
 
-export default async function AdminApplicationsPage({ searchParams }: { searchParams: { status?: string } }) {
+export default async function AdminApplicationsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
   const session = await auth();
   if (!session?.user) redirect("/auth/sign-in?next=/admin/applications");
   if (session.user.role !== "ADMIN" && session.user.role !== "AUDITOR") redirect("/");
+  const query = await searchParams;
 
   let apps: Array<{
     id: string;
@@ -38,7 +43,7 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
 
   if (DB_ENABLED && prisma) {
     apps = await prisma.application.findMany({
-      where: searchParams.status ? { status: searchParams.status as never } : {},
+      where: query.status ? { status: query.status as never } : {},
       include: { user: { select: { id: true, name: true, email: true } } },
       orderBy: { createdAt: "desc" },
       take: 100,
@@ -52,8 +57,8 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
     }
   } else {
     const [demoApps, demoUsers] = await Promise.all([getAllDemoApplications(), getAllDemoUsers()]);
-    const filtered = searchParams.status
-      ? demoApps.filter((application) => application.status === searchParams.status)
+    const filtered = query.status
+      ? demoApps.filter((application) => application.status === query.status)
       : demoApps;
     apps = filtered.map((application) => {
       const user = demoUsers.find((entry) => entry.id === application.userId);
@@ -98,7 +103,7 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
               href={s ? `/admin/applications?status=${s}` : "/admin/applications"}
               className={cn(
                 "rounded-full px-3 py-1 text-[10px] font-medium uppercase tracking-wider",
-                searchParams.status === s || (!s && !searchParams.status)
+                query.status === s || (!s && !query.status)
                   ? "bg-forest-800 text-cream-50"
                   : "border border-cream-300 text-charcoal-600 hover:border-forest-700",
               )}
