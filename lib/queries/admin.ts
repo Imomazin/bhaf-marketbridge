@@ -39,16 +39,6 @@ export async function loadAdminData(): Promise<{
       prisma.user.count(),
     ]);
 
-    if (pendingArtefacts.length === 0 && recentAudit.length === 0) {
-      return {
-        queue: mockQueue,
-        audit: mockAudit,
-        isReal: false,
-        pendingCount: 0,
-        totalUsers,
-      };
-    }
-
     const queue: QueueItem[] = pendingArtefacts.map((a) => {
       const passed = a.checks.filter((c) => c.status === "PASS").length;
       const warnings = a.checks.filter((c) => c.status === "WARN").length;
@@ -80,8 +70,8 @@ export async function loadAdminData(): Promise<{
     }));
 
     return {
-      queue: queue.length > 0 ? queue : mockQueue,
-      audit: audit.length > 0 ? audit : mockAudit,
+      queue,
+      audit,
       isReal: true,
       pendingCount: queue.length,
       totalUsers,

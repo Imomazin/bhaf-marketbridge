@@ -63,13 +63,19 @@ export default async function OpportunitiesPage({
             </span>
           </form>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {opportunities.map((o, idx) => (
-              <Reveal key={o.id} delayMs={idx * 80}>
-                <OpportunityCard opportunity={o} />
-              </Reveal>
-            ))}
-          </div>
+          {opportunities.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-cream-300 bg-white p-10 text-center text-sm text-charcoal-500">
+              No opportunities match this filter yet. Check back soon.
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {opportunities.map((o, idx) => (
+                <Reveal key={o.id} delayMs={idx * 80}>
+                  <OpportunityCard opportunity={o} />
+                </Reveal>
+              ))}
+            </div>
+          )}
 
           <div className="mt-16 grid gap-6 md:grid-cols-2">
             <AnnotatedPhoto photo={photos.nyc3} tag="BHAF NYC Launch" caption="Where global stakeholders meet African women entrepreneurs." aspect="auto" className="min-h-[260px]" />

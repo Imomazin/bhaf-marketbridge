@@ -69,11 +69,17 @@ export default async function EntrepreneurOpportunitiesPage({
             </button>
           </form>
 
-          <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {opportunities.map((opportunity) => (
-              <OpportunityCard key={opportunity.id} opportunity={opportunity} />
-            ))}
-          </div>
+          {opportunities.length === 0 ? (
+            <div className="mt-6 rounded-2xl border border-dashed border-cream-300 bg-white p-10 text-center text-sm text-charcoal-500">
+              No opportunities match this filter yet. Check back soon.
+            </div>
+          ) : (
+            <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {opportunities.map((opportunity) => (
+                <OpportunityCard key={opportunity.id} opportunity={opportunity} />
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </div>

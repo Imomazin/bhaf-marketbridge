@@ -1,12 +1,15 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { prisma, DB_ENABLED } from "@/lib/db";
 import { DashboardCard } from "@/components/cards/DashboardCard";
 import { PortalSidebar } from "@/components/layout/PortalSidebar";
 import { PortalWorkflowStrip } from "@/components/layout/PortalWorkflowStrip";
 import { OnboardingCard } from "@/components/onboarding/OnboardingCard";
 import { DocumentVault } from "@/components/sections/DocumentVault";
 import { ReadinessBadge } from "@/components/ui/ReadinessBadge";
+import { ReviewStatusBadge } from "@/components/ui/ReviewStatusBadge";
+import { ProfileStatusBanner } from "@/components/settings/ProfileStatusBanner";
 import { loadMyArtefacts } from "@/lib/queries/artefacts";
 import { loadOnboardingState } from "@/lib/queries/onboarding";
 import { getDemoFunderProfile } from "@/lib/demoState";
@@ -38,6 +41,14 @@ export default async function FunderPortalPage() {
     getDemoUserById(session.user.id),
     getSavedFunderShortlistEntries(session.user.id),
   ]);
+
+  const reviewProfile =
+    DB_ENABLED && prisma
+      ? await prisma.funderProfile.findUnique({
+          where: { userId: session.user.id },
+          select: { status: true, rejectionReason: true },
+        })
+      : null;
 
   const seeded = isSeededFunderAccount(session.user.id);
   const profile = demoProfile ?? getDemoSeedFunderProfile(session.user.id);
@@ -96,6 +107,7 @@ export default async function FunderPortalPage() {
               </div>
             </div>
             <div className="flex flex-wrap items-center gap-3">
+              {reviewProfile && <ReviewStatusBadge status={reviewProfile.status} />}
               <Link href="/settings" className="btn-secondary !px-3 !py-2 text-xs">
                 Manage mandate
               </Link>
@@ -112,6 +124,11 @@ export default async function FunderPortalPage() {
         <PortalWorkflowStrip roleId="funder" currentStep={workflowStep} />
 
         <div className="container-edge py-8 lg:px-8">
+          {reviewProfile && (
+            <div className="mb-6">
+              <ProfileStatusBanner status={reviewProfile.status} rejectionReason={reviewProfile.rejectionReason} />
+            </div>
+          )}
           <div className="mb-8">
             <OnboardingCard state={onboarding} role="funder" />
           </div>

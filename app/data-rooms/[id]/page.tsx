@@ -7,13 +7,14 @@ import { RevokeAccessButton } from "@/components/data-rooms/RevokeAccessButton";
 
 export const dynamic = "force-dynamic";
 
-export default async function DataRoomDetail({ params }: { params: { id: string } }) {
+export default async function DataRoomDetail({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
-  if (!session?.user) redirect(`/auth/sign-in?next=/data-rooms/${params.id}`);
+  if (!session?.user) redirect(`/auth/sign-in?next=/data-rooms/${id}`);
   if (!DB_ENABLED || !prisma) notFound();
 
   const room = await prisma.dataRoom.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       access: {
         include: { user: { select: { id: true, name: true, email: true, role: true } } },
@@ -70,6 +71,14 @@ export default async function DataRoomDetail({ params }: { params: { id: string 
                   </p>
                 )}
               </div>
+              <a
+                href={`/api/artefacts/${a.id}/download`}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-secondary !px-3 !py-2 text-xs"
+              >
+                Open document
+              </a>
             </li>
           ))}
         </ul>

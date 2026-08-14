@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createOpportunity } from "@/app/actions/opportunities";
+import { createOpportunity, updateOpportunity } from "@/app/actions/opportunities";
+import type { OpportunityInput } from "@/lib/schemas/opportunity";
 
 const TYPES: { value: "GRANT" | "INVESTMENT" | "PROCUREMENT" | "PROGRAMME" | "CERTIFICATION" | "GOVERNMENT"; label: string }[] = [
   { value: "GRANT", label: "Grant" },
@@ -13,24 +14,29 @@ const TYPES: { value: "GRANT" | "INVESTMENT" | "PROCUREMENT" | "PROGRAMME" | "CE
   { value: "GOVERNMENT", label: "Government & multilateral" },
 ];
 
-export function NewOpportunityForm() {
+interface NewOpportunityFormProps {
+  opportunityId?: string;
+  initial?: OpportunityInput;
+}
+
+export function NewOpportunityForm({ opportunityId, initial }: NewOpportunityFormProps) {
   const router = useRouter();
-  const [title, setTitle] = useState("");
-  const [organisation, setOrganisation] = useState("");
-  const [type, setType] = useState<typeof TYPES[number]["value"]>("GRANT");
-  const [region, setRegion] = useState("");
-  const [amount, setAmount] = useState("");
-  const [deadline, setDeadline] = useState("");
-  const [description, setDescription] = useState("");
-  const [eligibility, setEligibility] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const isEdit = Boolean(opportunityId);
+  const [title, setTitle] = useState(initial?.title ?? "");
+  const [organisation, setOrganisation] = useState(initial?.organisation ?? "");
+  const [type, setType] = useState<typeof TYPES[number]["value"]>(initial?.type ?? "GRANT");
+  const [region, setRegion] = useState(initial?.region ?? "");
+  const [amount, setAmount] = useState(initial?.amount ?? "");
+  const [deadline, setDeadline] = useState(initial?.deadline ?? "");
+  const [description, setDescription] = useState(initial?.description ?? "");
+  const [eligibility, setEligibility] = useState(initial?.eligibility ?? "");
+  const [submitting, setSubmitting] = useState<"draft" | "publish" | "save" | null>(null);
   const [status, setStatus] = useState<{ ok: boolean; message: string } | null>(null);
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setSubmitting(true);
+  async function onSubmit(mode: "draft" | "publish" | "save") {
+    setSubmitting(mode);
     setStatus(null);
-    const res = await createOpportunity({
+    const payload: OpportunityInput = {
       title,
       organisation,
       type,
@@ -39,17 +45,26 @@ export function NewOpportunityForm() {
       deadline: deadline || undefined,
       description,
       eligibility: eligibility || undefined,
-    });
-    setSubmitting(false);
+    };
+    const res = isEdit && opportunityId
+      ? await updateOpportunity(opportunityId, payload)
+      : await createOpportunity(payload, mode === "publish");
+    setSubmitting(null);
     setStatus(res);
     if (res.ok) {
-      router.push("/opportunities");
+      router.push(isEdit ? `/admin/opportunities/${opportunityId}` : `/admin/opportunities/${res.id}`);
       router.refresh();
     }
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSubmit(isEdit ? "save" : "publish");
+      }}
+      className="space-y-4"
+    >
       <Field label="Title" value={title} onChange={setTitle} placeholder="Green Trade Accelerator Grant 2026" />
       <Field label="Organisation" value={organisation} onChange={setOrganisation} placeholder="BHAF & Pan-African Trade Foundation" />
 
@@ -114,9 +129,27 @@ export function NewOpportunityForm() {
         </p>
       )}
 
-      <button type="submit" disabled={submitting} className="btn-primary disabled:opacity-60">
-        {submitting ? "Publishing…" : "Publish opportunity"}
-      </button>
+      <div className="flex flex-wrap gap-3">
+        {isEdit ? (
+          <button type="submit" disabled={submitting !== null} className="btn-primary disabled:opacity-60">
+            {submitting === "save" ? "Saving…" : "Save changes"}
+          </button>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={() => onSubmit("draft")}
+              disabled={submitting !== null}
+              className="rounded-md border border-cream-300 px-4 py-2 text-sm font-medium text-charcoal-600 hover:border-forest-700 hover:text-forest-900 disabled:opacity-60"
+            >
+              {submitting === "draft" ? "Saving…" : "Save as draft"}
+            </button>
+            <button type="submit" disabled={submitting !== null} className="btn-primary disabled:opacity-60">
+              {submitting === "publish" ? "Publishing…" : "Publish now"}
+            </button>
+          </>
+        )}
+      </div>
     </form>
   );
 }

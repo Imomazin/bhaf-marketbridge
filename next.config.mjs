@@ -17,6 +17,15 @@ const securityHeaders = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  experimental: {
+    // File uploads currently flow through a Server Action and the auth proxy.
+    // Keep the transport limit slightly above the app's 5 MB file cap so
+    // multipart overhead does not trip the request before validation.
+    serverActions: {
+      bodySizeLimit: "6mb",
+    },
+    proxyClientMaxBodySize: "6mb",
+  },
   images: {
     // Local BHAF photos are large originals; ship them as-is and let the
     // browser handle scaling. Set up domain rules here later if remote

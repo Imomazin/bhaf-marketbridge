@@ -1,6 +1,7 @@
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { getDemoArtefacts, getDemoEntrepreneurProfile, getDemoFunderProfile, getDemoListings } from "@/lib/demoState";
 import { getDemoSeedFunderProfile } from "@/lib/funderPortal";
+import type { ReadinessLevel } from "@/data/entrepreneurs";
 
 export interface OnboardingState {
   hasProfile: boolean;
@@ -8,6 +9,21 @@ export interface OnboardingState {
   hasFirstListing: boolean;
   emailVerified: boolean;
   percent: number;
+}
+
+/**
+ * Single source of truth for entrepreneur readiness, out of the 4 real
+ * onboarding signals: complete profile, ESG self-assessment, a verification
+ * document, and a marketplace listing. Uploading the listing (the last of
+ * the 4) takes an entrepreneur to 100% / Funding-Ready. Used by both the
+ * entrepreneur's own dashboard badge and the admin readiness pipeline so
+ * they never disagree.
+ */
+export function getEntrepreneurReadinessLevel(score: number): ReadinessLevel {
+  if (score >= 4) return "Funding-Ready";
+  if (score >= 3) return "Market-Ready";
+  if (score >= 2) return "Developing";
+  return "Emerging";
 }
 
 function hasCoreProfileFields(profile: {
@@ -22,7 +38,7 @@ function hasCoreProfileFields(profile: {
   );
 }
 
-function isEntrepreneurProfileComplete(profile: {
+export function isEntrepreneurProfileComplete(profile: {
   businessName?: string | null;
   country?: string | null;
   sector?: string | null;

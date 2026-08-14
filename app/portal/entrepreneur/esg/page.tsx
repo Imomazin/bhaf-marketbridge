@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { auth } from "@/auth";
+import { prisma, DB_ENABLED } from "@/lib/db";
 import { PortalSidebar } from "@/components/layout/PortalSidebar";
 import { DocumentVault } from "@/components/sections/DocumentVault";
 import { entrepreneurs } from "@/data/entrepreneurs";
@@ -17,7 +18,12 @@ export default async function EntrepreneurEsgPage() {
 
   const sample = session.user.id === "demo-entrepreneur" ? entrepreneurs[0] : null;
   const [profile, { artefacts }] = await Promise.all([
-    getDemoEntrepreneurProfile(session.user.id),
+    DB_ENABLED && prisma
+      ? prisma.entrepreneurProfile.findUnique({
+          where: { userId: session.user.id },
+          select: { esgActivity: true, womenSupported: true, jobsCreated: true, yearFounded: true },
+        })
+      : getDemoEntrepreneurProfile(session.user.id),
     loadMyArtefacts(session.user.id, "entrepreneur"),
   ]);
 

@@ -28,6 +28,10 @@ export function AuditLog({ entries }: AuditLogProps) {
         </div>
       </header>
 
+      {entries.length === 0 && (
+        <p className="mt-4 text-center text-xs text-charcoal-500">No audit entries yet.</p>
+      )}
+
       <ol className="mt-4 space-y-3">
         {entries.map((e, idx) => (
           <li key={idx} className="grid gap-1 border-l-2 border-gold-300 pl-3 text-xs sm:grid-cols-[160px_1fr]">

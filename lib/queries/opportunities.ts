@@ -63,10 +63,6 @@ export async function loadOpportunities(filters: OpportunityFilters = {}): Promi
       take: 50,
     });
 
-    if (rows.length === 0) {
-      return { opportunities: applyMockFilters(mockOpportunities, filters), isReal: false };
-    }
-
     const real: Opportunity[] = rows.map((o) => ({
       id: o.id,
       title: o.title,

@@ -20,8 +20,13 @@ export function DocumentVault({
   }, {});
 
   const requiredTotal = artefacts.filter((a) => a.required).length;
-  const requiredValidated = artefacts.filter((a) => a.required && a.status === "validated").length;
-  const completion = requiredTotal === 0 ? 0 : Math.round((requiredValidated / requiredTotal) * 100);
+  const requiredValidated = artefacts.filter(
+    (a) => a.required && a.status === "validated",
+  ).length;
+  const completion =
+    requiredTotal === 0
+      ? 0
+      : Math.round((requiredValidated / requiredTotal) * 100);
 
   return (
     <section id="vault">
@@ -33,23 +38,7 @@ export function DocumentVault({
           <h2 className="mt-1 font-serif text-2xl text-forest-900">{title}</h2>
           <p className="mt-1 max-w-2xl text-sm text-charcoal-500">{intro}</p>
         </div>
-        <div className="w-full max-w-xs">
-          <div className="flex items-baseline justify-between text-xs">
-            <span className="font-medium text-forest-900">Required artefacts</span>
-            <span className="text-charcoal-500">
-              {requiredValidated} of {requiredTotal} validated
-            </span>
-          </div>
-          <div className="mt-2 h-2 overflow-hidden rounded-full bg-cream-200">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-forest-700 via-forest-600 to-gold-400 transition-all duration-700"
-              style={{ width: `${completion}%` }}
-            />
-          </div>
-          <p className="mt-1 text-[10px] text-charcoal-400">
-            Profile authentication unlocks when all required artefacts are Validated.
-          </p>
-        </div>
+        <div className="w-full max-w-xs"></div>
       </header>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[2fr_1fr]">
@@ -58,7 +47,9 @@ export function DocumentVault({
             Object.entries(grouped).map(([category, items]) => (
               <div key={category}>
                 <div className="mb-3 flex items-center gap-3">
-                  <h3 className="font-serif text-sm uppercase tracking-[0.14em] text-forest-800">{category}</h3>
+                  <h3 className="font-serif text-sm uppercase tracking-[0.14em] text-forest-800">
+                    {category}
+                  </h3>
                   <span className="gold-rule" />
                 </div>
                 <div className="grid gap-3">
@@ -70,8 +61,9 @@ export function DocumentVault({
             ))
           ) : (
             <div className="rounded-2xl border border-dashed border-cream-300 bg-white p-8 text-sm text-charcoal-500">
-              No documents uploaded yet. Start with your registration certificate or first ESG file and this vault will
-              update as you go.
+              No documents uploaded yet. Start with your registration
+              certificate or first ESG file and this vault will update as you
+              go.
             </div>
           )}
         </div>

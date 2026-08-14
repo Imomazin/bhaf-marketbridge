@@ -1,4 +1,4 @@
-import NextAuth, { type DefaultSession, type NextAuthConfig } from "next-auth";
+import NextAuth, { CredentialsSignin, type DefaultSession, type NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import Resend from "next-auth/providers/resend";
@@ -23,6 +23,10 @@ declare module "next-auth" {
     role?: "ENTREPRENEUR" | "FUNDER" | "CORPORATE" | "ADMIN" | "AUDITOR";
     status?: "ACTIVE" | "SUSPENDED" | "PENDING_VERIFICATION" | "DELETED";
   }
+}
+
+export class AccountDeactivatedError extends CredentialsSignin {
+  code = "account_deactivated";
 }
 
 const credentialsSchema = z.object({
@@ -75,9 +79,10 @@ const providers: NextAuthConfig["providers"] = [
         where: { email },
       });
       if (!user || !user.passwordHash) return null;
-      if (user.status !== "ACTIVE" && user.status !== "PENDING_VERIFICATION") return null;
       const ok = await bcrypt.compare(parsed.data.password, user.passwordHash);
       if (!ok) return null;
+      if (user.status === "SUSPENDED") throw new AccountDeactivatedError();
+      if (user.status !== "ACTIVE" && user.status !== "PENDING_VERIFICATION") return null;
       return {
         id: user.id,
         email: user.email,

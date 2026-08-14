@@ -42,6 +42,9 @@ model User {
   artefacts           Artefact[]
   auditEntries        AuditEntry[]        @relation("AuditActor")
   reviewedArtefacts   ArtefactReview[]
+  reviewedEntrepreneurProfiles EntrepreneurProfile[] @relation("EntrepreneurProfileReviewer")
+  reviewedFunderProfiles       FunderProfile[]       @relation("FunderProfileReviewer")
+  reviewedCorporateProfiles    CorporateProfile[]    @relation("CorporateProfileReviewer")
   listings            Listing[]
   notifications       Notification[]
   conversationParticipants ConversationParticipant[]
@@ -129,11 +132,16 @@ model EntrepreneurProfile {
   womenSupported  Int              @default(0)
   jobsCreated     Int              @default(0)
   verified        Boolean          @default(false)
+  status          ProfileReviewStatus @default(PENDING)
+  rejectionReason String?          @db.Text
+  reviewedById    String?
+  reviewedAt      DateTime?
   publishedAt     DateTime?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
 
   user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy      User?            @relation("EntrepreneurProfileReviewer", fields: [reviewedById], references: [id])
   products        Product[]
   certifications  Certification[]
 
@@ -141,6 +149,7 @@ model EntrepreneurProfile {
   @@index([sector])
   @@index([readinessLevel])
   @@index([verified])
+  @@index([status])
 }
 
 enum ReadinessLevel {
@@ -148,6 +157,12 @@ enum ReadinessLevel {
   DEVELOPING
   MARKET_READY
   FUNDING_READY
+}
+
+enum ProfileReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model FunderProfile {
@@ -160,10 +175,17 @@ model FunderProfile {
   ticketMin     Int?
   ticketMax     Int?
   verified      Boolean  @default(false)
+  status          ProfileReviewStatus @default(PENDING)
+  rejectionReason String?  @db.Text
+  reviewedById    String?
+  reviewedAt      DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy    User?    @relation("FunderProfileReviewer", fields: [reviewedById], references: [id])
+
+  @@index([status])
 }
 
 model CorporateProfile {
@@ -174,10 +196,17 @@ model CorporateProfile {
   procurementGeo  String[]
   esgFramework    String?
   verified        Boolean  @default(false)
+  status          ProfileReviewStatus @default(PENDING)
+  rejectionReason String?  @db.Text
+  reviewedById    String?
+  reviewedAt      DateTime?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy      User?    @relation("CorporateProfileReviewer", fields: [reviewedById], references: [id])
+
+  @@index([status])
 }
 
 model Product {
@@ -320,6 +349,7 @@ model Listing {
   minOrder    String?
   esgHighlight String?
   tags        String[]
+  images      String[] @default([])
   status      ListingStatus @default(DRAFT)
   publishedAt DateTime?
   createdAt   DateTime @default(now())
@@ -352,6 +382,8 @@ model Opportunity {
   published     Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  applications  Application[]
 
   @@index([type])
   @@index([deadline])
@@ -392,6 +424,7 @@ enum NotificationKind {
   OPPORTUNITY_MATCH
   ENQUIRY_RECEIVED
   PROFILE_APPROVED
+  PROFILE_REJECTED
   PROFILE_VERIFIED
   WELCOME
   GENERIC
@@ -579,6 +612,7 @@ model Application {
   updatedAt     DateTime          @updatedAt
 
   user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  opportunity Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
 
   @@unique([userId, opportunityId])
   @@index([opportunityId])

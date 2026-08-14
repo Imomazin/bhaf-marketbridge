@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { auth } from "@/auth";
+import { prisma, DB_ENABLED } from "@/lib/db";
 import { PortalSidebar } from "@/components/layout/PortalSidebar";
 import { PortalWorkflowStrip } from "@/components/layout/PortalWorkflowStrip";
 import { DashboardCard } from "@/components/cards/DashboardCard";
 import { DocumentVault } from "@/components/sections/DocumentVault";
+import { ProfileStatusBanner } from "@/components/settings/ProfileStatusBanner";
+import { ReviewStatusBadge } from "@/components/ui/ReviewStatusBadge";
 import { marketplaceListings } from "@/data/marketplace";
 import { getDemoRfpsByOwner } from "@/lib/demoCorporate";
 import { loadMyArtefacts } from "@/lib/queries/artefacts";
@@ -36,6 +39,13 @@ export default async function CorporatePortalPage() {
   const [{ artefacts: myArtefacts }, demoRfps] = session?.user
     ? await Promise.all([loadMyArtefacts(session.user.id, "corporate"), getDemoRfpsByOwner(session.user.id)])
     : [{ artefacts: [] }, []];
+  const reviewProfile =
+    session?.user && DB_ENABLED && prisma
+      ? await prisma.corporateProfile.findUnique({
+          where: { userId: session.user.id },
+          select: { status: true, rejectionReason: true },
+        })
+      : null;
   const activeRfps = [
     ...demoRfps.map((rfp) => ({
       title: rfp.title,
@@ -63,6 +73,7 @@ export default async function CorporatePortalPage() {
               <p className="text-xs text-charcoal-500">FMCG · West & Southern Africa procurement programme</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              {reviewProfile && <ReviewStatusBadge status={reviewProfile.status} />}
               <Link href="/marketplace" className="btn-secondary !py-2 !px-3 text-xs">
                 Browse marketplace
               </Link>
@@ -79,6 +90,11 @@ export default async function CorporatePortalPage() {
         <PortalWorkflowStrip roleId="corporate" currentStep={3} />
 
         <div className="container-edge py-8 lg:px-8">
+          {reviewProfile && (
+            <div className="mb-6">
+              <ProfileStatusBanner status={reviewProfile.status} rejectionReason={reviewProfile.rejectionReason} />
+            </div>
+          )}
           <div className="grid gap-4 sm:grid-cols-3">
             {diversityStats.map((s, i) => (
               <div

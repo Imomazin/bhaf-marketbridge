@@ -8,6 +8,7 @@ import { EntrepreneurProfileForm } from "@/components/settings/EntrepreneurProfi
 import { FunderProfileForm } from "@/components/settings/FunderProfileForm";
 import { CorporateProfileForm } from "@/components/settings/CorporateProfileForm";
 import { KycSection } from "@/components/settings/KycSection";
+import { ProfileStatusBanner } from "@/components/settings/ProfileStatusBanner";
 import { EmailVerificationOtpForm } from "@/components/auth/EmailVerificationOtpForm";
 import { getDemoCorporateProfile, getDemoSeedCorporateProfile } from "@/lib/demoCorporate";
 import { getDemoEntrepreneurProfile, getDemoFunderProfile } from "@/lib/demoState";
@@ -44,6 +45,8 @@ export default async function SettingsPage() {
     yearFounded: number | null;
     womenSupported: number;
     jobsCreated: number;
+    status: string;
+    rejectionReason: string | null;
   } | null = null;
   let funderProfile: {
     orgName: string;
@@ -52,12 +55,16 @@ export default async function SettingsPage() {
     sectorFocus: string[];
     ticketMin: number | null;
     ticketMax: number | null;
+    status: string;
+    rejectionReason: string | null;
   } | null = null;
   let corporateProfile: {
     orgName: string;
     industry: string;
     procurementGeo: string[];
     esgFramework: string | null;
+    status: string;
+    rejectionReason: string | null;
   } | null = null;
   if (DB_ENABLED && prisma) {
     user = await prisma.user.findUnique({
@@ -127,6 +134,8 @@ export default async function SettingsPage() {
         yearFounded: profile?.yearFounded ?? showcase?.yearFounded ?? null,
         womenSupported: profile?.womenSupported ?? showcase?.womenSupported ?? 0,
         jobsCreated: profile?.jobsCreated ?? showcase?.jobsCreated ?? 0,
+        status: "APPROVED",
+        rejectionReason: null,
       };
     }
     if (session.user.role === "FUNDER") {
@@ -138,6 +147,8 @@ export default async function SettingsPage() {
         sectorFocus: activeProfile?.sectorFocus ?? [],
         ticketMin: activeProfile?.ticketMin ?? null,
         ticketMax: activeProfile?.ticketMax ?? null,
+        status: "APPROVED",
+        rejectionReason: null,
       };
     }
     if (session.user.role === "CORPORATE") {
@@ -147,6 +158,8 @@ export default async function SettingsPage() {
         industry: activeProfile?.industry ?? "",
         procurementGeo: activeProfile?.procurementGeo ?? [],
         esgFramework: activeProfile?.esgFramework ?? "",
+        status: "APPROVED",
+        rejectionReason: null,
       };
     }
   }
@@ -195,6 +208,9 @@ export default async function SettingsPage() {
                 These details appear on your public verified profile in the directory.
               </p>
               <div className="mt-5">
+                {entrepreneurProfile && (
+                  <ProfileStatusBanner status={entrepreneurProfile.status} rejectionReason={entrepreneurProfile.rejectionReason} />
+                )}
                 <EntrepreneurProfileForm
                   initial={{
                     businessName: entrepreneurProfile?.businessName ?? "",
@@ -216,6 +232,9 @@ export default async function SettingsPage() {
             <section className="card p-6">
               <h2 className="font-serif text-lg text-forest-900">Fund profile</h2>
               <div className="mt-5">
+                {funderProfile && (
+                  <ProfileStatusBanner status={funderProfile.status} rejectionReason={funderProfile.rejectionReason} />
+                )}
                 <FunderProfileForm
                   initial={{
                     orgName: funderProfile?.orgName ?? "",
@@ -234,6 +253,9 @@ export default async function SettingsPage() {
             <section className="card p-6">
               <h2 className="font-serif text-lg text-forest-900">Corporate profile</h2>
               <div className="mt-5">
+                {corporateProfile && (
+                  <ProfileStatusBanner status={corporateProfile.status} rejectionReason={corporateProfile.rejectionReason} />
+                )}
                 <CorporateProfileForm
                   initial={{
                     orgName: corporateProfile?.orgName ?? "",

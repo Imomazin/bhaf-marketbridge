@@ -31,6 +31,7 @@ export interface Artefact {
   reviewedBy?: string;
   rejectionReason?: string;
   hash?: string;
+  downloadHref?: string;
   checks: ArtefactCheck[];
   requiresDualSignOff?: boolean;
   signOffs?: { admin: string; at: string }[];

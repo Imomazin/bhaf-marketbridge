@@ -29,7 +29,11 @@ export function SignInForm({ next }: SignInFormProps) {
     });
     setSubmitting(false);
     if (res?.error) {
-      setErr("Those credentials didn't match. Try again.");
+      if (res.code === "account_deactivated") {
+        setErr("Account deactivated. Please contact support.");
+      } else {
+        setErr("Those credentials didn't match. Try again.");
+      }
       return;
     }
     router.push(target);

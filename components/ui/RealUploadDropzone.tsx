@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { uploadArtefact } from "@/app/actions/artefacts";
+import { ARTEFACT_MAX_BYTES, ARTEFACT_MAX_MB, formatArtefactBytes } from "@/lib/artefactUpload";
 import { cn } from "@/lib/utils";
 
 const STAGES = [
@@ -38,6 +38,15 @@ export function RealUploadDropzone({ defaultCategory = "Business identity" }: Re
 
   function pickFile(f?: File | null) {
     if (!f) return;
+    if (f.size > ARTEFACT_MAX_BYTES) {
+      setFile(null);
+      setStage(-1);
+      setResult({
+        ok: false,
+        message: `Files larger than ${ARTEFACT_MAX_MB} MB are not allowed. Selected file: ${formatArtefactBytes(f.size)}.`,
+      });
+      return;
+    }
     setFile(f);
     if (!name) setName(f.name.replace(/\.[^.]+$/, ""));
     setResult(null);
@@ -64,14 +73,19 @@ export function RealUploadDropzone({ defaultCategory = "Business identity" }: Re
     fd.set("category", category);
     fd.set("required", required ? "true" : "false");
 
-    const res = await uploadArtefact(fd);
+    const response = await fetch("/api/artefacts/upload", {
+      method: "POST",
+      body: fd,
+    });
+    const res = (await response.json()) as { ok: boolean; message?: string; sha256?: string };
     window.clearInterval(visualTimer);
-    setStage(STAGES.length);
     setSubmitting(false);
 
     if (res.ok) {
+      setStage(STAGES.length);
       setResult({ ok: true, sha256: res.sha256 });
     } else {
+      setStage(-1);
       setResult({ ok: false, message: res.message });
     }
   }
@@ -164,7 +178,7 @@ export function RealUploadDropzone({ defaultCategory = "Business identity" }: Re
           {file ? file.name : "Drag a document here or click to browse"}
         </p>
         <p className="mt-1 text-[10px] text-charcoal-400">
-          PDF · JPG · PNG · WebP · DOCX · XLSX · ZIP · up to 25 MB
+          PDF · JPG · PNG · WebP · DOCX · XLSX · ZIP · up to 5 MB
         </p>
       </label>
 

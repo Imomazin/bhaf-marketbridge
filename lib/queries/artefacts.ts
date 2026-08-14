@@ -71,6 +71,7 @@ export async function loadMyArtefacts(
       expiresAt: r.expiresAt?.toISOString().slice(0, 10),
       rejectionReason: r.rejectionReason ?? undefined,
       hash: r.sha256 ?? undefined,
+      downloadHref: r.storageKey ? `/api/artefacts/${r.id}/download` : undefined,
       requiresDualSignOff: r.requiresDualSignOff,
       checks: r.checks.map((c) => ({
         name: c.name,

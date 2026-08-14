@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { QueueItem } from "@/data/artefacts";
 import { cn } from "@/lib/utils";
 
@@ -34,6 +35,10 @@ export function VerificationQueue({ items }: VerificationQueueProps) {
           <button className="btn-secondary !py-1.5 !px-3 text-xs">Export audit pack</button>
         </div>
       </header>
+
+      {items.length === 0 && (
+        <p className="py-8 text-center text-sm text-charcoal-500">Nothing waiting on review right now.</p>
+      )}
 
       <ul className="mt-4 divide-y divide-cream-200">
         {items.map((q) => {
@@ -93,15 +98,12 @@ export function VerificationQueue({ items }: VerificationQueueProps) {
               </div>
 
               <div className="flex flex-wrap gap-2">
-                <button className="rounded-md border border-cream-300 px-3 py-1.5 text-xs font-medium text-charcoal-600 hover:border-forest-700 hover:text-forest-900">
+                <Link
+                  href={`/admin/artefacts/${q.id}`}
+                  className="rounded-md border border-cream-300 px-3 py-1.5 text-xs font-medium text-charcoal-600 hover:border-forest-700 hover:text-forest-900"
+                >
                   Review
-                </button>
-                <button className="rounded-md border border-red-200 px-3 py-1.5 text-xs font-medium text-red-700 hover:border-red-400">
-                  Reject
-                </button>
-                <button className="rounded-md bg-forest-800 px-3 py-1.5 text-xs font-medium text-cream-50 hover:bg-forest-700">
-                  Approve
-                </button>
+                </Link>
               </div>
             </li>
           );

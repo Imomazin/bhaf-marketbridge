@@ -10,6 +10,11 @@ const ServerEnv = z.object({
   DATABASE_URL: z.string().url().optional(),
   AUTH_SECRET: z.string().min(32).optional(),
   AUTH_URL: z.string().url().optional(),
+  AWS_REGION: z.string().min(1).optional(),
+  AWS_S3_BUCKET: z.string().min(3).optional(),
+  AWS_ACCESS_KEY_ID: z.string().min(16).optional(),
+  AWS_SECRET_ACCESS_KEY: z.string().min(16).optional(),
+  AWS_SESSION_TOKEN: z.string().optional(),
   RESEND_API_KEY: z.string().optional(),
   MAILTRAP_API_TOKEN: z.string().optional(),
   MAILTRAP_FROM_EMAIL: z.string().email().optional(),
@@ -81,7 +86,7 @@ export function hasIntegration(feature: "ai" | "email" | "payments" | "kyc" | "a
     case "av":
       return !!env.VIRUSTOTAL_API_KEY;
     case "storage":
-      return !!env.BLOB_READ_WRITE_TOKEN;
+      return (!!env.AWS_REGION && !!env.AWS_S3_BUCKET) || !!env.BLOB_READ_WRITE_TOKEN;
     case "captcha":
       return !!env.TURNSTILE_SECRET_KEY;
   }

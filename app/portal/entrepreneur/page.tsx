@@ -1,20 +1,24 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { prisma, DB_ENABLED } from "@/lib/db";
 import { PortalSidebar } from "@/components/layout/PortalSidebar";
 import { PortalWorkflowStrip } from "@/components/layout/PortalWorkflowStrip";
 import { DashboardCard } from "@/components/cards/DashboardCard";
 import { ReadinessBadge } from "@/components/ui/ReadinessBadge";
+import { ReviewStatusBadge } from "@/components/ui/ReviewStatusBadge";
 import { DocumentVault } from "@/components/sections/DocumentVault";
 import { OnboardingCard } from "@/components/onboarding/OnboardingCard";
+import { ProfileStatusBanner } from "@/components/settings/ProfileStatusBanner";
 import { entrepreneurs } from "@/data/entrepreneurs";
-import { opportunities } from "@/data/opportunities";
+import { opportunities as mockOpportunities } from "@/data/opportunities";
+import { loadOpportunities } from "@/lib/queries/opportunities";
 import { loadMyArtefacts } from "@/lib/queries/artefacts";
-import { loadOnboardingState } from "@/lib/queries/onboarding";
+import { loadOnboardingState, getEntrepreneurReadinessLevel } from "@/lib/queries/onboarding";
 import { getDemoApplications, getDemoEnquiries, getDemoEntrepreneurProfile, getDemoListings } from "@/lib/demoState";
 import { getDemoUserById } from "@/lib/demoUsers";
 import { getEntrepreneurNav } from "@/lib/portalNav";
-import { buildInitials, formatIsoDate, getEntrepreneurWorkflowStep, getReadinessLevel } from "@/lib/demoPresentation";
+import { buildInitials, formatIsoDate, getEntrepreneurWorkflowStep } from "@/lib/demoPresentation";
 
 export const dynamic = "force-dynamic";
 
@@ -53,22 +57,32 @@ export default async function EntrepreneurPortalPage() {
     getDemoUserById(session.user.id),
   ]);
 
+  const reviewProfile =
+    DB_ENABLED && prisma
+      ? await prisma.entrepreneurProfile.findUnique({
+          where: { userId: session.user.id },
+          select: { status: true, rejectionReason: true, esgActivity: true },
+        })
+      : null;
+
+  const recommendedOpportunities = DB_ENABLED
+    ? (await loadOpportunities()).opportunities
+    : mockOpportunities;
+
   const name = demoUser?.name ?? session.user.name ?? sample?.name ?? "Entrepreneur";
   const businessName = demoProfile?.businessName ?? sample?.businessName ?? "Your business";
   const country = demoProfile?.country ?? sample?.country ?? "Add your country";
   const sector = demoProfile?.sector ?? sample?.sector ?? "Add your sector";
-  const esgActivity = demoProfile?.esgActivity ?? sample?.esgActivity ?? "";
+  const esgActivity = reviewProfile?.esgActivity ?? demoProfile?.esgActivity ?? sample?.esgActivity ?? "";
   const hasProfileStarted = Boolean(demoProfile?.businessName || demoProfile?.country || demoProfile?.sector || sample);
   const hasEsgActivity = esgActivity.trim().length > 20;
-  const hasApplication = demoApplications.length > 0;
   const readinessScore = [
     onboarding?.hasProfile ?? false,
     hasEsgActivity,
     onboarding?.hasFirstArtefact ?? false,
     onboarding?.hasFirstListing ?? false,
-    hasApplication,
   ].filter(Boolean).length;
-  const completion = Math.round((readinessScore / 5) * 100);
+  const completion = Math.round((readinessScore / 4) * 100);
   const workflowStep = getEntrepreneurWorkflowStep({
     hasProfile: onboarding?.hasProfile ?? false,
     hasEsgActivity,
@@ -116,35 +130,21 @@ export default async function EntrepreneurPortalPage() {
       status: statusForProfile(hasEsgActivity, Boolean(esgActivity.trim())),
     },
     {
-      item: "Marketplace listing(s)",
+      item: "Upload your first listing",
       status: statusForProfile(Boolean(onboarding?.hasFirstListing), demoListings.length > 0),
-    },
-    {
-      item: "Funding readiness questionnaire",
-      status:
-        onboarding?.hasProfile && hasEsgActivity && onboarding.hasFirstArtefact
-          ? "in-progress"
-          : "todo",
-    },
-    {
-      item: "Market access portfolio",
-      status:
-        onboarding?.hasProfile && hasEsgActivity && onboarding?.hasFirstListing
-          ? "in-progress"
-          : "todo",
     },
   ] as const;
 
   const nextAction =
     !(onboarding?.hasProfile ?? false)
       ? "Finish your business profile so funders and buyers can understand what you do."
+      : !(onboarding?.hasFirstArtefact ?? false)
+      ? "Upload verification documents to build trust with funders and buyers."
       : !hasEsgActivity
       ? "Add your ESG activity next so the platform can show your impact story."
       : !(onboarding?.hasFirstListing ?? false)
-      ? "Create your first marketplace listing so buyers can find you."
-      : !(onboarding?.hasFirstArtefact ?? false)
-      ? "Upload verification documents to complete your readiness checklist."
-      : "You are ready to apply for curated opportunities and buyer enquiries.";
+      ? "Upload your first marketplace listing — the last step to become Funding-Ready."
+      : "You're 100% ready — Funding-Ready and visible for curated opportunities and buyer enquiries.";
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
@@ -166,7 +166,8 @@ export default async function EntrepreneurPortalPage() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <ReadinessBadge level={getReadinessLevel(readinessScore)} />
+              {reviewProfile && <ReviewStatusBadge status={reviewProfile.status} />}
+              <ReadinessBadge level={getEntrepreneurReadinessLevel(readinessScore)} />
               <Link href="/portal/entrepreneur/applications" className="btn-secondary !px-3 !py-2 text-xs">
                 My applications
               </Link>
@@ -183,6 +184,11 @@ export default async function EntrepreneurPortalPage() {
         <PortalWorkflowStrip roleId="entrepreneur" currentStep={workflowStep} />
 
         <div className="container-edge py-8 lg:px-8">
+          {reviewProfile && (
+            <div className="mb-6">
+              <ProfileStatusBanner status={reviewProfile.status} rejectionReason={reviewProfile.rejectionReason} />
+            </div>
+          )}
           <div className="mb-8">
             <OnboardingCard state={onboarding} role="entrepreneur" />
           </div>
@@ -271,16 +277,20 @@ export default async function EntrepreneurPortalPage() {
               </ul>
             </DashboardCard>
 
-            <DashboardCard title="Recommended opportunities" action="See all">
-              <ul className="space-y-3">
-                {opportunities.slice(0, 3).map((opportunity) => (
-                  <li key={opportunity.id} className="rounded-lg border border-cream-200 p-3">
-                    <p className="text-[10px] uppercase tracking-wide text-gold-700">{opportunity.type}</p>
-                    <p className="mt-0.5 text-sm font-medium text-forest-900">{opportunity.title}</p>
-                    <p className="mt-1 text-[11px] text-charcoal-400">Closes {opportunity.deadline}</p>
-                  </li>
-                ))}
-              </ul>
+            <DashboardCard title="Recommended opportunities" action="See all" actionHref="/portal/entrepreneur/opportunities">
+              {recommendedOpportunities.length === 0 ? (
+                <p className="py-6 text-center text-sm text-charcoal-500">No opportunities published yet.</p>
+              ) : (
+                <ul className="space-y-3">
+                  {recommendedOpportunities.slice(0, 3).map((opportunity) => (
+                    <li key={opportunity.id} className="rounded-lg border border-cream-200 p-3">
+                      <p className="text-[10px] uppercase tracking-wide text-gold-700">{opportunity.type}</p>
+                      <p className="mt-0.5 text-sm font-medium text-forest-900">{opportunity.title}</p>
+                      <p className="mt-1 text-[11px] text-charcoal-400">Closes {opportunity.deadline}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </DashboardCard>
           </div>
 
