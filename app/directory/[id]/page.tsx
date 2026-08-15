@@ -141,26 +141,6 @@ export default async function DirectoryProfilePage({
                   )}
                 </ul>
               </article>
-
-              <article>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-700">Certifications</p>
-                <ul className="mt-3 space-y-2">
-                  {entrepreneur.certifications.length > 0 ? (
-                    entrepreneur.certifications.map((certification) => (
-                      <li
-                        key={certification}
-                        className="rounded-lg border border-cream-200 bg-white px-3 py-2 text-sm text-forest-900"
-                      >
-                        {certification}
-                      </li>
-                    ))
-                  ) : (
-                    <li className="rounded-lg border border-cream-200 bg-white px-3 py-2 text-sm text-charcoal-500">
-                      No certifications listed yet.
-                    </li>
-                  )}
-                </ul>
-              </article>
             </div>
           </div>
         </div>

@@ -109,25 +109,39 @@ export async function loadDirectory(filters: DirectoryFilters = {}): Promise<{ e
   }
 
   try {
-    const where: Record<string, unknown> = { verified: true };
+    const where: Record<string, unknown> = { 
+      verified: true,
+      user: { status: "ACTIVE" }
+    };
     if (filters.sector && filters.sector !== "All sectors") where.sector = filters.sector;
     if (filters.country && filters.country !== "All countries") where.country = filters.country;
     if (filters.readiness && filters.readiness !== "All levels") {
       where.readinessLevel = READINESS_DB_MAP[filters.readiness] ?? undefined;
     }
     if (filters.q) {
+      // Because we already have a `user` object in `where`, we need to use AND
+      // to ensure the OR condition doesn't conflict with or overwrite the user condition 
+      // in some older Prisma versions, though generally it's fine. 
+      // A safe way is to just keep the OR at the root level.
       where.OR = [
         { businessName: { contains: filters.q, mode: "insensitive" } },
         { description: { contains: filters.q, mode: "insensitive" } },
-        { user: { name: { contains: filters.q, mode: "insensitive" } } },
+        { user: { is: { name: { contains: filters.q, mode: "insensitive" } } } },
       ];
     }
     const rows = await prisma.entrepreneurProfile.findMany({
       where,
       include: {
-        user: { select: { name: true, email: true } },
-        products: { select: { name: true } },
-        certifications: { select: { name: true } },
+        user: { 
+          select: { 
+            name: true, 
+            email: true,
+            listings: {
+              where: { status: "PUBLISHED" },
+              select: { title: true }
+            }
+          } 
+        },
       },
       orderBy: { updatedAt: "desc" },
       take: 50,
@@ -155,8 +169,8 @@ export async function loadDirectory(filters: DirectoryFilters = {}): Promise<{ e
         fundingNeed: r.fundingNeed ?? "—",
         esgActivity: r.esgActivity ?? "—",
         readinessLevel: READINESS_MAP[r.readinessLevel] ?? "Emerging",
-        products: r.products.map((p) => p.name),
-        certifications: r.certifications.map((c) => c.name),
+        products: r.user.listings.map((p) => p.title),
+        certifications: [],
         womenSupported: r.womenSupported,
         jobsCreated: r.jobsCreated,
         yearFounded: r.yearFounded ?? new Date().getFullYear(),
@@ -180,13 +194,21 @@ export async function loadDirectoryEntrepreneurById(id: string): Promise<Entrepr
     const row = await prisma.entrepreneurProfile.findUnique({
       where: { id },
       include: {
-        user: { select: { name: true, email: true } },
-        products: { select: { name: true } },
-        certifications: { select: { name: true } },
+        user: { 
+          select: { 
+            name: true, 
+            email: true,
+            status: true,
+            listings: {
+              where: { status: "PUBLISHED" },
+              select: { title: true }
+            }
+          } 
+        },
       },
     });
 
-    if (!row || !row.verified) return null;
+    if (!row || !row.verified || row.user.status !== "ACTIVE") return null;
 
     const name = row.user.name ?? row.user.email;
     const initials = name
@@ -205,8 +227,8 @@ export async function loadDirectoryEntrepreneurById(id: string): Promise<Entrepr
       fundingNeed: row.fundingNeed ?? "—",
       esgActivity: row.esgActivity ?? "—",
       readinessLevel: READINESS_MAP[row.readinessLevel] ?? "Emerging",
-      products: row.products.map((product) => product.name),
-      certifications: row.certifications.map((certification) => certification.name),
+      products: row.user.listings.map((listing) => listing.title),
+      certifications: [],
       womenSupported: row.womenSupported,
       jobsCreated: row.jobsCreated,
       yearFounded: row.yearFounded ?? new Date().getFullYear(),

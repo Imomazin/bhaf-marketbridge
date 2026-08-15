@@ -1,7 +1,6 @@
 import { DashboardCard } from "@/components/cards/DashboardCard";
 import { ReadinessBadge } from "@/components/ui/ReadinessBadge";
 import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
-import { PortalWorkflowStrip } from "@/components/layout/PortalWorkflowStrip";
 import { VerificationQueue } from "@/components/sections/VerificationQueue";
 import { AuditLog } from "@/components/sections/AuditLog";
 import { entrepreneurs } from "@/data/entrepreneurs";
@@ -90,7 +89,6 @@ export default async function AdminPage() {
 
   return (
     <>
-      <PortalWorkflowStrip roleId="admin" currentStep={2} />
       <section className="bg-cream-50 py-12 md:py-16">
         <div className="container-edge">
         <div className="flex flex-wrap items-end justify-between gap-6">
