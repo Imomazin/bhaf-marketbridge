@@ -50,6 +50,14 @@ export default async function FunderPortalPage() {
         })
       : null;
 
+  const dbShortlists =
+    DB_ENABLED && prisma
+      ? await prisma.shortlist.findMany({
+          where: { ownerId: session.user.id },
+          include: { _count: { select: { entries: true } } },
+        })
+      : [];
+
   const seeded = isSeededFunderAccount(session.user.id);
   const profile = demoProfile ?? getDemoSeedFunderProfile(session.user.id);
   const orgName = profile?.orgName ?? "Your fund or organisation";
@@ -57,21 +65,35 @@ export default async function FunderPortalPage() {
   const mandate = profile?.mandate?.trim() || "Define your investment or donor mandate in Manage account.";
   const geoFocus = profile?.geoFocus ?? [];
   const sectorFocus = profile?.sectorFocus ?? [];
-  const savedShortlists = buildFunderShortlistsFromEntries(savedShortlistEntries);
+  
+  const savedShortlists = DB_ENABLED
+    ? dbShortlists.map((s) => ({
+        id: s.id,
+        name: s.name,
+        count: s._count.entries,
+        owner: contactName,
+      }))
+    : buildFunderShortlistsFromEntries(savedShortlistEntries);
+    
   const shortlists = [...savedShortlists, ...(seeded ? SEEDED_FUNDER_SHORTLISTS : [])];
+  
+  const totalEntriesCount = DB_ENABLED
+    ? dbShortlists.reduce((sum, s) => sum + s._count.entries, 0)
+    : savedShortlistEntries.length;
+    
   const pipeline = seeded
     ? SEEDED_FUNDER_PIPELINE.map((row) =>
         row.stage === "Sourcing"
-          ? { ...row, count: row.count + savedShortlistEntries.length }
+          ? { ...row, count: row.count + totalEntriesCount }
           : row,
       )
     : [
         {
           stage: "Sourcing",
-          count: savedShortlistEntries.length,
+          count: totalEntriesCount,
           capital: "—",
           description:
-            savedShortlistEntries.length > 0
+            totalEntriesCount > 0
               ? "Ventures saved from the directory and ready for first review."
               : "No saved ventures yet.",
         },

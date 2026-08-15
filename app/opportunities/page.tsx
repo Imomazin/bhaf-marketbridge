@@ -55,7 +55,7 @@ export default async function OpportunitiesPage({
             <a href="/opportunities" className="btn-secondary !py-2 !px-4 text-xs">Reset</a>
             <span className="ml-auto text-xs text-charcoal-500">
               <strong className="text-forest-900">{opportunities.length}</strong> open
-              {!isReal && (
+              {!isReal && opportunities.length > 0 && (
                 <span className="ml-2 rounded-full bg-cream-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-charcoal-500">
                   Sample data
                 </span>

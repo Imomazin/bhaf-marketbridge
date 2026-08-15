@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { PortalSidebar } from "@/components/layout/PortalSidebar";
+import { DeleteListingButton } from "@/components/listings/DeleteListingButton";
 import { entrepreneurs } from "@/data/entrepreneurs";
 import { getDemoListings } from "@/lib/demoState";
 import { getEntrepreneurNav } from "@/lib/portalNav";
@@ -114,10 +115,14 @@ export default async function EntrepreneurListingsPage({
                   </div>
                   <h2 className="mt-2 font-serif text-xl text-forest-900">{listing.title}</h2>
                   <p className="mt-3 text-sm leading-relaxed text-charcoal-500">{listing.description}</p>
-                  <div className="mt-5">
-                    <Link href="/marketplace" className="text-xs font-medium text-forest-700 hover:text-gold-700">
+                  <div className="mt-5 flex items-center gap-4">
+                    <Link href={`/marketplace`} className="text-xs font-medium text-forest-700 hover:text-gold-700">
                       View on marketplace →
                     </Link>
+                    <Link href={`/portal/entrepreneur/listings/${listing.id}/edit`} className="text-xs font-medium text-charcoal-600 hover:text-forest-700">
+                      Edit
+                    </Link>
+                    <DeleteListingButton id={listing.id} />
                   </div>
                 </article>
               ))}

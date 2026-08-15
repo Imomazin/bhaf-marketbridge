@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ARTEFACT_MAX_BYTES, ARTEFACT_MAX_MB, formatArtefactBytes } from "@/lib/artefactUpload";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ interface RealUploadDropzoneProps {
 }
 
 export function RealUploadDropzone({ defaultCategory = "Business identity" }: RealUploadDropzoneProps) {
+  const router = useRouter();
   const [hover, setHover] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState("");
@@ -84,6 +86,15 @@ export function RealUploadDropzone({ defaultCategory = "Business identity" }: Re
     if (res.ok) {
       setStage(STAGES.length);
       setResult({ ok: true, sha256: res.sha256 });
+      router.refresh();
+      
+      // Optional: reset the form after 3 seconds so they can upload another
+      setTimeout(() => {
+        setFile(null);
+        setName("");
+        setResult(null);
+        setStage(-1);
+      }, 3000);
     } else {
       setStage(-1);
       setResult({ ok: false, message: res.message });

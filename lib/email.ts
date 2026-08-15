@@ -2,13 +2,7 @@ import { Resend } from "resend";
 import { renderBrandedEmail } from "@/lib/emailTemplate";
 
 const resendClient = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const emailProvider = process.env.EMAIL_PROVIDER ?? "auto";
-const mailtrapApiToken = process.env.MAILTRAP_API_TOKEN;
-const mailtrapFromEmail = process.env.MAILTRAP_FROM_EMAIL;
-const mailtrapFromName = process.env.MAILTRAP_FROM_NAME;
 const MAILTRAP_SEND_URL = "https://send.api.mailtrap.io/api/send";
-
-const FROM = process.env.EMAIL_FROM ?? "BHAF MarketBridge <noreply@bhaf.example>";
 
 interface EmailPayload {
   to: string;
@@ -32,6 +26,10 @@ function parseFromAddress(value: string) {
 }
 
 function getMailtrapFromAddress() {
+  const mailtrapFromEmail = process.env.MAILTRAP_FROM_EMAIL;
+  const mailtrapFromName = process.env.MAILTRAP_FROM_NAME;
+  const FROM = process.env.EMAIL_FROM ?? "BHAF MarketBridge <noreply@bhaf.example>";
+
   if (mailtrapFromEmail) {
     return mailtrapFromName
       ? { email: mailtrapFromEmail.trim(), name: mailtrapFromName.trim() }
@@ -45,6 +43,7 @@ export async function sendEmail({ to, subject, body, html, ctaLabel, ctaUrl }: E
   const renderedHtml = html ?? renderBrandedEmail({ title: subject, bodyText: body, ctaLabel, ctaUrl });
 
   async function tryMailtrap() {
+    const mailtrapApiToken = process.env.MAILTRAP_API_TOKEN;
     if (!mailtrapApiToken) return false;
 
     const controller = new AbortController();
@@ -98,6 +97,7 @@ export async function sendEmail({ to, subject, body, html, ctaLabel, ctaUrl }: E
 
   async function tryResend() {
     if (!resendClient) return false;
+    const FROM = process.env.EMAIL_FROM ?? "BHAF MarketBridge <noreply@bhaf.example>";
     try {
       await Promise.race([
         resendClient.emails.send({
@@ -118,6 +118,7 @@ export async function sendEmail({ to, subject, body, html, ctaLabel, ctaUrl }: E
     }
   }
 
+  const emailProvider = process.env.EMAIL_PROVIDER ?? "auto";
   const deliveryOrder =
     emailProvider === "resend"
       ? [tryResend]

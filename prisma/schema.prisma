@@ -58,6 +58,10 @@ model User {
   rfpResponses             RfpResponse[]            @relation("RfpResponder")
   dataRooms                DataRoom[]               @relation("DataRoomOwner")
   dataRoomAccess           DataRoomAccess[]
+  enquiriesSent            Enquiry[]                @relation("EnquiriesSent")
+  enquiriesReceived        Enquiry[]                @relation("EnquiriesReceived")
+  shortlistsOwned          Shortlist[]              @relation("ShortlistOwner")
+  shortlistEntries         ShortlistEntry[]         @relation("ShortlistedEntrepreneurs")
 
   @@index([email])
   @@index([role])
@@ -356,6 +360,7 @@ model Listing {
   updatedAt   DateTime @updatedAt
 
   owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  enquiries   Enquiry[]
 
   @@index([category])
   @@index([status])
@@ -731,4 +736,62 @@ enum AccessLevel {
   VIEW
   DOWNLOAD
   EDIT
+}
+
+// ────────────────────────────────────────────────────────────
+// Enquiries (buyer → marketplace listing)
+// ────────────────────────────────────────────────────────────
+
+model Enquiry {
+  id             String         @id @default(cuid())
+  senderId       String
+  listingId      String
+  targetUserId   String
+  note           String?        @db.Text
+  status         EnquiryStatus  @default(SENT)
+  createdAt      DateTime       @default(now())
+
+  sender         User           @relation("EnquiriesSent", fields: [senderId], references: [id], onDelete: Cascade)
+  targetUser     User           @relation("EnquiriesReceived", fields: [targetUserId], references: [id], onDelete: Cascade)
+  listing        Listing        @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+  @@index([senderId])
+  @@index([targetUserId])
+}
+
+enum EnquiryStatus {
+  SENT
+  READ
+  RESPONDED
+  ARCHIVED
+}
+
+// ────────────────────────────────────────────────────────────
+// Shortlists (funder/corporate → saved entrepreneurs)
+// ────────────────────────────────────────────────────────────
+
+model Shortlist {
+  id        String   @id @default(cuid())
+  ownerId   String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner     User             @relation("ShortlistOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  entries   ShortlistEntry[]
+
+  @@unique([ownerId, name])
+}
+
+model ShortlistEntry {
+  id               String   @id @default(cuid())
+  shortlistId      String
+  entrepreneurId   String
+  createdAt        DateTime @default(now())
+
+  shortlist        Shortlist @relation(fields: [shortlistId], references: [id], onDelete: Cascade)
+  entrepreneur     User      @relation("ShortlistedEntrepreneurs", fields: [entrepreneurId], references: [id], onDelete: Cascade)
+
+  @@unique([shortlistId, entrepreneurId])
 }

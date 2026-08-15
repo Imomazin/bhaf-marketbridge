@@ -70,7 +70,7 @@ export default async function MarketplacePage({
             <span>
               <strong className="text-forest-900">{marketplaceListings.length}</strong> listings · all entrepreneurs
               verified by BHAF
-              {!isReal && (
+              {!isReal && marketplaceListings.length > 0 && (
                 <span className="ml-2 rounded-full bg-cream-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-charcoal-500">
                   Sample data
                 </span>
@@ -79,13 +79,19 @@ export default async function MarketplacePage({
             <span>Sorted by relevance</span>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {marketplaceListings.map((l, idx) => (
-              <Reveal key={l.id} delayMs={idx * 80}>
-                <MarketplaceCard listing={l} />
-              </Reveal>
-            ))}
-          </div>
+          {marketplaceListings.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-cream-300 bg-white p-10 text-center text-sm text-charcoal-500">
+              No products or services match this filter yet. Check back soon.
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {marketplaceListings.map((l, idx) => (
+                <Reveal key={l.id} delayMs={idx * 80}>
+                  <MarketplaceCard listing={l} />
+                </Reveal>
+              ))}
+            </div>
+          )}
 
           <div className="mt-16 overflow-hidden rounded-2xl">
             <AnnotatedPhoto

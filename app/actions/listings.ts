@@ -54,6 +54,14 @@ export async function createListing(
     return { ok: true, id: listing.id, message: "Listing published!" };
   }
 
+  const profile = await prisma.entrepreneurProfile.findUnique({
+    where: { userId: session.user.id },
+    select: { verified: true },
+  });
+
+  const isVerified = profile?.verified ?? false;
+  const status = isVerified ? "PUBLISHED" : "PENDING_REVIEW";
+
   const listing = await prisma.listing.create({
     data: {
       ownerId: session.user.id,
@@ -64,7 +72,8 @@ export async function createListing(
       minOrder: parsed.data.minOrder || null,
       esgHighlight: parsed.data.esgHighlight || null,
       tags,
-      status: "PENDING_REVIEW",
+      status,
+      publishedAt: isVerified ? new Date() : null,
     },
   });
 
@@ -81,8 +90,9 @@ export async function createListing(
   return {
     ok: true,
     id: listing.id,
-    message:
-      "Listing submitted. It'll appear in the marketplace once BHAF approves it.",
+    message: isVerified
+      ? "Listing published directly to the marketplace!"
+      : "Listing submitted. It'll appear in the marketplace once BHAF approves it.",
   };
 }
 
@@ -157,4 +167,115 @@ export async function reviewListing(
     id,
     message: `Listing ${decision === "APPROVE" ? "published" : "rejected"}.`,
   };
+}
+
+export async function unarchiveListing(id: string): Promise<ListingResult> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, message: "Sign-in required." };
+  if (!DB_ENABLED || !prisma)
+    return { ok: false, message: "Database not configured." };
+  if (session.user.role !== "ADMIN" && session.user.role !== "AUDITOR") {
+    return { ok: false, message: "Only admins can unarchive listings." };
+  }
+
+  const listing = await prisma.listing.findUnique({ where: { id } });
+  if (!listing) return { ok: false, message: "Listing not found." };
+  if (listing.status !== "ARCHIVED") {
+    return { ok: false, message: "Listing is not archived." };
+  }
+
+  await prisma.listing.update({
+    where: { id },
+    data: { status: "PUBLISHED" },
+  });
+
+  await writeAudit({
+    actorId: session.user.id,
+    actorLabel: session.user.email ?? "Admin",
+    action: `Listing unarchived · ${listing.title}`,
+    entityType: "Listing",
+    entityId: listing.id,
+  });
+
+  revalidatePath("/marketplace");
+  revalidatePath("/admin");
+  return { ok: true, id, message: "Listing unarchived and published." };
+}
+
+export async function updateListing(
+  id: string,
+  input: ListingInput,
+): Promise<ListingResult> {
+  const session = await auth();
+  if (!session?.user) return { ok: false, message: "Sign-in required." };
+  if (session.user.role !== "ENTREPRENEUR" && session.user.role !== "ADMIN") {
+    return { ok: false, message: "Only entrepreneurs can update listings." };
+  }
+  if (!DB_ENABLED || !prisma)
+    return { ok: false, message: "Database not configured." };
+
+  const parsed = listingSchema.safeParse(input);
+  if (!parsed.success) {
+    return {
+      ok: false,
+      message: parsed.error.issues[0]?.message ?? "Invalid input.",
+    };
+  }
+
+  const listing = await prisma.listing.findUnique({ where: { id } });
+  if (!listing) return { ok: false, message: "Listing not found." };
+  if (listing.ownerId !== session.user.id && session.user.role !== "ADMIN") {
+    return { ok: false, message: "You can only update your own listings." };
+  }
+
+  const tags = parsed.data.tags
+    ? parsed.data.tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean)
+        .slice(0, 10)
+    : [];
+
+  const profile = await prisma.entrepreneurProfile.findUnique({
+    where: { userId: listing.ownerId },
+    select: { verified: true },
+  });
+
+  const isVerified = profile?.verified ?? false;
+  // If the listing was published, let it stay published if they are verified. 
+  // Otherwise, it might need to go back to pending review if they aren't verified, 
+  // but let's assume it reverts to pending if they are not verified, or stays published if verified.
+  let newStatus = listing.status;
+  if (newStatus === "REJECTED" || newStatus === "ARCHIVED") {
+    newStatus = isVerified ? "PUBLISHED" : "PENDING_REVIEW";
+  } else if (!isVerified) {
+    newStatus = "PENDING_REVIEW";
+  }
+
+  await prisma.listing.update({
+    where: { id },
+    data: {
+      title: parsed.data.title,
+      category: parsed.data.category,
+      description: parsed.data.description,
+      priceRange: parsed.data.priceRange || null,
+      minOrder: parsed.data.minOrder || null,
+      esgHighlight: parsed.data.esgHighlight || null,
+      tags,
+      status: newStatus,
+    },
+  });
+
+  await writeAudit({
+    actorId: session.user.id,
+    actorLabel: session.user.email ?? session.user.id,
+    action: `Listing updated · ${parsed.data.title}`,
+    entityType: "Listing",
+    entityId: listing.id,
+  });
+
+  revalidatePath("/marketplace");
+  revalidatePath("/portal/entrepreneur");
+  revalidatePath("/portal/entrepreneur/listings");
+  return { ok: true, id: listing.id, message: "Listing updated." };
 }

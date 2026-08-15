@@ -18,8 +18,8 @@ describe("demo accounts", () => {
   });
 
   it("validates only exact published demo credentials", () => {
-    expect(validateDemoCredentials("amara@greenweave.example", "Founder!123")?.key).toBe("entrepreneur");
+    expect(validateDemoCredentials("amara@greenweave.example", "Test1234@@")?.key).toBe("entrepreneur");
     expect(validateDemoCredentials("amara@greenweave.example", "wrong-password")).toBeNull();
-    expect(validateDemoCredentials("unknown@example.com", "Founder!123")).toBeNull();
+    expect(validateDemoCredentials("unknown@example.com", "Test1234@@")).toBeNull();
   });
 });

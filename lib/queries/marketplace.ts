@@ -50,7 +50,10 @@ export async function loadMarketplace(filters: MarketplaceFilters = {}): Promise
   }
 
   try {
-    const where: Record<string, unknown> = { status: "PUBLISHED" };
+    const where: Record<string, unknown> = { 
+      status: "PUBLISHED",
+      owner: { status: "ACTIVE" } 
+    };
     if (filters.category && filters.category !== "All categories") where.category = filters.category;
     if (filters.q) {
       where.OR = [

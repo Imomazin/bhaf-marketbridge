@@ -94,7 +94,7 @@ export default async function DirectoryPage({
           <div className="mb-6 flex items-center justify-between text-sm text-charcoal-500">
             <span>
               Showing <strong className="text-forest-900">{entrepreneurs.length}</strong> verified entrepreneurs
-              {!isReal && (
+              {!isReal && entrepreneurs.length > 0 && (
                 <span className="ml-2 rounded-full bg-cream-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-charcoal-500">
                   Sample data
                 </span>
@@ -103,13 +103,19 @@ export default async function DirectoryPage({
             <span>Sorted by readiness level</span>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {entrepreneurs.map((e, idx) => (
-              <Reveal key={e.id} delayMs={idx * 80}>
-                <EntrepreneurCard entrepreneur={e} />
-              </Reveal>
-            ))}
-          </div>
+          {entrepreneurs.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-cream-300 bg-white p-10 text-center text-sm text-charcoal-500">
+              No verified entrepreneurs match this filter yet. Check back soon.
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {entrepreneurs.map((e, idx) => (
+                <Reveal key={e.id} delayMs={idx * 80}>
+                  <EntrepreneurCard entrepreneur={e} />
+                </Reveal>
+              ))}
+            </div>
+          )}
 
           <div className="mt-16 grid gap-6 md:grid-cols-3">
             <AnnotatedPhoto photo={photos.abuja7} tag="Cohort 1" caption="Group portrait — Abuja Accelerator." aspect="auto" className="min-h-[220px]" />

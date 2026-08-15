@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth } from "@/auth";
+import { prisma, DB_ENABLED } from "@/lib/db";
 import { loadDirectoryEntrepreneurById } from "@/lib/queries/directory";
 import { saveFunderShortlistEntry } from "@/lib/funderShortlists";
 
@@ -31,24 +32,63 @@ export async function addEntrepreneurToShortlist(formData: FormData) {
   const entrepreneur = await loadDirectoryEntrepreneurById(parsed.data.entrepreneurId);
   if (!entrepreneur) redirect("/directory");
 
-  await saveFunderShortlistEntry({
-    funderUserId: session.user.id,
-    shortlistName: parsed.data.shortlistName,
-    entrepreneurId: entrepreneur.id,
-    entrepreneurName: entrepreneur.name,
-    businessName: entrepreneur.businessName,
-    country: entrepreneur.country,
-    sector: entrepreneur.sector,
-    readinessLevel: entrepreneur.readinessLevel,
-    fundingNeed: entrepreneur.fundingNeed,
-    description: entrepreneur.description,
-  });
+  if (DB_ENABLED && prisma) {
+    let shortlist = await prisma.shortlist.findUnique({
+      where: {
+        ownerId_name: {
+          ownerId: session.user.id,
+          name: parsed.data.shortlistName,
+        }
+      }
+    });
+
+    if (!shortlist) {
+      shortlist = await prisma.shortlist.create({
+        data: {
+          ownerId: session.user.id,
+          name: parsed.data.shortlistName,
+        }
+      });
+    }
+
+    const existingEntry = await prisma.shortlistEntry.findUnique({
+      where: {
+        shortlistId_entrepreneurId: {
+          shortlistId: shortlist.id,
+          entrepreneurId: entrepreneur.id,
+        }
+      }
+    });
+
+    if (!existingEntry) {
+      await prisma.shortlistEntry.create({
+        data: {
+          shortlistId: shortlist.id,
+          entrepreneurId: entrepreneur.id,
+        }
+      });
+    }
+  } else {
+    await saveFunderShortlistEntry({
+      funderUserId: session.user.id,
+      shortlistName: parsed.data.shortlistName,
+      entrepreneurId: entrepreneur.id,
+      entrepreneurName: entrepreneur.name,
+      businessName: entrepreneur.businessName,
+      country: entrepreneur.country,
+      sector: entrepreneur.sector,
+      readinessLevel: entrepreneur.readinessLevel,
+      fundingNeed: entrepreneur.fundingNeed,
+      description: entrepreneur.description,
+    });
+  }
 
   revalidatePath("/directory");
   revalidatePath(parsed.data.returnTo);
   revalidatePath("/portal/funder");
   revalidatePath("/portal/funder/shortlists");
   revalidatePath("/portal/funder/pipeline");
+  revalidatePath("/portal/corporate");
 
   redirect(`${parsed.data.returnTo}?shortlisted=1`);
 }

@@ -81,6 +81,13 @@ export async function approveProfile(role: ProfileRole, profileId: string): Prom
     reviewedAt: new Date(),
   });
 
+  if (role === "entrepreneur") {
+    await prisma.listing.updateMany({
+      where: { ownerId: existing.user.id, status: "PENDING_REVIEW" },
+      data: { status: "PUBLISHED", publishedAt: new Date() },
+    });
+  }
+
   await writeAudit({
     actorId: gate.session.user.id,
     actorLabel: gate.session.user.email ?? gate.session.user.id,

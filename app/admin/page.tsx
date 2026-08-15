@@ -16,14 +16,7 @@ import { getAllDemoApplications, getAllDemoEnquiries, getAllDemoEntrepreneurProf
 import { getDemoUsersByRole } from "@/lib/demoUsers";
 import { buildInitials, getReadinessLevel } from "@/lib/demoPresentation";
 
-export const dynamic = "force-dynamic";
-const activity = [
-  { time: "08:42", actor: "Amara Okafor", action: "Uploaded ESG documentation pack" },
-  { time: "Yesterday", actor: "Mosaic Impact Partners", action: "Shortlisted 6 entrepreneurs for review" },
-  { time: "Yesterday", actor: "Lumina Skill Studios", action: "Submitted certification application" },
-  { time: "2 days ago", actor: "BHAF Admin", action: "Published Green Trade Accelerator Grant 2026" },
-  { time: "3 days ago", actor: "Khaya Harvest", action: "Marketplace listing approved" },
-];
+// Removed hardcoded activity array
 
 export default async function AdminPage() {
   const adminData = await loadAdminData();
@@ -41,6 +34,9 @@ export default async function AdminPage() {
   const pendingProfilesCount = DB_ENABLED ? await countPendingProfiles() : 0;
   const readinessPipeline = await getReadinessPipeline();
   const publishedOpportunitiesCount = DB_ENABLED && prisma ? await prisma.opportunity.count({ where: { published: true } }) : 0;
+  const verifiedEntrepreneursCount = DB_ENABLED && prisma ? await prisma.entrepreneurProfile.count({ where: { verified: true } }) : 0;
+  const enquiriesCount = DB_ENABLED && prisma ? await prisma.enquiry.count() : 0;
+  const publishedListingsCount = DB_ENABLED && prisma ? await prisma.listing.count({ where: { status: "PUBLISHED" } }) : 0;
   const dashboardOpportunities = DB_ENABLED ? (await loadOpportunities()).opportunities : [];
 
   const pendingProfiles =
@@ -74,8 +70,8 @@ export default async function AdminPage() {
     },
     {
       label: "Verified entrepreneurs",
-      value: String(DB_ENABLED ? 165 : demoEntrepreneurs.length),
-      trend: DB_ENABLED ? "+8 this month" : "Visible in this demo browser session",
+      value: String(DB_ENABLED ? verifiedEntrepreneursCount : demoEntrepreneurs.length),
+      trend: DB_ENABLED ? "Active profiles" : "Visible in this demo browser session",
       tone: "forest" as const,
     },
     {
@@ -86,8 +82,8 @@ export default async function AdminPage() {
     },
     {
       label: "Marketplace enquiries",
-      value: String(DB_ENABLED ? 318 : demoEnquiries.length),
-      trend: DB_ENABLED ? "+42 last 7 days" : `${demoApplications.length} demo applications submitted`,
+      value: String(DB_ENABLED ? enquiriesCount : demoEnquiries.length),
+      trend: DB_ENABLED ? "Total leads generated" : `${demoApplications.length} demo applications submitted`,
       tone: "neutral" as const,
     },
   ];
@@ -109,6 +105,9 @@ export default async function AdminPage() {
           <div className="flex flex-wrap gap-2">
             <a href="/admin/users" className="btn-secondary !py-2 !px-3 text-xs">
               Users
+            </a>
+            <a href="/admin/listings" className="btn-secondary !py-2 !px-3 text-xs">
+              Listings
             </a>
             <a href="/admin/artefacts" className="btn-secondary !py-2 !px-3 text-xs">
               Artefacts
@@ -206,17 +205,21 @@ export default async function AdminPage() {
           {/* Activity */}
           <DashboardCard title="Recent activity" description="Live across the platform">
             <ul className="space-y-4">
-              {activity.map((a, idx) => (
-                <li key={idx} className="flex gap-3">
-                  <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-gold-500" />
-                  <div className="flex-1">
-                    <p className="text-sm text-forest-900">
-                      <span className="font-medium">{a.actor}</span> {a.action.toLowerCase()}
-                    </p>
-                    <p className="text-[11px] text-charcoal-400">{a.time}</p>
-                  </div>
-                </li>
-              ))}
+              {adminData.audit.length === 0 ? (
+                <li className="text-sm text-charcoal-500 py-2">No recent activity</li>
+              ) : (
+                adminData.audit.slice(0, 5).map((a, idx) => (
+                  <li key={idx} className="flex gap-3">
+                    <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-gold-500" />
+                    <div className="flex-1">
+                      <p className="text-sm text-forest-900">
+                        <span className="font-medium">{a.actor}</span> {a.action.toLowerCase()}
+                      </p>
+                      <p className="text-[11px] text-charcoal-400">{a.ts}</p>
+                    </div>
+                  </li>
+                ))
+              )}
             </ul>
           </DashboardCard>
         </div>

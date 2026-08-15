@@ -196,22 +196,23 @@ async function buildInitialChecks(sha256: string) {
   ];
 
   let avRow:
-    | { name: string; status: "PASS" | "FAIL" | "WARN" | "PENDING"; detail?: string };
+    | { name: string; status: "PASS" | "FAIL" | "WARN" | "PENDING"; detail?: string }
+    | null = null;
   try {
     const av = await checkBySha256(sha256);
-    avRow =
-      av.status === "CLEAN"
-        ? { name: "Antivirus scan (VirusTotal)", status: "PASS", detail: `${av.total ?? 0} engines · ${av.message}` }
-        : av.status === "INFECTED"
-          ? { name: "Antivirus scan (VirusTotal)", status: "FAIL", detail: av.message }
-          : av.status === "PENDING"
-            ? { name: "Antivirus scan (VirusTotal)", status: "PENDING", detail: av.message }
-            : av.status === "NOT_CONFIGURED"
-              ? { name: "Antivirus scan", status: "PENDING", detail: "VirusTotal not configured — manual review" }
+    if (av.status !== "NOT_CONFIGURED") {
+      avRow =
+        av.status === "CLEAN"
+          ? { name: "Antivirus scan (VirusTotal)", status: "PASS", detail: `${av.total ?? 0} engines · ${av.message}` }
+          : av.status === "INFECTED"
+            ? { name: "Antivirus scan (VirusTotal)", status: "FAIL", detail: av.message }
+            : av.status === "PENDING"
+              ? { name: "Antivirus scan (VirusTotal)", status: "PENDING", detail: av.message }
               : { name: "Antivirus scan", status: "WARN", detail: av.message };
+    }
   } catch {
     avRow = { name: "Antivirus scan", status: "PENDING" };
   }
 
-  return [...base, avRow, { name: "Cross-check against profile", status: "PENDING" as const }];
+  return [...base, ...(avRow ? [avRow] : []), { name: "Cross-check against profile", status: "PENDING" as const }];
 }

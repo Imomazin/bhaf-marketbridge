@@ -6,6 +6,8 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
+import { sendEmail } from "@/lib/email";
+
 import { authConfig } from "@/auth.config";
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { validateDemoCredentials } from "@/lib/demoAccounts";
@@ -103,14 +105,25 @@ if (process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET) {
   );
 }
 
-if (process.env.AUTH_RESEND_KEY) {
-  providers.push(
-    Resend({
-      apiKey: process.env.AUTH_RESEND_KEY,
-      from: process.env.AUTH_EMAIL_FROM ?? "BHAF MarketBridge <noreply@bhaf.example>",
-    }),
-  );
-}
+// Add a custom Email provider that hooks into our unified email sender
+providers.push({
+  id: "email",
+  type: "email",
+  name: "Email",
+  server: "", // Not used because we override sendVerificationRequest
+  from: process.env.EMAIL_FROM ?? "BHAF MarketBridge <noreply@bhaf.example>",
+  maxAge: 24 * 60 * 60,
+  options: {},
+  sendVerificationRequest: async ({ identifier: to, url }) => {
+    await sendEmail({
+      to,
+      subject: "Sign in to BHAF MarketBridge",
+      body: `Use this link to sign in to your MarketBridge account:\n\n${url}\n\nThis link will expire in 24 hours.`,
+      ctaLabel: "Sign in to MarketBridge",
+      ctaUrl: url,
+    });
+  },
+} as any);
 
 export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
   ...authConfig,

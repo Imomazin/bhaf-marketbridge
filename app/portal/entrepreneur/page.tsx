@@ -65,6 +65,14 @@ export default async function EntrepreneurPortalPage() {
         })
       : null;
 
+  const dbListings =
+    DB_ENABLED && prisma
+      ? await prisma.listing.findMany({
+          where: { ownerId: session.user.id },
+          orderBy: { createdAt: "desc" },
+        })
+      : [];
+
   const recommendedOpportunities = DB_ENABLED
     ? (await loadOpportunities()).opportunities
     : mockOpportunities;
@@ -91,7 +99,13 @@ export default async function EntrepreneurPortalPage() {
   });
 
   const listingItems =
-    demoListings.length > 0
+    DB_ENABLED && dbListings.length > 0
+      ? dbListings.map((listing) => ({
+          id: listing.id,
+          title: listing.title,
+          meta: `${listing.category} · created ${formatIsoDate(listing.createdAt)}`,
+        }))
+      : demoListings.length > 0
       ? demoListings.map((listing) => ({
           id: listing.id,
           title: listing.title,
@@ -299,6 +313,7 @@ export default async function EntrepreneurPortalPage() {
               title="My listings"
               description="Products and services visible to buyers and partners."
               action="New listing"
+              actionHref="/portal/entrepreneur/listings"
               className="lg:col-span-2"
             >
               {listingItems.length > 0 ? (

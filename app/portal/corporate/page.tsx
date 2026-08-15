@@ -46,19 +46,60 @@ export default async function CorporatePortalPage() {
           select: { status: true, rejectionReason: true },
         })
       : null;
-  const activeRfps = [
-    ...demoRfps.map((rfp) => ({
-      title: rfp.title,
-      responses: 0,
-      deadline: rfp.deadline ? rfp.deadline.slice(0, 10) : "No deadline",
-      category: rfp.category,
-      reviewHref: `/marketplace/rfps/${rfp.id}`,
-    })),
-    ...rfps.map((rfp) => ({
-      ...rfp,
-      reviewHref: "/marketplace/rfps",
-    })),
-  ].slice(0, 6);
+
+  const dbRfps = session?.user && DB_ENABLED && prisma
+    ? await prisma.rfp.findMany({
+        where: { ownerId: session.user.id, status: { not: "DRAFT" } },
+        include: { _count: { select: { responses: true } } },
+        orderBy: { createdAt: "desc" },
+      })
+    : [];
+
+  const dbShortlistEntries = session?.user && DB_ENABLED && prisma
+    ? await prisma.shortlistEntry.findMany({
+        where: { shortlist: { ownerId: session.user.id } },
+        include: {
+          entrepreneur: {
+            include: { entrepreneurProfile: true }
+          }
+        },
+        orderBy: { createdAt: "desc" },
+        take: 6,
+      })
+    : [];
+
+  const activeRfps = (DB_ENABLED && prisma)
+    ? dbRfps.map(rfp => ({
+        title: rfp.title,
+        responses: rfp._count.responses,
+        deadline: rfp.deadline ? rfp.deadline.toISOString().slice(0, 10) : "No deadline",
+        category: rfp.category,
+        reviewHref: `/portal/corporate/rfps/${rfp.id}`,
+      }))
+    : [
+      ...demoRfps.map((rfp) => ({
+        title: rfp.title,
+        responses: 0,
+        deadline: rfp.deadline ? rfp.deadline.slice(0, 10) : "No deadline",
+        category: rfp.category,
+        reviewHref: `/marketplace/rfps/${rfp.id}`,
+      })),
+      ...rfps.map((rfp) => ({
+        ...rfp,
+        reviewHref: "/marketplace/rfps",
+      })),
+    ].slice(0, 6);
+
+  const shortlistedSuppliers = (DB_ENABLED && prisma)
+    ? dbShortlistEntries.map(e => ({
+        id: e.entrepreneur.id,
+        category: e.entrepreneur.entrepreneurProfile?.sector || "Uncategorised",
+        title: e.entrepreneur.entrepreneurProfile?.businessName || "Supplier",
+        business: e.entrepreneur.name || e.entrepreneur.email || "Contact",
+        country: e.entrepreneur.entrepreneurProfile?.country || "Location pending",
+        esgHighlight: e.entrepreneur.entrepreneurProfile?.esgActivity || "",
+      }))
+    : marketplaceListings.slice(0, 6);
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
@@ -173,7 +214,7 @@ export default async function CorporatePortalPage() {
               action="Open marketplace"
             >
               <ul className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                {marketplaceListings.slice(0, 6).map((l) => (
+                {shortlistedSuppliers.map((l) => (
                   <li key={l.id} className="rounded-lg border border-cream-200 p-3">
                     <p className="text-[10px] uppercase tracking-wide text-gold-700">{l.category}</p>
                     <p className="mt-0.5 text-sm font-medium text-forest-900">{l.title}</p>
