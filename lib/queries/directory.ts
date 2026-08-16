@@ -160,7 +160,7 @@ export async function loadDirectory(filters: DirectoryFilters = {}): Promise<{ e
         .slice(0, 2)
         .join("");
       return {
-        id: r.id,
+        id: r.userId,
         name,
         country: r.country,
         sector: r.sector,
@@ -192,7 +192,7 @@ export async function loadDirectoryEntrepreneurById(id: string): Promise<Entrepr
 
   try {
     const row = await prisma.entrepreneurProfile.findUnique({
-      where: { id },
+      where: { userId: id },
       include: {
         user: { 
           select: { 
@@ -218,7 +218,7 @@ export async function loadDirectoryEntrepreneurById(id: string): Promise<Entrepr
       .join("");
 
     return {
-      id: row.id,
+      id: row.userId,
       name,
       country: row.country,
       sector: row.sector,

@@ -81,3 +81,17 @@ export async function loadOpportunities(filters: OpportunityFilters = {}): Promi
     return { opportunities: mockOpportunities, isReal: false };
   }
 }
+
+export async function getUserAppliedOpportunityIds(userId: string): Promise<Set<string>> {
+  if (!DB_ENABLED || !prisma) {
+    const { getDemoApplications } = await import("@/lib/demoState");
+    const apps = await getDemoApplications(userId);
+    return new Set(apps.map((a) => a.opportunityId));
+  }
+  
+  const rows = await prisma.application.findMany({
+    where: { userId },
+    select: { opportunityId: true }
+  });
+  return new Set(rows.map((r) => r.opportunityId));
+}

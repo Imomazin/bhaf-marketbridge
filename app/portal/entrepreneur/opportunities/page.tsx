@@ -3,7 +3,7 @@ import Link from "next/link";
 import { auth } from "@/auth";
 import { PortalSidebar } from "@/components/layout/PortalSidebar";
 import { OpportunityCard } from "@/components/cards/OpportunityCard";
-import { loadOpportunities } from "@/lib/queries/opportunities";
+import { loadOpportunities, getUserAppliedOpportunityIds } from "@/lib/queries/opportunities";
 import { getEntrepreneurNav } from "@/lib/portalNav";
 import { normalizeSearchParam } from "@/lib/searchParams";
 
@@ -25,7 +25,11 @@ export default async function EntrepreneurOpportunitiesPage({
     q: normalizeSearchParam(resolved.q),
     type: normalizeSearchParam(resolved.type),
   };
-  const { opportunities } = await loadOpportunities(filters);
+  
+  const [{ opportunities }, appliedIds] = await Promise.all([
+    loadOpportunities(filters),
+    getUserAppliedOpportunityIds(session.user.id),
+  ]);
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
@@ -76,7 +80,7 @@ export default async function EntrepreneurOpportunitiesPage({
           ) : (
             <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {opportunities.map((opportunity) => (
-                <OpportunityCard key={opportunity.id} opportunity={opportunity} />
+                <OpportunityCard key={opportunity.id} opportunity={opportunity} hasApplied={appliedIds.has(opportunity.id)} />
               ))}
             </div>
           )}

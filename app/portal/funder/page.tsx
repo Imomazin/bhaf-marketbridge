@@ -155,12 +155,12 @@ export default async function FunderPortalPage() {
             <OnboardingCard state={onboarding} role="funder" />
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {[
               {
-                label: "Mandate profile",
-                value: onboarding.hasProfile ? "Ready" : "Needs setup",
-                caption: onboarding.hasProfile ? "Profile is complete enough for sourcing" : "Add focus areas and ticket size",
+                label: "Onboarding status",
+                value: onboarding.percent === 100 ? "Complete" : `${onboarding.percent}%`,
+                caption: onboarding.percent === 100 ? "Your account is fully set up" : "Complete your profile and vault",
               },
               {
                 label: "Compliance documents",
@@ -172,11 +172,13 @@ export default async function FunderPortalPage() {
                 value: String(shortlists.length),
                 caption: shortlists.length > 0 ? "Named lists saved for review" : "Create your first shortlist from the directory",
               },
+              /*
               {
                 label: "Funding-ready matches",
                 value: String(matches.length),
                 caption: "Visible from the public directory right now",
               },
+              */
             ].map((item, index) => (
               <div
                 key={item.label}
@@ -260,7 +262,7 @@ export default async function FunderPortalPage() {
               description="A simple view of how your review pipeline is progressing."
               action="View pipeline"
               actionHref="/portal/funder/pipeline"
-              className="lg:col-span-2"
+              className="lg:col-span-3"
             >
               <div className="space-y-4">
                 {pipeline.map((row, index) => (
@@ -285,6 +287,7 @@ export default async function FunderPortalPage() {
               </div>
             </DashboardCard>
 
+            {/*
             <DashboardCard
               title="Impact reporting"
               description="Templates you can use to turn live platform data into funder-facing updates."
@@ -300,35 +303,25 @@ export default async function FunderPortalPage() {
                 ))}
               </ul>
             </DashboardCard>
+            */}
           </div>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-3">
             <DashboardCard
               title="Funding-ready entrepreneurs"
               description="Verified women-led ventures currently visible through the MarketBridge directory."
-              action="Open directory"
+              action="Browse directory"
               actionHref="/directory"
               className="lg:col-span-2"
             >
-              <ul className="divide-y divide-cream-200">
-                {matches.map((entrepreneur) => (
-                  <li key={entrepreneur.id} className="flex flex-wrap items-center gap-3 py-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-forest-800 text-cream-50">
-                      <span className="font-serif text-sm">{entrepreneur.initials}</span>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-forest-900">
-                        {entrepreneur.name} · {entrepreneur.businessName}
-                      </p>
-                      <p className="text-xs text-charcoal-400">
-                        {entrepreneur.country} · {entrepreneur.sector}
-                      </p>
-                    </div>
-                    <span className="hidden text-xs text-charcoal-500 md:inline">{entrepreneur.fundingNeed}</span>
-                    <ReadinessBadge level={entrepreneur.readinessLevel} />
-                  </li>
-                ))}
-              </ul>
+              <div className="flex h-full flex-col items-center justify-center rounded-xl border border-dashed border-cream-300 bg-cream-50 p-8 text-center">
+                <p className="text-sm text-charcoal-500">
+                  Browse the public directory to find verified women-led ventures that match your investment or donor mandate.
+                </p>
+                <Link href="/directory" className="btn-primary mt-4 !px-4 !py-2 text-xs">
+                  Browse directory
+                </Link>
+              </div>
             </DashboardCard>
 
             <DashboardCard title="What to do next" description="A simple guide for the next best step in the funder flow.">
@@ -338,7 +331,9 @@ export default async function FunderPortalPage() {
                     ? "Start by defining your mandate so the platform reflects who you want to support."
                     : !onboarding.hasFirstArtefact
                     ? "Upload your first compliance document so diligence and introductions have supporting evidence."
-                    : "Use the directory and shortlists to move businesses into your diligence process."}
+                    : shortlists.length === 0
+                    ? "Use the directory to find promising ventures and save them to your shortlists."
+                    : "Review your shortlists with your investment committee and move businesses into your diligence process."}
                 </li>
                 <li className="rounded-lg border border-cream-200 bg-white p-3">
                   The public directory, marketplace and opportunities board stay available while you build the private

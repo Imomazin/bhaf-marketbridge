@@ -22,7 +22,7 @@ export interface FunderShortlist {
   owner: string;
   focus: string;
   updatedAt: string;
-  members: string[];
+  members: { id: string; name: string }[];
 }
 
 export interface FunderReportTemplate {
@@ -120,7 +120,10 @@ export const SEEDED_FUNDER_SHORTLISTS: FunderShortlist[] = [
     owner: "Investment team",
     focus: "Off-grid energy and productive-use solutions",
     updatedAt: "2026-07-12",
-    members: ["Fatou Diop", "Thandiwe Ncube"],
+    members: [
+      { id: "fatou-diop", name: "Fatou Diop" },
+      { id: "thandiwe-ncube", name: "Thandiwe Ncube" }
+    ],
   },
   {
     id: "funder-shortlist-circular",
@@ -128,8 +131,11 @@ export const SEEDED_FUNDER_SHORTLISTS: FunderShortlist[] = [
     count: 2,
     owner: "ESG advisory",
     focus: "Waste reduction, circular production and trade readiness",
-    updatedAt: "2026-07-15",
-    members: ["Amara Okafor", "Naledi Mokoena"],
+    updatedAt: "2026-07-28",
+    members: [
+      { id: "amara-okafor", name: "Amara Okafor" },
+      { id: "wanjiru-kamau", name: "Wanjiru Kamau" }
+    ],
   },
   {
     id: "funder-shortlist-board-pack",
@@ -137,8 +143,11 @@ export const SEEDED_FUNDER_SHORTLISTS: FunderShortlist[] = [
     count: 3,
     owner: "Catalyst committee",
     focus: "Funding-ready women-led ventures for next investment committee",
-    updatedAt: "2026-07-18",
-    members: ["Amara Okafor", "Fatou Diop", "Wanjiru Kamau"],
+    members: [
+      { id: "amara-okafor", name: "Amara Okafor" },
+      { id: "fatou-diop", name: "Fatou Diop" },
+      { id: "wanjiru-kamau", name: "Wanjiru Kamau" }
+    ],
   },
 ];
 

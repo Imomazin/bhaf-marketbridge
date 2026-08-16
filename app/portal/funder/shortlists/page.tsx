@@ -7,6 +7,8 @@ import { buildFunderShortlistsFromEntries, getSavedFunderShortlistEntries } from
 import { FUNDER_MATCHES, SEEDED_FUNDER_SHORTLISTS, isSeededFunderAccount } from "@/lib/funderPortal";
 import { getFunderNav } from "@/lib/portalNav";
 
+import { RemoveFromShortlistButton } from "@/components/portal/RemoveFromShortlistButton";
+
 export const metadata = { title: "Shortlists · BHAF MarketBridge" };
 export const dynamic = "force-dynamic";
 
@@ -55,8 +57,15 @@ export default async function FunderShortlistsPage() {
 
                   <ul className="mt-4 space-y-2">
                     {shortlist.members.map((member) => (
-                      <li key={member} className="rounded-lg border border-cream-200 bg-cream-50 px-3 py-2 text-sm text-forest-900">
-                        {member}
+                      <li key={member.id} className="flex items-center rounded-lg border border-cream-200 bg-cream-50 px-3 py-2 text-sm text-forest-900">
+                        <Link href={`/directory/${member.id}`} className="hover:text-gold-600 hover:underline">
+                          {member.name}
+                        </Link>
+                        <RemoveFromShortlistButton 
+                          entrepreneurId={member.id} 
+                          entrepreneurName={member.name}
+                          shortlistName={shortlist.name} 
+                        />
                       </li>
                     ))}
                   </ul>

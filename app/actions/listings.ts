@@ -7,6 +7,7 @@ import { prisma, DB_ENABLED } from "@/lib/db";
 import { writeAudit } from "@/lib/audit";
 import { listingSchema, type ListingInput } from "@/lib/schemas/listing";
 import { saveDemoListing } from "@/lib/demoState";
+import { syncEntrepreneurReadiness } from "@/lib/readinessSync";
 
 export type ListingResult =
   | { ok: true; id: string; message: string }
@@ -85,6 +86,8 @@ export async function createListing(
     entityId: listing.id,
   });
 
+  await syncEntrepreneurReadiness(session.user.id);
+
   revalidatePath("/marketplace");
   revalidatePath("/portal/entrepreneur");
   return {
@@ -120,6 +123,8 @@ export async function deleteListing(id: string): Promise<ListingResult> {
     entityType: "Listing",
     entityId: listing.id,
   });
+
+  await syncEntrepreneurReadiness(session.user.id);
 
   revalidatePath("/marketplace");
   revalidatePath("/portal/entrepreneur");
@@ -273,6 +278,8 @@ export async function updateListing(
     entityType: "Listing",
     entityId: listing.id,
   });
+
+  await syncEntrepreneurReadiness(session.user.id);
 
   revalidatePath("/marketplace");
   revalidatePath("/portal/entrepreneur");

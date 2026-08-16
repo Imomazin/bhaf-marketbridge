@@ -2,9 +2,10 @@ import { PageHero } from "@/components/ui/PageHero";
 import { OpportunityCard } from "@/components/cards/OpportunityCard";
 import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
 import { Reveal } from "@/components/ui/Reveal";
-import { loadOpportunities } from "@/lib/queries/opportunities";
+import { loadOpportunities, getUserAppliedOpportunityIds } from "@/lib/queries/opportunities";
 import { photos } from "@/data/photos";
 import { normalizeSearchParam } from "@/lib/searchParams";
+import { auth } from "@/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,11 @@ export default async function OpportunitiesPage({
     q: normalizeSearchParam(resolved.q),
     type: normalizeSearchParam(resolved.type),
   };
-  const { opportunities, isReal } = await loadOpportunities(filters);
+  const session = await auth();
+  const [{ opportunities, isReal }, appliedIds] = await Promise.all([
+    loadOpportunities(filters),
+    session?.user ? getUserAppliedOpportunityIds(session.user.id) : Promise.resolve(new Set<string>()),
+  ]);
 
   return (
     <>
@@ -71,7 +76,7 @@ export default async function OpportunitiesPage({
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {opportunities.map((o, idx) => (
                 <Reveal key={o.id} delayMs={idx * 80}>
-                  <OpportunityCard opportunity={o} />
+                  <OpportunityCard opportunity={o} hasApplied={appliedIds.has(o.id)} />
                 </Reveal>
               ))}
             </div>

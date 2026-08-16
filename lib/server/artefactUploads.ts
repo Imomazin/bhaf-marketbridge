@@ -9,6 +9,7 @@ import { writeAudit } from "@/lib/audit";
 import { rateLimit } from "@/lib/ratelimit";
 import { checkBySha256 } from "@/lib/integrations/virusTotal";
 import { saveDemoArtefact } from "@/lib/demoState";
+import { syncEntrepreneurReadiness } from "@/lib/readinessSync";
 
 const uploadSchema = z.object({
   name: z.string().min(2).max(160),
@@ -106,6 +107,8 @@ export async function uploadArtefactForUser(
     entityId: artefact.id,
     metadata: { sha256: a.sha256, size: a.size, mime: a.mimeType },
   });
+
+  await syncEntrepreneurReadiness(actor.id);
 
   revalidateArtefactViews();
   return { ok: true, id: artefact.id, sha256: a.sha256, status: artefact.status };

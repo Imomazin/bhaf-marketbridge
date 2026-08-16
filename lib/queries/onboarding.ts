@@ -142,7 +142,16 @@ export async function loadOnboardingState(userId: string, role: string): Promise
           products: { select: { id: true } },
         },
       },
-      funderProfile: { select: { mandate: true } },
+      funderProfile: { 
+        select: { 
+          orgName: true,
+          mandate: true,
+          geoFocus: true,
+          sectorFocus: true,
+          ticketMin: true,
+          ticketMax: true
+        } 
+      },
       corporateProfile: { select: { industry: true } },
       _count: {
         select: {

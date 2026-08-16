@@ -15,6 +15,7 @@ import {
   type FunderProfileInput,
   type CorporateProfileInput,
 } from "@/lib/schemas/profile";
+import { syncEntrepreneurReadiness } from "@/lib/readinessSync";
 
 export type ProfileResult = { ok: true; message: string } | { ok: false; message: string };
 
@@ -96,6 +97,8 @@ export async function saveEntrepreneurProfile(input: EntrepreneurProfileInput): 
       ? { archivedRejectionReason: existingEntrepreneurProfile?.rejectionReason ?? undefined }
       : undefined,
   });
+
+  await syncEntrepreneurReadiness(session.user.id);
 
   revalidatePath("/settings");
   revalidatePath("/portal/entrepreneur");

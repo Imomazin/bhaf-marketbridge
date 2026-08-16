@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { applyToOpportunity } from "@/app/actions/opportunities";
 
-export function ApplyButton({ opportunityId, title }: { opportunityId: string; title: string }) {
+export function ApplyButton({ opportunityId, title, hasApplied }: { opportunityId: string; title: string; hasApplied?: boolean }) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<{ ok: boolean; message: string } | null>(null);
-  const [sent, setSent] = useState(false);
+  const [sent, setSent] = useState(hasApplied || false);
 
   async function submit() {
     setSubmitting(true);

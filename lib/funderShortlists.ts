@@ -2,6 +2,7 @@ import crypto from "crypto";
 import { cookies } from "next/headers";
 import type { ReadinessLevel } from "@/data/entrepreneurs";
 import type { FunderShortlist } from "@/lib/funderPortal";
+import { DB_ENABLED, prisma } from "@/lib/db";
 
 const FUNDER_SHORTLIST_COOKIE = "bhaf-funder-shortlists";
 
@@ -122,6 +123,45 @@ function summarizeFocus(entries: SavedFunderShortlistEntry[]): string {
 }
 
 export async function getSavedFunderShortlistEntries(funderUserId: string): Promise<SavedFunderShortlistEntry[]> {
+  if (DB_ENABLED && prisma) {
+    const dbEntries = await prisma.shortlistEntry.findMany({
+      where: {
+        shortlist: {
+          ownerId: funderUserId
+        }
+      },
+      include: {
+        shortlist: true,
+        entrepreneur: {
+          include: {
+            entrepreneurProfile: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: "desc"
+      }
+    });
+
+    return dbEntries.map((entry) => {
+      const p = entry.entrepreneur.entrepreneurProfile as any;
+      return {
+        id: entry.id,
+        funderUserId: entry.shortlist.ownerId,
+        shortlistName: entry.shortlist.name,
+        entrepreneurId: entry.entrepreneurId,
+        entrepreneurName: entry.entrepreneur.name || "Unknown",
+        businessName: p?.businessName || "Unknown",
+        country: p?.country || "Unknown",
+        sector: p?.sector || "Unknown",
+        readinessLevel: p?.readinessLevel || "Emerging",
+        fundingNeed: p?.fundingNeed || "Unknown",
+        description: p?.description || "",
+        createdAt: entry.createdAt.toISOString(),
+      };
+    });
+  }
+
   const entries = await readEntries();
   return entries
     .filter((entry) => entry.funderUserId === funderUserId)
@@ -162,6 +202,21 @@ export async function saveFunderShortlistEntry(
   return record;
 }
 
+export async function removeFunderShortlistEntry(
+  funderUserId: string,
+  entrepreneurId: string,
+  shortlistName: string,
+): Promise<void> {
+  const entries = await readEntries();
+  const updated = entries.filter(
+    (entry) =>
+      !(entry.funderUserId === funderUserId &&
+        entry.entrepreneurId === entrepreneurId &&
+        entry.shortlistName === shortlistName)
+  );
+  await writeEntries(updated);
+}
+
 export function buildFunderShortlistsFromEntries(entries: SavedFunderShortlistEntry[]): FunderShortlist[] {
   const grouped = new Map<string, SavedFunderShortlistEntry[]>();
 
@@ -173,7 +228,11 @@ export function buildFunderShortlistsFromEntries(entries: SavedFunderShortlistEn
 
   return Array.from(grouped.entries())
     .map(([shortlistName, rows]) => {
-      const uniqueMembers = Array.from(new Set(rows.map((row) => row.entrepreneurName)));
+      const uniqueMembersMap = new Map<string, { id: string; name: string }>();
+      for (const row of rows) {
+        uniqueMembersMap.set(row.entrepreneurId, { id: row.entrepreneurId, name: row.entrepreneurName });
+      }
+      const uniqueMembers = Array.from(uniqueMembersMap.values());
       const updatedAt = rows.reduce(
         (latest, row) => (row.createdAt > latest ? row.createdAt : latest),
         rows[0]?.createdAt ?? new Date().toISOString(),

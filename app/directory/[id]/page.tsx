@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { addEntrepreneurToShortlist } from "@/app/actions/funder";
 import { ReadinessBadge } from "@/components/ui/ReadinessBadge";
+import { Toast } from "@/components/ui/Toast";
+import { ShortlistButton } from "@/components/directory/ShortlistButton";
 import { hasSavedFunderShortlistEntry } from "@/lib/funderShortlists";
 import { loadDirectoryEntrepreneurById } from "@/lib/queries/directory";
 import { normalizeSearchParam } from "@/lib/searchParams";
@@ -35,13 +37,7 @@ export default async function DirectoryProfilePage({
         </Link>
 
         {shortlisted && (
-          <div className="mt-6 rounded-xl border border-forest-200 bg-forest-50 px-4 py-3 text-sm text-forest-800">
-            Added to <strong>My shortlist</strong>. You can view it in{" "}
-            <Link href="/portal/funder/shortlists" className="font-medium underline">
-              funder shortlists
-            </Link>
-            .
-          </div>
+          <Toast message="Entrepreneur added to your shortlist." />
         )}
 
         <div className="card mt-6 p-8">
@@ -71,14 +67,7 @@ export default async function DirectoryProfilePage({
                     Already in My shortlist
                   </div>
                 ) : (
-                  <form action={addEntrepreneurToShortlist}>
-                    <input type="hidden" name="entrepreneurId" value={entrepreneur.id} />
-                    <input type="hidden" name="shortlistName" value="My shortlist" />
-                    <input type="hidden" name="returnTo" value={returnTo} />
-                    <button type="submit" className="btn-primary !px-4 !py-2 text-xs">
-                      Add to shortlist
-                    </button>
-                  </form>
+                  <ShortlistButton entrepreneurId={entrepreneur.id} returnTo={returnTo} />
                 )
               ) : session?.user ? (
                 <p className="max-w-xs text-right text-xs text-charcoal-500">

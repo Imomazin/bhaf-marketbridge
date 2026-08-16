@@ -2,6 +2,10 @@ import { prisma } from "./lib/db";
 import { getEntrepreneurReadinessLevel } from "./lib/queries/onboarding";
 
 async function main() {
+  if (!prisma) {
+    console.error("Prisma client is null. Is DB configured?");
+    return;
+  }
   const profiles = await prisma.entrepreneurProfile.findMany({
     include: {
       user: {

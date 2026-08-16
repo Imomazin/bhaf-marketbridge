@@ -102,3 +102,71 @@ export async function loadMarketplace(filters: MarketplaceFilters = {}): Promise
     return { listings: mockListings, isReal: false };
   }
 }
+
+export async function getUserSentEnquiries(userId: string) {
+  if (!DB_ENABLED || !prisma) return [];
+
+  const rows = await prisma.enquiry.findMany({
+    where: { senderId: userId },
+    include: {
+      listing: true,
+      targetUser: {
+        select: {
+          name: true,
+          entrepreneurProfile: { select: { businessName: true } },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return rows.map((e) => ({
+    id: e.id,
+    listingTitle: e.listing.title,
+    listingId: e.listing.id,
+    targetBusiness: e.targetUser.entrepreneurProfile?.businessName ?? e.targetUser.name ?? "—",
+    note: e.note,
+    status: e.status,
+    createdAt: e.createdAt,
+  }));
+}
+
+export async function getUserReceivedEnquiries(userId: string) {
+  if (!DB_ENABLED || !prisma) return [];
+
+  const rows = await prisma.enquiry.findMany({
+    where: { targetUserId: userId },
+    include: {
+      listing: true,
+      sender: {
+        select: {
+          name: true,
+          email: true,
+          entrepreneurProfile: { select: { businessName: true } },
+          corporateProfile: { select: { orgName: true } },
+          funderProfile: { select: { orgName: true } },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return rows.map((e) => {
+    let senderBusiness = e.sender.name ?? "Unknown user";
+    if (e.sender.funderProfile?.orgName) senderBusiness = e.sender.funderProfile.orgName;
+    else if (e.sender.corporateProfile?.orgName) senderBusiness = e.sender.corporateProfile.orgName;
+    else if (e.sender.entrepreneurProfile?.businessName) senderBusiness = e.sender.entrepreneurProfile.businessName;
+
+    return {
+      id: e.id,
+      listingTitle: e.listing.title,
+      listingId: e.listing.id,
+      senderName: e.sender.name,
+      senderEmail: e.sender.email,
+      senderBusiness,
+      note: e.note,
+      status: e.status,
+      createdAt: e.createdAt,
+    };
+  });
+}

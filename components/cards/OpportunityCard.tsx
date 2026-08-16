@@ -13,9 +13,10 @@ const typeStyles: Record<OpportunityType, string> = {
 
 interface OpportunityCardProps {
   opportunity: Opportunity;
+  hasApplied?: boolean;
 }
 
-export function OpportunityCard({ opportunity }: OpportunityCardProps) {
+export function OpportunityCard({ opportunity, hasApplied }: OpportunityCardProps) {
   return (
     <article className="card flex h-full flex-col p-6">
       <div className="flex items-start justify-between gap-4">
@@ -60,7 +61,7 @@ export function OpportunityCard({ opportunity }: OpportunityCardProps) {
         </ul>
       </div>
 
-      <ApplyButton opportunityId={opportunity.id} title={opportunity.title} />
+      <ApplyButton opportunityId={opportunity.id} title={opportunity.title} hasApplied={hasApplied} />
     </article>
   );
 }

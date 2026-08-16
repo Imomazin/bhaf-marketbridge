@@ -92,3 +92,51 @@ export async function addEntrepreneurToShortlist(formData: FormData) {
 
   redirect(`${parsed.data.returnTo}?shortlisted=1`);
 }
+
+export async function removeEntrepreneurFromShortlist(formData: FormData) {
+  const session = await auth();
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  const schema = z.object({
+    entrepreneurId: z.string(),
+    shortlistName: z.string(),
+    returnTo: z.string().default("/portal/funder/shortlists"),
+  });
+
+  const parsed = schema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) throw new Error("Invalid request");
+
+  if (DB_ENABLED && prisma) {
+    const shortlist = await prisma.shortlist.findUnique({
+      where: {
+        ownerId_name: {
+          ownerId: session.user.id,
+          name: parsed.data.shortlistName,
+        }
+      }
+    });
+
+    if (shortlist) {
+      await prisma.shortlistEntry.delete({
+        where: {
+          shortlistId_entrepreneurId: {
+            shortlistId: shortlist.id,
+            entrepreneurId: parsed.data.entrepreneurId,
+          }
+        }
+      }).catch(() => {
+        // Ignore if it doesn't exist
+      });
+    }
+  } else {
+    const { removeFunderShortlistEntry } = await import("@/lib/funderShortlists");
+    await removeFunderShortlistEntry(session.user.id, parsed.data.entrepreneurId, parsed.data.shortlistName);
+  }
+
+  revalidatePath("/directory");
+  revalidatePath(parsed.data.returnTo);
+  revalidatePath("/portal/funder");
+  revalidatePath("/portal/funder/shortlists");
+  
+  redirect(parsed.data.returnTo);
+}
