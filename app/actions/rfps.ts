@@ -108,7 +108,7 @@ export async function respondToRfp(input: RfpResponseInput): Promise<RfpResult> 
       rfpId: rfp.id,
       responderId: session.user.id,
       body: parsed.data.body,
-      pricingNote: parsed.data.pricingNote ?? null,
+      pricingNote: null,
       status: "SUBMITTED",
     },
   });

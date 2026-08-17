@@ -20,10 +20,6 @@ const navLinks = [
 ];
 
 const accountLinks = [
-  { href: "/data-rooms", label: "Data rooms" },
-  { href: "/messages", label: "Messages" },
-  { href: "/inbox", label: "Inbox" },
-  { href: "/billing/dashboard", label: "Billing" },
   { href: "/settings", label: "Settings" },
 ];
 

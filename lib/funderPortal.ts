@@ -186,10 +186,12 @@ export function formatTicketRange(min?: number | null, max?: number | null): str
 export function getFunderWorkflowStep(input: {
   hasProfile: boolean;
   hasFirstArtefact: boolean;
+  hasShortlist: boolean;
   seeded?: boolean;
 }): number {
-  if (input.seeded) return 6;
+  if (input.seeded) return 5;
   if (!input.hasProfile) return 1;
   if (!input.hasFirstArtefact) return 2;
-  return 4;
+  if (!input.hasShortlist) return 3;
+  return 5;
 }

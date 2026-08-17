@@ -5,6 +5,7 @@ export function getEntrepreneurNav(currentHref: string) {
     { label: "ESG documentation", href: "/portal/entrepreneur/esg" },
     { label: "My listings", href: "/portal/entrepreneur/listings" },
     { label: "Opportunities", href: "/portal/entrepreneur/opportunities" },
+    { label: "Active RFPs", href: "/portal/entrepreneur/rfps" },
     { label: "Enquiries", href: "/portal/entrepreneur/enquiries" },
   ];
 
@@ -23,4 +24,16 @@ export function getFunderNav(currentHref: string) {
   ];
 
   return items.map((item) => ({ ...item, active: item.href === currentHref }));
+}
+
+export function getCorporateNav(currentHref: string) {
+  const items = [
+    { label: "Procurement desk", href: "/portal/corporate" },
+    { label: "Shortlisted suppliers", href: "/portal/corporate/shortlists" },
+    { label: "Active RFPs", href: "/portal/corporate/rfps" },
+    { label: "Marketplace", href: "/marketplace" },
+    { label: "ESG reports", href: "/impact" },
+  ];
+
+  return items.map((item) => ({ ...item, active: item.href === currentHref || (currentHref.startsWith(item.href) && item.href !== "/portal/corporate" && item.href !== "/marketplace" && item.href !== "/impact") }));
 }

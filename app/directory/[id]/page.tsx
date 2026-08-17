@@ -23,8 +23,8 @@ export default async function DirectoryProfilePage({
   if (!entrepreneur) notFound();
 
   const shortlisted = normalizeSearchParam(resolvedSearchParams.shortlisted) === "1";
-  const isFunder = session?.user?.role === "FUNDER";
-  const alreadyShortlisted = isFunder
+  const isFunderOrCorporate = session?.user?.role === "FUNDER" || session?.user?.role === "CORPORATE";
+  const alreadyShortlisted = isFunderOrCorporate
     ? await hasSavedFunderShortlistEntry(session.user.id, entrepreneur.id)
     : false;
   const returnTo = `/directory/${encodeURIComponent(entrepreneur.id)}`;
@@ -61,7 +61,7 @@ export default async function DirectoryProfilePage({
 
             <div className="flex flex-col items-start gap-3 sm:items-end">
               <ReadinessBadge level={entrepreneur.readinessLevel} />
-              {isFunder ? (
+              {isFunderOrCorporate ? (
                 alreadyShortlisted ? (
                   <div className="rounded-full border border-forest-200 bg-forest-50 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-forest-800">
                     Already in My shortlist
@@ -71,7 +71,7 @@ export default async function DirectoryProfilePage({
                 )
               ) : session?.user ? (
                 <p className="max-w-xs text-right text-xs text-charcoal-500">
-                  Sign in as a funder to add entrepreneurs to a shortlist.
+                  Sign in as a funder or corporate partner to add to a shortlist.
                 </p>
               ) : (
                 <Link href={`/auth/sign-in?next=${encodeURIComponent(returnTo)}`} className="btn-secondary !px-4 !py-2 text-xs">

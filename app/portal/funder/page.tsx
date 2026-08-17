@@ -14,6 +14,7 @@ import { loadMyArtefacts } from "@/lib/queries/artefacts";
 import { loadOnboardingState } from "@/lib/queries/onboarding";
 import { getDemoFunderProfile } from "@/lib/demoState";
 import { buildInitials } from "@/lib/demoPresentation";
+import { getFunderPipeline } from "@/lib/queries/pipeline";
 import { buildFunderShortlistsFromEntries, getSavedFunderShortlistEntries } from "@/lib/funderShortlists";
 import {
   FUNDER_MATCHES,
@@ -34,12 +35,13 @@ export default async function FunderPortalPage() {
   const session = await auth();
   if (!session?.user) redirect("/auth/sign-in?next=/portal/funder");
 
-  const [{ artefacts }, onboarding, demoProfile, demoUser, savedShortlistEntries] = await Promise.all([
+  const [{ artefacts }, onboarding, demoProfile, demoUser, savedShortlistEntries, pipelineEntries] = await Promise.all([
     loadMyArtefacts(session.user.id, "funder"),
     loadOnboardingState(session.user.id, session.user.role),
     getDemoFunderProfile(session.user.id),
     getDemoUserById(session.user.id),
     getSavedFunderShortlistEntries(session.user.id),
+    getFunderPipeline(session.user.id),
   ]);
 
   const reviewProfile =
@@ -81,30 +83,33 @@ export default async function FunderPortalPage() {
     ? dbShortlists.reduce((sum, s) => sum + s._count.entries, 0)
     : savedShortlistEntries.length;
     
+  const getStageCount = (stage: string) => pipelineEntries.filter(e => e.stage === stage).length;
+    
   const pipeline = seeded
     ? SEEDED_FUNDER_PIPELINE.map((row) =>
         row.stage === "Sourcing"
-          ? { ...row, count: row.count + totalEntriesCount }
+          ? { ...row, count: row.count + getStageCount("SOURCING") }
           : row,
       )
     : [
         {
           stage: "Sourcing",
-          count: totalEntriesCount,
+          count: getStageCount("SOURCING"),
           capital: "—",
           description:
-            totalEntriesCount > 0
+            getStageCount("SOURCING") > 0
               ? "Ventures saved from the directory and ready for first review."
               : "No saved ventures yet.",
         },
-        { stage: "Diligence", count: 0, capital: "—", description: "No active diligence yet." },
-        { stage: "Term sheet", count: 0, capital: "—", description: "No active term sheets yet." },
-        { stage: "Closed", count: 0, capital: "—", description: "No closed deals yet." },
+        { stage: "Diligence", count: getStageCount("DILIGENCE"), capital: "—", description: getStageCount("DILIGENCE") > 0 ? "Active diligence." : "No active diligence yet." },
+        { stage: "Term sheet", count: getStageCount("TERM_SHEET"), capital: "—", description: getStageCount("TERM_SHEET") > 0 ? "Active negotiations." : "No active term sheets yet." },
+        { stage: "Closed", count: getStageCount("CLOSED"), capital: "—", description: getStageCount("CLOSED") > 0 ? "Closed deals." : "No closed deals yet." },
       ];
   const matches = FUNDER_MATCHES.slice(0, 4);
   const workflowStep = getFunderWorkflowStep({
     hasProfile: onboarding.hasProfile,
     hasFirstArtefact: onboarding.hasFirstArtefact,
+    hasShortlist: shortlists.length > 0,
     seeded,
   });
 
@@ -277,7 +282,7 @@ export default async function FunderPortalPage() {
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-forest-700 to-gold-400"
                         style={{
-                          width: `${seeded ? [90, 55, 35, 20][index] : savedShortlistEntries.length > 0 && index === 0 ? 40 : 6}%`,
+                          width: `${seeded ? [90, 55, 35, 20][index] : pipelineEntries.length > 0 && row.count > 0 ? Math.max(10, Math.min(100, (row.count / pipelineEntries.length) * 100)) : 6}%`,
                         }}
                       />
                     </div>
@@ -286,8 +291,7 @@ export default async function FunderPortalPage() {
                 ))}
               </div>
             </DashboardCard>
-
-            {/*
+{/* 
             <DashboardCard
               title="Impact reporting"
               description="Templates you can use to turn live platform data into funder-facing updates."
@@ -303,7 +307,7 @@ export default async function FunderPortalPage() {
                 ))}
               </ul>
             </DashboardCard>
-            */}
+*/}
           </div>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-3">

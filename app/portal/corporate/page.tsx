@@ -13,14 +13,7 @@ import { loadMyArtefacts } from "@/lib/queries/artefacts";
 
 export const dynamic = "force-dynamic";
 
-const nav = [
-  { label: "Procurement desk", href: "/portal/corporate", active: true },
-  { label: "Suppliers", href: "/portal/corporate#suppliers" },
-  { label: "Active RFPs", href: "/portal/corporate#rfps" },
-  { label: "Supplier diversity", href: "/portal/corporate#diversity" },
-  { label: "Marketplace", href: "/marketplace" },
-  { label: "ESG reports", href: "/impact" },
-];
+import { getCorporateNav } from "@/lib/portalNav";
 
 const rfps = [
   { title: "Sustainable apparel — Q3 cohort", responses: 14, deadline: "30 June 2026", category: "Fashion & Textiles" },
@@ -68,28 +61,6 @@ export default async function CorporatePortalPage() {
       })
     : [];
 
-  const activeRfps = (DB_ENABLED && prisma)
-    ? dbRfps.map(rfp => ({
-        title: rfp.title,
-        responses: rfp._count.responses,
-        deadline: rfp.deadline ? rfp.deadline.toISOString().slice(0, 10) : "No deadline",
-        category: rfp.category,
-        reviewHref: `/portal/corporate/rfps/${rfp.id}`,
-      }))
-    : [
-      ...demoRfps.map((rfp) => ({
-        title: rfp.title,
-        responses: 0,
-        deadline: rfp.deadline ? rfp.deadline.slice(0, 10) : "No deadline",
-        category: rfp.category,
-        reviewHref: `/marketplace/rfps/${rfp.id}`,
-      })),
-      ...rfps.map((rfp) => ({
-        ...rfp,
-        reviewHref: "/marketplace/rfps",
-      })),
-    ].slice(0, 6);
-
   const shortlistedSuppliers = (DB_ENABLED && prisma)
     ? dbShortlistEntries.map(e => ({
         id: e.entrepreneur.id,
@@ -101,9 +72,35 @@ export default async function CorporatePortalPage() {
       }))
     : marketplaceListings.slice(0, 6);
 
+  const activeRfps = DB_ENABLED
+    ? dbRfps.map((r) => ({
+        title: r.title,
+        category: r.category,
+        responses: r._count.responses,
+        deadline: r.deadline ? r.deadline.toISOString().slice(0, 10) : "Rolling",
+        reviewHref: `/portal/corporate/rfps/${r.id}`,
+      }))
+    : demoRfps.map((r) => ({
+        title: r.title,
+        category: r.category,
+        responses: 0,
+        deadline: r.deadline || "Rolling",
+        reviewHref: `/portal/corporate/rfps/${r.id}`,
+      }));
+
+  let currentStep = 2; // Browse the marketplace
+  if (shortlistedSuppliers.length > 0) {
+    currentStep = 3; // Shortlist verified suppliers
+  }
+  if (activeRfps.length > 0) {
+    currentStep = 5; // Flow completed, wait, step 4 is Post RFPs. Let's say if activeRfps > 0 then step is 5 (all complete)
+  } else if (shortlistedSuppliers.length > 0) {
+    currentStep = 4; // Moving on to Post RFPs
+  }
+
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
-      <PortalSidebar currentRole="corporate" nav={nav} />
+      <PortalSidebar currentRole="corporate" nav={getCorporateNav("/portal/corporate")} />
 
       <div className="flex-1">
         <header className="border-b border-cream-200 bg-white">
@@ -118,7 +115,7 @@ export default async function CorporatePortalPage() {
               <Link href="/marketplace" className="btn-secondary !py-2 !px-3 text-xs">
                 Browse marketplace
               </Link>
-              <Link href="/marketplace/rfps" className="btn-secondary !py-2 !px-3 text-xs">
+              <Link href="/portal/corporate/rfps" className="btn-secondary !py-2 !px-3 text-xs">
                 All RFPs
               </Link>
               <Link href="/portal/corporate/rfps/new" className="btn-primary !py-2 !px-3 text-xs">
@@ -128,7 +125,7 @@ export default async function CorporatePortalPage() {
           </div>
         </header>
 
-        <PortalWorkflowStrip roleId="corporate" currentStep={3} />
+        <PortalWorkflowStrip roleId="corporate" currentStep={currentStep} />
 
         <div className="container-edge py-8 lg:px-8">
           {reviewProfile && (
@@ -136,95 +133,32 @@ export default async function CorporatePortalPage() {
               <ProfileStatusBanner status={reviewProfile.status} rejectionReason={reviewProfile.rejectionReason} />
             </div>
           )}
-          <div className="grid gap-4 sm:grid-cols-3">
-            {diversityStats.map((s, i) => (
-              <div
-                key={s.label}
-                className={
-                  i === 0
-                    ? "rounded-2xl border border-[#102d4a]/15 bg-[#0d2840] p-5 text-cream-50"
-                    : "rounded-2xl border border-cream-200 bg-white p-5 shadow-card"
-                }
-              >
-                <p className={i === 0 ? "text-[11px] uppercase tracking-wide text-cream-100/70" : "text-[11px] uppercase tracking-wide text-charcoal-500"}>
-                  {s.label}
-                </p>
-                <p className={i === 0 ? "mt-3 font-serif text-3xl text-cream-50" : "mt-3 font-serif text-3xl text-forest-900"}>
-                  {s.value}
-                </p>
-                <p className={i === 0 ? "mt-1 text-xs text-cream-100/70" : "mt-1 text-xs text-charcoal-500"}>
-                  {s.change}
-                </p>
-              </div>
-            ))}
-          </div>
 
-          <div className="mt-6 grid gap-6 lg:grid-cols-3">
-            <DashboardCard
-              title="Active RFPs & sourcing"
-              description="Open requests visible to verified women-led suppliers"
-              action="Post new"
-              actionHref="/portal/corporate/rfps/new"
-              className="lg:col-span-2"
-            >
-              <ul className="divide-y divide-cream-200">
-                {activeRfps.map((r) => (
-                  <li key={r.title} className="flex flex-wrap items-center gap-4 py-4">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-forest-900">{r.title}</p>
-                      <p className="text-xs text-charcoal-400">{r.category}</p>
-                    </div>
-                    <div className="text-right text-xs">
-                      <p className="font-medium text-forest-900">{r.responses} responses</p>
-                      <p className="text-charcoal-400">Closes {r.deadline}</p>
-                    </div>
-                    <Link href={r.reviewHref} className="rounded-md border border-cream-300 px-3 py-1.5 text-xs font-medium text-charcoal-600 hover:border-forest-700 hover:text-forest-900">
-                      Review
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </DashboardCard>
-
-            <DashboardCard title="ESG supplier scorecard">
-              <ul className="space-y-3 text-sm">
-                <li className="flex items-baseline justify-between">
-                  <span className="text-charcoal-500">ESG-aligned suppliers</span>
-                  <span className="font-serif text-lg text-forest-900">38</span>
-                </li>
-                <li className="flex items-baseline justify-between">
-                  <span className="text-charcoal-500">Circular practices verified</span>
-                  <span className="font-serif text-lg text-forest-900">22</span>
-                </li>
-                <li className="flex items-baseline justify-between">
-                  <span className="text-charcoal-500">Avg readiness score</span>
-                  <span className="font-serif text-lg text-forest-900">74%</span>
-                </li>
-                <li className="border-t border-cream-200 pt-3 text-[11px] text-charcoal-400">
-                  Auto-compiled from supplier profiles · refreshed daily
-                </li>
-              </ul>
-            </DashboardCard>
-          </div>
-
-          <div className="mt-6">
+          <div className="mt-6" id="shortlisted-suppliers">
             <DashboardCard
               title="Shortlisted suppliers"
               description="Saved from the marketplace · review and route to procurement teams"
-              action="Open marketplace"
+              action="View all"
+              actionHref="/portal/corporate/shortlists"
             >
-              <ul className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                {shortlistedSuppliers.map((l) => (
-                  <li key={l.id} className="rounded-lg border border-cream-200 p-3">
-                    <p className="text-[10px] uppercase tracking-wide text-gold-700">{l.category}</p>
-                    <p className="mt-0.5 text-sm font-medium text-forest-900">{l.title}</p>
-                    <p className="mt-1 text-[11px] text-charcoal-400">
-                      {l.business} · {l.country}
-                    </p>
-                    <p className="mt-2 text-[11px] text-charcoal-500">{l.esgHighlight}</p>
-                  </li>
-                ))}
-              </ul>
+              {shortlistedSuppliers.length === 0 ? (
+                <div className="py-8 text-center text-sm text-charcoal-400">
+                  No shortlisted suppliers yet. Browse the directory to add some.
+                </div>
+              ) : (
+                <ul className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                  {shortlistedSuppliers.slice(0, 6).map((l) => (
+                    <li key={l.id} className="rounded-lg border border-cream-200 p-3">
+                      <p className="text-[10px] uppercase tracking-wide text-gold-700">{l.category}</p>
+                      <p className="mt-0.5 text-sm font-medium text-forest-900">{l.title}</p>
+                      <p className="mt-1 text-[11px] text-charcoal-400">
+                        {l.business} · {l.country}
+                      </p>
+                      <p className="mt-2 text-[11px] text-charcoal-500">{l.esgHighlight}</p>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </DashboardCard>
           </div>
 

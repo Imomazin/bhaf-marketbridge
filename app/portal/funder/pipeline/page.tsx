@@ -10,10 +10,11 @@ import {
   getDemoSeedFunderProfile,
   isSeededFunderAccount,
 } from "@/lib/funderPortal";
-import { getSavedFunderShortlistEntries } from "@/lib/funderShortlists";
+import { getFunderPipeline } from "@/lib/queries/pipeline";
 import { getFunderNav } from "@/lib/portalNav";
 import { loadOnboardingState } from "@/lib/queries/onboarding";
 import { loadMyArtefacts } from "@/lib/queries/artefacts";
+import { MoveStageDropdown } from "@/components/ui/MoveStageDropdown";
 
 export const metadata = { title: "Pipeline · BHAF MarketBridge" };
 export const dynamic = "force-dynamic";
@@ -22,48 +23,36 @@ export default async function FunderPipelinePage() {
   const session = await auth();
   if (!session?.user) redirect("/auth/sign-in?next=/portal/funder/pipeline");
 
-  const [onboarding, { artefacts }, savedShortlistEntries] = await Promise.all([
+  const [onboarding, { artefacts }, pipelineEntries] = await Promise.all([
     loadOnboardingState(session.user.id, session.user.role),
     loadMyArtefacts(session.user.id, "funder"),
-    getSavedFunderShortlistEntries(session.user.id),
+    getFunderPipeline(session.user.id),
   ]);
 
   const seeded = isSeededFunderAccount(session.user.id);
   const profile = getDemoSeedFunderProfile(session.user.id);
+  const getStageCount = (stage: string) => pipelineEntries.filter(e => e.stage === stage).length;
+  
   const pipelineRows = seeded
     ? SEEDED_FUNDER_PIPELINE.map((row) =>
         row.stage === "Sourcing"
-          ? { ...row, count: row.count + savedShortlistEntries.length }
+          ? { ...row, count: row.count + getStageCount("SOURCING") }
           : row,
       )
     : [
         {
           stage: "Sourcing",
-          count: savedShortlistEntries.length,
+          count: getStageCount("SOURCING"),
           capital: "—",
           description:
-            savedShortlistEntries.length > 0
+            getStageCount("SOURCING") > 0
               ? "Saved from the directory and waiting for first review."
               : "No sourced ventures yet.",
         },
-        { stage: "Diligence", count: 0, capital: "—", description: "No diligence activity yet." },
-        { stage: "Term sheet", count: 0, capital: "—", description: "No active negotiations yet." },
-        { stage: "Closed", count: 0, capital: "—", description: "No closed deals yet." },
+        { stage: "Diligence", count: getStageCount("DILIGENCE"), capital: "—", description: "Active diligence." },
+        { stage: "Term sheet", count: getStageCount("TERM_SHEET"), capital: "—", description: "Active negotiations." },
+        { stage: "Closed", count: getStageCount("CLOSED"), capital: "—", description: "Closed deals." },
       ];
-  const savedPipelineEntries = savedShortlistEntries.map((entry) => ({
-    entrepreneurId: entry.entrepreneurId,
-    stage: "Sourcing",
-    capital: entry.fundingNeed || "Funding need to be confirmed",
-    nextStep: "Shortlisted from the directory. Review fit and move to diligence when ready.",
-    entrepreneur: {
-      name: entry.entrepreneurName,
-      businessName: entry.businessName,
-      country: entry.country,
-      sector: entry.sector,
-      readinessLevel: entry.readinessLevel,
-      description: entry.description,
-    },
-  }));
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
@@ -100,9 +89,9 @@ export default async function FunderPipelinePage() {
             ))}
           </div>
 
-          {seeded || savedPipelineEntries.length > 0 ? (
+          {seeded || pipelineEntries.length > 0 ? (
             <div className="mt-8 space-y-4">
-              {[...savedPipelineEntries, ...SEEDED_FUNDER_PIPELINE_ENTRIES.map((entry) => ({
+              {[...pipelineEntries, ...(seeded ? SEEDED_FUNDER_PIPELINE_ENTRIES.map((entry) => ({
                 ...entry,
                 entrepreneur: {
                   name:
@@ -147,20 +136,23 @@ export default async function FunderPipelinePage() {
                       : "Health & Beauty",
                   readinessLevel:
                     entry.entrepreneurId === "naledi-mokoena" || entry.entrepreneurId === "wanjiru-kamau"
-                      ? ("Market-Ready" as ReadinessLevel)
-                      : ("Funding-Ready" as ReadinessLevel),
+                      ? ("MARKET_READY" as ReadinessLevel)
+                      : ("FUNDING_READY" as ReadinessLevel),
                   description: "",
                 },
-              }))].map((entry) => {
+              })) : [])].map((entry) => {
                 const entrepreneur = entry.entrepreneur;
 
                 return (
                   <article key={`${entry.stage}-${entry.entrepreneurId}`} className="card p-6">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-700">
-                          {entry.stage}
-                        </p>
+                        <div className="flex flex-1 items-center gap-3">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-700">
+                            {entry.stage.replace("_", " ")}
+                          </p>
+                          <MoveStageDropdown entrepreneurId={entry.entrepreneurId} currentStage={entry.stage} />
+                        </div>
                         <h2 className="mt-2 font-serif text-2xl text-forest-900">
                           {entrepreneur.businessName}
                         </h2>
@@ -171,20 +163,14 @@ export default async function FunderPipelinePage() {
                       <ReadinessBadge level={entrepreneur.readinessLevel} />
                     </div>
 
-                    <div className="mt-5 grid gap-4 md:grid-cols-3">
+                    <div className="mt-5 grid gap-4 md:grid-cols-2">
                       <div className="rounded-xl border border-cream-200 bg-cream-50 p-4">
                         <p className="text-[10px] uppercase tracking-wide text-charcoal-400">Capital need</p>
-                        <p className="mt-2 text-sm font-medium text-forest-900">{entry.capital}</p>
-                      </div>
-                      <div className="rounded-xl border border-cream-200 bg-cream-50 p-4">
-                        <p className="text-[10px] uppercase tracking-wide text-charcoal-400">Mandate fit</p>
-                        <p className="mt-2 text-sm font-medium text-forest-900">
-                          {profile?.sectorFocus.join(", ") ?? "Mandate not set"}
-                        </p>
+                        <p className="mt-2 text-sm font-medium text-forest-900">{entry.capital || "To be confirmed"}</p>
                       </div>
                       <div className="rounded-xl border border-cream-200 bg-cream-50 p-4">
                         <p className="text-[10px] uppercase tracking-wide text-charcoal-400">Next step</p>
-                        <p className="mt-2 text-sm font-medium text-forest-900">{entry.nextStep}</p>
+                        <p className="mt-2 text-sm font-medium text-forest-900">{entry.nextStep || "Review fit and move to next stage when ready."}</p>
                       </div>
                     </div>
                   </article>
@@ -217,11 +203,33 @@ export default async function FunderPipelinePage() {
           )}
 
           <div className="card mt-8 p-6">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-700">How to explain this screen</p>
-            <p className="mt-3 text-sm leading-relaxed text-charcoal-600">
-              In the demo, this is where a funder can show how opportunities are tracked from first discovery, through
-              diligence, into term sheets and finally into deployed support.
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-700">Pipeline Guide</p>
+            <p className="mt-3 text-sm leading-relaxed text-charcoal-600 mb-6">
+              The pipeline is your deal-flow tracker. Once you shortlist an entrepreneur, they enter your Sourcing pipeline. Use the <strong className="text-forest-900">Move</strong> button on their card to advance them through the following stages as your relationship progresses:
             </p>
+            
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="rounded-xl border border-cream-200 bg-cream-50 p-4">
+                <p className="text-[10px] uppercase tracking-wide text-charcoal-500 font-semibold mb-2">1. Diligence</p>
+                <p className="text-xs text-charcoal-600 leading-relaxed">
+                  You are actively reviewing their profile, holding introductory calls, or requesting and reviewing compliance documents from their Vault.
+                </p>
+              </div>
+              
+              <div className="rounded-xl border border-cream-200 bg-cream-50 p-4">
+                <p className="text-[10px] uppercase tracking-wide text-charcoal-500 font-semibold mb-2">2. Term Sheet</p>
+                <p className="text-xs text-charcoal-600 leading-relaxed">
+                  You have decided to invest and are currently negotiating commercial terms, structuring the deal, or awaiting final signatures.
+                </p>
+              </div>
+              
+              <div className="rounded-xl border border-cream-200 bg-cream-50 p-4">
+                <p className="text-[10px] uppercase tracking-wide text-charcoal-500 font-semibold mb-2">3. Closed</p>
+                <p className="text-xs text-charcoal-600 leading-relaxed">
+                  The deal is signed and capital has been deployed. Post-investment impact tracking will begin shortly.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

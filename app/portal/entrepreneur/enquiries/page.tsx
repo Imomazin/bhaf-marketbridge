@@ -61,7 +61,7 @@ export default async function EntrepreneurEnquiriesPage() {
                       {row.note && (
                         <p className="mt-3 rounded-md bg-cream-50 px-3 py-2 text-xs text-charcoal-600">{row.note}</p>
                       )}
-                      <p className="mt-3 text-[11px] text-charcoal-400">Received on {formatIsoDate(row.createdAt)}</p>
+                      <p className="mt-4 text-[10px] uppercase tracking-wide text-charcoal-400">Received on {formatIsoDate(row.createdAt.toISOString())}</p>
                       
                       {row.status !== "RESPONDED" && (
                         <ReplyModal 
@@ -102,7 +102,7 @@ export default async function EntrepreneurEnquiriesPage() {
                       {row.note && (
                         <p className="mt-3 rounded-md bg-cream-50 px-3 py-2 text-xs text-charcoal-600">{row.note}</p>
                       )}
-                      <p className="mt-3 text-[11px] text-charcoal-400">Sent on {formatIsoDate(row.createdAt)}</p>
+                      <p className="mt-3 text-[11px] text-charcoal-400">Sent on {formatIsoDate(row.createdAt.toISOString())}</p>
                     </li>
                   ))}
                 </ul>

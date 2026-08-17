@@ -27,7 +27,7 @@ export async function addEntrepreneurToShortlist(formData: FormData) {
 
   const session = await auth();
   if (!session?.user) redirect(`/auth/sign-in?next=${encodeURIComponent(parsed.data.returnTo)}`);
-  if (session.user.role !== "FUNDER") redirect(parsed.data.returnTo);
+  if (session.user.role !== "FUNDER" && session.user.role !== "CORPORATE") redirect(parsed.data.returnTo);
 
   const entrepreneur = await loadDirectoryEntrepreneurById(parsed.data.entrepreneurId);
   if (!entrepreneur) redirect("/directory");
