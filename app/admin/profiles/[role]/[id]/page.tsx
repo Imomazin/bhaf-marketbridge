@@ -12,6 +12,7 @@ const VALID_ROLES: ProfileRole[] = ["entrepreneur", "funder", "corporate"];
 
 const statusTone: Record<string, string> = {
   PENDING: "bg-gold-50 text-gold-800 border-gold-200",
+  PARTIALLY_APPROVED: "bg-blue-50 text-blue-800 border-blue-200",
   APPROVED: "bg-forest-50 text-forest-800 border-forest-200",
   REJECTED: "bg-red-50 text-red-700 border-red-200",
 };
@@ -129,10 +130,16 @@ export default async function AdminProfileReviewDetailPage({
           )}
         </div>
 
-        {profile.status === "PENDING" && (
+        {profile.status !== "APPROVED" && (
           <div className="card mt-6 p-6">
-            <h2 className="font-serif text-lg text-forest-900">Decision</h2>
-            <p className="mt-1 text-xs text-charcoal-500">Reject requires a reason; approve requires confirmation.</p>
+            <h2 className="font-serif text-lg text-forest-900">Decision / Override</h2>
+            <p className="mt-1 text-xs text-charcoal-500">
+              {profile.status === "PARTIALLY_APPROVED"
+                ? "This profile was automatically partially approved by AI. You can give full manual approval or reject it."
+                : profile.status === "REJECTED"
+                ? "This profile is currently rejected. You can override and approve it if appropriate."
+                : "Reject requires a reason; approve requires confirmation."}
+            </p>
             <div className="mt-4">
               <ProfileReviewActions role={role} profileId={profile.id} />
             </div>

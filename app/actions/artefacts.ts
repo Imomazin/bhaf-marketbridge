@@ -91,8 +91,8 @@ export async function reviewArtefact(input: z.infer<typeof reviewSchema>): Promi
         parsed.data.decision === "APPROVE"
           ? `Your "${artefact.name}" has been validated. It now counts toward your readiness status.`
           : parsed.data.decision === "REJECT"
-          ? `Your "${artefact.name}" was rejected.\n\nReason: ${parsed.data.comment ?? "See your dashboard."}\n\nPlease re-upload a corrected version.`
-          : `Your "${artefact.name}" needs changes.\n\n${parsed.data.comment ?? "Check your dashboard for details."}`,
+          ? `Hi ${artefact.user.name ?? "there"},\n\nWe're sorry to let you know that your "${artefact.name}" couldn't be accepted at this time.\n\nHere is the reason provided by our review team:\n${parsed.data.comment ?? "Please check your dashboard for more details."}\n\nWe know this can be frustrating, but we'd love for you to upload a corrected version whenever you're ready!\n\nBest,\nThe Review Team`
+          : `Hi ${artefact.user.name ?? "there"},\n\nYour "${artefact.name}" needs a few changes before we can validate it.\n\nHere's what our review team noted:\n${parsed.data.comment ?? "Please check your dashboard for details."}\n\nWe look forward to seeing your updated version!\n\nBest,\nThe Review Team`,
     });
   }
 

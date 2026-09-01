@@ -2,38 +2,56 @@ import { prisma, DB_ENABLED } from "@/lib/db";
 
 export type ProfileRole = "entrepreneur" | "funder" | "corporate";
 
-export interface PendingProfileRow {
+export type ProfileReviewFilter = "ALL" | "PENDING" | "PARTIALLY_APPROVED" | "APPROVED" | "REJECTED";
+
+export interface ProfileReviewRow {
   role: ProfileRole;
   profileId: string;
   userId: string;
   name: string;
   email: string;
   orgLabel: string;
+  status: "PENDING" | "PARTIALLY_APPROVED" | "APPROVED" | "REJECTED";
+  rejectionReason?: string | null;
+  verified: boolean;
   submittedAt: Date;
 }
 
-export async function listPendingProfiles(): Promise<PendingProfileRow[]> {
+export async function listProfilesForReview(
+  filter: ProfileReviewFilter = "ALL",
+): Promise<ProfileReviewRow[]> {
   if (!DB_ENABLED || !prisma) return [];
+
+  const statusFilter = filter === "ALL" ? undefined : filter;
 
   const [entrepreneurs, funders, corporates] = await Promise.all([
     prisma.entrepreneurProfile.findMany({
-      where: { status: "PENDING", user: { deletedAt: null } },
+      where: {
+        ...(statusFilter ? { status: statusFilter } : {}),
+        user: { deletedAt: null },
+      },
       include: { user: { select: { id: true, name: true, email: true } } },
       orderBy: { updatedAt: "desc" },
     }),
     prisma.funderProfile.findMany({
-      where: { status: "PENDING", user: { deletedAt: null } },
+      where: {
+        ...(statusFilter ? { status: statusFilter } : {}),
+        user: { deletedAt: null },
+      },
       include: { user: { select: { id: true, name: true, email: true } } },
       orderBy: { updatedAt: "desc" },
     }),
     prisma.corporateProfile.findMany({
-      where: { status: "PENDING", user: { deletedAt: null } },
+      where: {
+        ...(statusFilter ? { status: statusFilter } : {}),
+        user: { deletedAt: null },
+      },
       include: { user: { select: { id: true, name: true, email: true } } },
       orderBy: { updatedAt: "desc" },
     }),
   ]);
 
-  const rows: PendingProfileRow[] = [
+  const rows: ProfileReviewRow[] = [
     ...entrepreneurs.map((p) => ({
       role: "entrepreneur" as const,
       profileId: p.id,
@@ -41,6 +59,9 @@ export async function listPendingProfiles(): Promise<PendingProfileRow[]> {
       name: p.user.name ?? p.user.email,
       email: p.user.email,
       orgLabel: p.businessName,
+      status: p.status,
+      rejectionReason: p.rejectionReason,
+      verified: p.verified,
       submittedAt: p.updatedAt,
     })),
     ...funders.map((p) => ({
@@ -50,6 +71,9 @@ export async function listPendingProfiles(): Promise<PendingProfileRow[]> {
       name: p.user.name ?? p.user.email,
       email: p.user.email,
       orgLabel: p.orgName,
+      status: p.status,
+      rejectionReason: p.rejectionReason,
+      verified: p.verified,
       submittedAt: p.updatedAt,
     })),
     ...corporates.map((p) => ({
@@ -59,6 +83,9 @@ export async function listPendingProfiles(): Promise<PendingProfileRow[]> {
       name: p.user.name ?? p.user.email,
       email: p.user.email,
       orgLabel: p.orgName,
+      status: p.status,
+      rejectionReason: p.rejectionReason,
+      verified: p.verified,
       submittedAt: p.updatedAt,
     })),
   ];
@@ -66,12 +93,22 @@ export async function listPendingProfiles(): Promise<PendingProfileRow[]> {
   return rows.sort((a, b) => b.submittedAt.getTime() - a.submittedAt.getTime());
 }
 
+export async function listPendingProfiles(): Promise<ProfileReviewRow[]> {
+  return listProfilesForReview("PENDING");
+}
+
 export async function countPendingProfiles(): Promise<number> {
   if (!DB_ENABLED || !prisma) return 0;
   const [a, b, c] = await Promise.all([
-    prisma.entrepreneurProfile.count({ where: { status: "PENDING", user: { deletedAt: null } } }),
-    prisma.funderProfile.count({ where: { status: "PENDING", user: { deletedAt: null } } }),
-    prisma.corporateProfile.count({ where: { status: "PENDING", user: { deletedAt: null } } }),
+    prisma.entrepreneurProfile.count({
+      where: { status: { in: ["PENDING", "PARTIALLY_APPROVED"] }, user: { deletedAt: null } },
+    }),
+    prisma.funderProfile.count({
+      where: { status: { in: ["PENDING", "PARTIALLY_APPROVED"] }, user: { deletedAt: null } },
+    }),
+    prisma.corporateProfile.count({
+      where: { status: { in: ["PENDING", "PARTIALLY_APPROVED"] }, user: { deletedAt: null } },
+    }),
   ]);
   return a + b + c;
 }

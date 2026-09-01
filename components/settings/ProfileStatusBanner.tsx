@@ -6,6 +6,11 @@ const statusCopy: Record<string, { label: string; tone: string; blurb: string }>
     tone: "border-gold-200 bg-gold-50 text-gold-800",
     blurb: "BHAF is reviewing this profile. It isn't visible on the network yet.",
   },
+  PARTIALLY_APPROVED: {
+    label: "AI-Verified (Partially Approved)",
+    tone: "border-blue-200 bg-blue-50 text-blue-800",
+    blurb: "Your documents passed AI automated verification. Your profile is active with full platform access.",
+  },
   APPROVED: {
     label: "Approved",
     tone: "border-forest-200 bg-forest-50 text-forest-800",
@@ -14,7 +19,7 @@ const statusCopy: Record<string, { label: string; tone: string; blurb: string }>
   REJECTED: {
     label: "Changes needed",
     tone: "border-red-200 bg-red-50 text-red-700",
-    blurb: "BHAF reviewed this profile and it wasn't approved. Update the details below and save to resubmit for review.",
+    blurb: "Our verification review identified issues with your submission. Update your details/documents to resubmit.",
   },
 };
 

@@ -11,7 +11,7 @@ export const rfpSchema = z.object({
 
 export const rfpResponseSchema = z.object({
   rfpId: z.string().min(1),
-  body: z.string().min(1, "Response note is required").max(50000),
+  body: z.string().min(10, "Response note is required").max(50000),
 });
 
 export type RfpInput = z.infer<typeof rfpSchema>;

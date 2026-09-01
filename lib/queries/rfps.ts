@@ -7,7 +7,7 @@ export async function loadActiveRfps(filters?: { q?: string; category?: string }
     status: "OPEN",
     owner: {
       corporateProfile: {
-        status: "APPROVED"
+        status: { in: ["APPROVED", "PARTIALLY_APPROVED"] }
       }
     }
   };
