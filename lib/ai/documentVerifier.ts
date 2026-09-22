@@ -45,6 +45,28 @@ export async function verifyDocumentWithAI(
 ): Promise<DocumentVerificationResult> {
   const apiKey = process.env.GEMINI_API_KEY?.trim();
 
+  // If MOCK_AI=true is set in .env (for local testing without API costs), auto-approve.
+  if (process.env.MOCK_AI === "true") {
+    console.log("[documentVerifier] MOCK_AI is enabled. Auto-approving document.");
+    return {
+      decision: "APPROVE",
+      documentType: "OTHER_OFFICIAL_DOCUMENT",
+      confidence: 100,
+      extractedEntityName: input.profileContext?.businessName ?? "Mocked Business",
+      extractedPersonName: input.profileContext?.founderName ?? "Mocked Person",
+      isLegible: true,
+      isExpired: false,
+      nameMatchesProfile: true,
+      reason: "Mock AI verification enabled. Document automatically approved.",
+      checks: [
+        { name: "AI Document Type & Authenticity", status: "PASS", detail: "Mocked Approval" },
+        { name: "AI Text Legibility & Quality", status: "PASS", detail: "Mocked Approval" },
+        { name: "AI Name & Profile Consistency", status: "PASS", detail: "Mocked Approval" },
+        { name: "AI Validity & Expiry", status: "PASS", detail: "Mocked Approval" },
+      ],
+    };
+  }
+
   // If no API key is provided, execute safe heuristic fallback
   if (!apiKey || apiKey === "mock_key") {
     return runHeuristicFallback(input);
@@ -93,67 +115,96 @@ Return ONLY a valid JSON object strictly matching this schema with no markdown f
 }
 `;
 
-    // Try Gemini 2.0 Flash first, fallback to 1.5 Flash
-    const model = "gemini-2.0-flash";
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    // Try these models in order if one is experiencing high demand (503)
+    const models = ["gemini-3.6-flash", "gemini-3.6-flash", "gemini-1.5-flash"];
+    let lastErrorStatus = null;
+    let lastErrorText = null;
 
-    // Normalize mimeType for Gemini
-    const safeMime = input.mimeType.startsWith("image/") || input.mimeType === "application/pdf"
-      ? input.mimeType
-      : "application/pdf";
+    for (const model of models) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
-              { text: prompt },
+        // Normalize mimeType for Gemini
+        const safeMime = input.mimeType.startsWith("image/") || input.mimeType === "application/pdf"
+          ? input.mimeType
+          : "application/pdf";
+
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [
               {
-                inlineData: {
-                  mimeType: safeMime,
-                  data: base64Data,
-                },
+                parts: [
+                  { text: prompt },
+                  {
+                    inlineData: {
+                      mimeType: safeMime,
+                      data: base64Data,
+                    },
+                  },
+                ],
               },
             ],
-          },
-        ],
-        generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.1,
-        },
-      }),
-    });
+            generationConfig: {
+              responseMimeType: "application/json",
+              temperature: 0.1,
+            },
+          }),
+        });
 
-    if (!response.ok) {
-      const errText = await response.text();
-      console.warn(`[documentVerifier] Gemini API returned status ${response.status}: ${errText}`);
-      return runHeuristicFallback(input);
+        if (!response.ok) {
+          lastErrorStatus = response.status;
+          lastErrorText = await response.text();
+          console.warn(`[documentVerifier] Gemini API (${model}) returned status ${response.status}: ${lastErrorText}`);
+          // If it's a 503, 429, or 404 (model name deprecated), continue to the next model in the loop
+          if (response.status === 503 || response.status === 429 || response.status === 404) {
+            if (response.status === 503) {
+              await new Promise(resolve => setTimeout(resolve, 1500)); // wait 1.5s before retry
+            }
+            continue;
+          }
+          // For other errors (like 400 Bad Request, or 403 Invalid API Key), fail immediately
+          break;
+        }
+
+        const data = await response.json();
+        const rawContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+        if (!rawContent) {
+          console.warn(`[documentVerifier] Empty response from Gemini API (${model})`);
+          continue; // Try next model just in case
+        }
+
+        const cleaned = rawContent.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
+        const parsed = JSON.parse(cleaned) as DocumentVerificationResult;
+
+        if (!parsed.decision || !Array.isArray(parsed.checks)) {
+          console.warn(`[documentVerifier] Invalid JSON structure from Gemini API (${model})`);
+          continue; // Try next model
+        }
+
+        // Successfully verified using this model
+        console.log(`[documentVerifier] Successfully verified using model: ${model}`);
+        return parsed;
+
+      } catch (err) {
+        console.error(`[documentVerifier] Network or parse error with model ${model}:`, err);
+        // Continue to the next model
+      }
     }
 
-    const data = await response.json();
-    const rawContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    // If we exhausted all models (or broke out early for a hard error), fall back to heuristic
+    console.warn("[documentVerifier] All Gemini models failed or returned invalid responses.");
+    return runHeuristicFallback(input);
 
-    if (!rawContent) {
-      console.warn("[documentVerifier] Empty response from Gemini API");
-      return runHeuristicFallback(input);
-    }
-
-    const cleaned = rawContent.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "").trim();
-    const parsed = JSON.parse(cleaned) as DocumentVerificationResult;
-
-    // Validate structure sanity
-    if (!parsed.decision || !Array.isArray(parsed.checks)) {
-      return runHeuristicFallback(input);
-    }
-
-    return parsed;
   } catch (error) {
     console.error("[documentVerifier] Error verifying document with AI:", error);
     return runHeuristicFallback(input);
   }
 }
+
+
 
 /**
  * Fallback heuristic verifier used when API key is not present or API is unreachable.
@@ -202,7 +253,7 @@ function runHeuristicFallback(input: DocumentVerificationInput): DocumentVerific
   }
 
   return {
-    decision: "APPROVE",
+    decision: "FLAG",
     documentType: "OTHER_OFFICIAL_DOCUMENT",
     confidence: 85,
     extractedEntityName: input.profileContext?.businessName ?? undefined,
@@ -210,12 +261,12 @@ function runHeuristicFallback(input: DocumentVerificationInput): DocumentVerific
     isLegible: true,
     isExpired: false,
     nameMatchesProfile: true,
-    reason: "Document conforms to requirements and has been verified.",
+    reason: "Automated AI verification is currently unavailable. Flagged for manual admin verification.",
     checks: [
-      { name: "AI Document Type & Authenticity", status: "PASS", detail: "Verified business document structure" },
-      { name: "AI Text Legibility & Quality", status: "PASS", detail: "Document text and resolution verified" },
-      { name: "AI Name & Profile Consistency", status: "PASS", detail: `Matches expected profile (${input.profileContext?.businessName ?? "Active"})` },
-      { name: "AI Validity & Expiry", status: "PASS", detail: "Document appears current" },
+      { name: "AI Document Type & Authenticity", status: "WARN", detail: "API Unavailable - Unverified" },
+      { name: "AI Text Legibility & Quality", status: "WARN", detail: "API Unavailable - Unverified" },
+      { name: "AI Name & Profile Consistency", status: "WARN", detail: "API Unavailable - Unverified" },
+      { name: "AI Validity & Expiry", status: "WARN", detail: "API Unavailable - Unverified" },
     ],
   };
 }

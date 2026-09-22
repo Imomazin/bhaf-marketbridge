@@ -1,0 +1,151 @@
+2718:export interface InvoiceCreatePreviewParams {
+2719-    /**
+2720-     * Settings for automatic tax lookup for this invoice preview.
+2721-     */
+2722-    automatic_tax?: InvoiceCreatePreviewParams.AutomaticTax;
+2723-    /**
+2724-     * The currency to preview this invoice in. Defaults to that of `customer` if not specified.
+2725-     */
+2726-    currency?: string;
+2727-    /**
+2728-     * The identifier of the customer whose upcoming invoice you're retrieving. If `automatic_tax` is enabled then one of `customer`, `customer_details`, `subscription`, or `schedule` must be set.
+2729-     */
+2730-    customer?: string;
+2731-    /**
+2732-     * The identifier of the account representing the customer whose upcoming invoice you're retrieving. If `automatic_tax` is enabled then one of `customer`, `customer_account`, `customer_details`, `subscription`, or `schedule` must be set.
+2733-     */
+2734-    customer_account?: string;
+2735-    /**
+2736-     * Details about the customer you want to invoice or overrides for an existing customer. If `automatic_tax` is enabled then one of `customer`, `customer_details`, `subscription`, or `schedule` must be set.
+2737-     */
+2738-    customer_details?: InvoiceCreatePreviewParams.CustomerDetails;
+2739-    /**
+2740-     * The coupons to redeem into discounts for the invoice preview. If not specified, inherits the discount from the subscription or customer. This works for both coupons directly applied to an invoice and coupons applied to a subscription. Pass an empty string to avoid inheriting any discounts.
+2741-     */
+2742-    discounts?: Emptyable<Array<InvoiceCreatePreviewParams.Discount>>;
+2743-    /**
+2744-     * Specifies which fields in the response should be expanded.
+2745-     */
+2746-    expand?: Array<string>;
+2747-    /**
+2748-     * List of invoice items to add or update in the upcoming invoice preview (up to 250).
+2749-     */
+2750-    invoice_items?: Array<InvoiceCreatePreviewParams.InvoiceItem>;
+2751-    /**
+2752-     * The connected account that issues the invoice. The invoice is presented with the branding and support information of the specified account.
+2753-     */
+2754-    issuer?: InvoiceCreatePreviewParams.Issuer;
+2755-    /**
+2756-     * The account (if any) for which the funds of the invoice payment are intended. If set, the invoice will be presented with the branding and support information of the specified account. See the [Invoices with Connect](https://docs.stripe.com/billing/invoices/connect) documentation for details.
+2757-     */
+2758-    on_behalf_of?: Emptyable<string>;
+2759-    /**
+2760-     * Customizes the types of values to include when calculating the invoice. Defaults to `next` if unspecified.
+2761-     */
+2762-    preview_mode?: InvoiceCreatePreviewParams.PreviewMode;
+2763-    /**
+2764-     * The identifier of the schedule whose upcoming invoice you'd like to retrieve. Cannot be used with subscription or subscription fields.
+2765-     */
+2766-    schedule?: string;
+2767-    /**
+2768-     * The schedule creation or modification params to apply as a preview. Cannot be used with `subscription` or `subscription_` prefixed fields.
+2769-     */
+2770-    schedule_details?: InvoiceCreatePreviewParams.ScheduleDetails;
+2771-    /**
+2772-     * The identifier of the subscription for which you'd like to retrieve the upcoming invoice. If not provided, but a `subscription_details.items` is provided, you will preview creating a subscription with those items. If neither `subscription` nor `subscription_details.items` is provided, you will retrieve the next upcoming invoice from among the customer's subscriptions.
+2773-     */
+2774-    subscription?: string;
+2775-    /**
+2776-     * The subscription creation or modification params to apply as a preview. Cannot be used with `schedule` or `schedule_details` fields.
+2777-     */
+2778-    subscription_details?: InvoiceCreatePreviewParams.SubscriptionDetails;
+2779-}
+2780-export declare namespace InvoiceCreatePreviewParams {
+2781-    interface AutomaticTax {
+2782-        /**
+2783-         * Whether Stripe automatically computes tax on this invoice. Note that incompatible invoice items (invoice items with manually specified [tax rates](https://docs.stripe.com/api/tax_rates), negative amounts, or `tax_behavior=unspecified`) cannot be added to automatic tax invoices.
+2784-         */
+2785-        enabled: boolean;
+2786-        /**
+2787-         * The account that's liable for tax. If set, the business address and tax registrations required to perform the tax calculation are loaded from this account. The tax transaction is returned in the report of the connected account.
+2788-         */
+2789-        liability?: AutomaticTax.Liability;
+2790-    }
+2791-    interface CustomerDetails {
+2792-        /**
+2793-         * The customer's address. Learn about [country-specific requirements for calculating tax](https://docs.stripe.com/invoicing/taxes?dashboard-or-api=dashboard#set-up-customer).
+2794-         */
+2795-        address?: Emptyable<AddressParam>;
+2796-        /**
+2797-         * The customer's shipping information. Appears on invoices emailed to this customer.
+2798-         */
+2799-        shipping?: Emptyable<CustomerDetails.Shipping>;
+2800-        /**
+2801-         * Tax details about the customer.
+2802-         */
+2803-        tax?: CustomerDetails.Tax;
+2804-        /**
+2805-         * The customer's tax exemption. One of `none`, `exempt`, or `reverse`.
+2806-         */
+2807-        tax_exempt?: Emptyable<CustomerDetails.TaxExempt>;
+2808-        /**
+2809-         * The customer's tax IDs.
+2810-         */
+2811-        tax_ids?: Array<CustomerDetails.TaxId>;
+2812-    }
+2813-    interface Discount {
+2814-        /**
+2815-         * ID of the coupon to create a new discount for.
+2816-         */
+2817-        coupon?: string;
+2818-        /**
+2819-         * ID of an existing discount on the object (or one of its ancestors) to reuse.
+2820-         */
+2821-        discount?: string;
+2822-        /**
+2823-         * ID of the promotion code to create a new discount for.
+2824-         */
+2825-        promotion_code?: string;
+2826-    }
+2827-    interface InvoiceItem {
+2828-        /**
+2829-         * The integer amount in cents (or local equivalent) of previewed invoice item.
+2830-         */
+2831-        amount?: number;
+2832-        /**
+2833-         * Three-letter [ISO currency code](https://www.iso.org/iso-4217-currency-codes.html), in lowercase. Must be a [supported currency](https://stripe.com/docs/currencies). Only applicable to new invoice items.
+2834-         */
+2835-        currency?: string;
+2836-        /**
+2837-         * An arbitrary string which you can attach to the invoice item. The description is displayed in the invoice for easy tracking.
+2838-         */
+2839-        description?: string;
+2840-        /**
+2841-         * Explicitly controls whether discounts apply to this invoice item. Defaults to true, except for negative invoice items.
+2842-         */
+2843-        discountable?: boolean;
+2844-        /**
+2845-         * The coupons to redeem into discounts for the invoice item in the preview.
+2846-         */
+2847-        discounts?: Emptyable<Array<InvoiceItem.Discount>>;
+2848-        /**
+2849-         * The ID of the invoice item to update in preview. If not specified, a new invoice item will be added to the preview of the upcoming invoice.
+2850-         */
+2851-        invoiceitem?: string;
+2852-        /**
+2853-         * Set of [key-value pairs](https://docs.stripe.com/api/metadata) that you can attach to an object. This can be useful for storing additional information about the object in a structured format. Individual keys can be unset by posting an empty value to them. All keys can be unset by posting an empty value to `metadata`.
+2854-         */
+2855-        metadata?: Emptyable<MetadataParam>;
+2856-        /**
+2857-         * The period associated with this invoice item. When set to different values, the period will be rendered on the invoice. If you have [Stripe Revenue Recognition](https://docs.stripe.com/revenue-recognition) enabled, the period will be used to recognize and defer revenue. See the [Revenue Recognition documentation](https://docs.stripe.com/revenue-recognition/methodology/subscriptions-and-invoicing) for details.
+2858-         */
+2859-        period?: InvoiceItem.Period;
+2860-        /**
+2861-         * The ID of the price object. One of `price` or `price_data` is required.
+2862-         */
+2863-        price?: string;
+2864-        /**
+2865-         * Data used to generate a new [Price](https://docs.stripe.com/api/prices) object inline. One of `price` or `price_data` is required.
+2866-         */
+2867-        price_data?: InvoiceItem.PriceData;
+2868-        /**

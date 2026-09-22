@@ -291,23 +291,24 @@ export default async function FunderPortalPage() {
                 ))}
               </div>
             </DashboardCard>
-{/* 
             <DashboardCard
-              title="Impact reporting"
-              description="Templates you can use to turn live platform data into funder-facing updates."
-              action="Open"
-              actionHref="/portal/funder/impact"
+              title="Grants & Impact"
+              description="Issue and track funding, review progress reports, and monitor beneficiary metrics."
+              action="Manage Grants"
+              actionHref="/portal/funder/grants"
             >
-              <ul className="space-y-3">
-                {FUNDER_REPORT_TEMPLATES.map((template) => (
-                  <li key={template.id} className="rounded-lg border border-cream-200 p-3">
-                    <p className="text-sm font-medium text-forest-900">{template.title}</p>
-                    <p className="mt-0.5 text-[11px] text-charcoal-400">{template.audience}</p>
-                  </li>
-                ))}
-              </ul>
+              <div className="flex h-full flex-col justify-center rounded-xl border border-cream-200 bg-forest-50 p-6">
+                <p className="text-sm font-medium text-forest-900 mb-2">
+                  Track your philanthropic impact
+                </p>
+                <p className="text-xs text-charcoal-600 mb-4">
+                  Review milestone reports, financial usage, and beneficiary growth from the entrepreneurs you fund.
+                </p>
+                <Link href="/portal/funder/grants" className="text-xs font-semibold text-forest-700 hover:text-forest-900">
+                  Open Grants Dashboard →
+                </Link>
+              </div>
             </DashboardCard>
-*/}
           </div>
 
           <div className="mt-6 grid gap-6 lg:grid-cols-3">

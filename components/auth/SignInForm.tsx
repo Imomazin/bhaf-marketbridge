@@ -36,7 +36,13 @@ export function SignInForm({ next }: SignInFormProps) {
       }
       return;
     }
-    router.push(target);
+    let finalTarget = target;
+    const baseRoutes = ["/portal/entrepreneur", "/portal/funder", "/portal/corporate", "/admin"];
+    if (baseRoutes.includes(target)) {
+      finalTarget = "/portal";
+    }
+
+    router.push(finalTarget);
     router.refresh();
   }
 

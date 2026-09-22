@@ -113,6 +113,23 @@ export async function registerAction(raw: RegisterInput & { turnstileToken?: str
     },
   });
 
+  const freemiumPlan = await prisma.subscriptionPlan.findUnique({
+    where: { name: "Freemium" }
+  });
+
+  if (freemiumPlan) {
+    await prisma.subscription.create({
+      data: {
+        userId: user.id,
+        planId: freemiumPlan.id,
+        plan: freemiumPlan.name,
+        amountUsdCents: freemiumPlan.monthlyPriceCents,
+        status: "ACTIVE",
+        provider: "system",
+      }
+    });
+  }
+
   // Role-specific profile stub
   if (input.role === "ENTREPRENEUR" && input.businessName && input.country && input.sector) {
     await prisma.entrepreneurProfile.create({

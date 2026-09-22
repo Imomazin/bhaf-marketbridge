@@ -119,6 +119,15 @@ export default async function AdminPage() {
             <a href="/admin/opportunities" className="btn-secondary !py-2 !px-3 text-xs">
               Opportunities
             </a>
+            <a href="/admin/consulting" className="btn-secondary !py-2 !px-3 text-xs">
+              Consulting Inquiries
+            </a>
+            <a href="/admin/subscriptions" className="btn-secondary !py-2 !px-3 text-xs">
+              Subscriptions
+            </a>
+            <a href="/admin/grants" className="btn-secondary !py-2 !px-3 text-xs">
+              Grants
+            </a>
             <a href="/admin/opportunities/new" className="btn-primary !py-2 !px-3 text-xs">
               New opportunity
             </a>

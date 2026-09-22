@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { requestPasswordReset } from "@/app/actions/password";
 
 export function ForgotPasswordForm() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [status, setStatus] = useState<{ ok: boolean; message: string } | null>(null);
@@ -12,8 +14,13 @@ export function ForgotPasswordForm() {
     e.preventDefault();
     setSubmitting(true);
     const res = await requestPasswordReset({ email: email.trim().toLowerCase() });
-    setStatus(res);
     setSubmitting(false);
+    
+    if (res.ok) {
+      router.push(`/auth/reset-password?email=${encodeURIComponent(email.trim().toLowerCase())}`);
+    } else {
+      setStatus(res);
+    }
   }
 
   return (

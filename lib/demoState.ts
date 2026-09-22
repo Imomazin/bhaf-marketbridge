@@ -16,6 +16,7 @@ const DEMO_ARTEFACT_COOKIE = "bhaf-demo-artefacts";
 const DEMO_LISTING_COOKIE = "bhaf-demo-listings";
 const DEMO_APPLICATION_COOKIE = "bhaf-demo-applications";
 const DEMO_ENQUIRY_COOKIE = "bhaf-demo-enquiries";
+const DEMO_CONSULTING_COOKIE = "bhaf-demo-consulting";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -28,8 +29,11 @@ export interface DemoEntrepreneurProfile {
   fundingNeed: string;
   esgActivity: string;
   yearFounded: number | null;
+  readinessLevel: "EMERGING" | "DEVELOPING" | "MARKET_READY" | "FUNDING_READY";
   womenSupported: number;
   jobsCreated: number;
+  verified: boolean;
+  publishedAt: string | null;
   updatedAt: string;
 }
 
@@ -41,6 +45,7 @@ export interface DemoFunderProfile {
   sectorFocus: string[];
   ticketMin: number | null;
   ticketMax: number | null;
+  verified: boolean;
   updatedAt: string;
 }
 
@@ -52,13 +57,15 @@ export interface DemoArtefactRecord {
   required: boolean;
   status: "PENDING_REVIEW";
   fileName: string;
-  fileSize: string;
-  uploadedAt: string;
+  fileSize: number;
+  mimeType: string;
+  storageKey: string;
   sha256: string;
+  uploadedAt: string;
   checks: Array<{
     name: string;
     status: "PASS" | "FAIL" | "WARN" | "PENDING";
-    detail?: string;
+    detail: string | null;
   }>;
 }
 
@@ -68,13 +75,14 @@ export interface DemoListingRecord {
   title: string;
   category: string;
   description: string;
-  priceRange: string;
-  minOrder: string;
-  esgHighlight: string;
+  priceRange: string | null;
+  minOrder: string | null;
+  esgHighlight: string | null;
   tags: string[];
-  status: "PUBLISHED";
+  status: "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "REJECTED" | "ARCHIVED";
+  publishedAt: string | null;
   createdAt: string;
-  publishedAt: string;
+  updatedAt: string;
 }
 
 export interface DemoApplicationRecord {
@@ -97,6 +105,31 @@ export interface DemoEnquiryRecord {
   note: string | null;
   status: "SENT";
   createdAt: string;
+}
+
+export interface DemoConsultingRequestRecord {
+  id: string;
+  userId: string | null;
+  name: string;
+  email: string;
+  orgName: string;
+  phone: string | null;
+  country: string | null;
+  serviceTrackId: string;
+  orgStageId: string;
+  engagementTypeId: string;
+  selectedAddonIds: string[];
+  urgency: "STANDARD" | "EXPEDITED";
+  estimatedPriceMin: number;
+  estimatedPriceMax: number;
+  clientBudget: string | null;
+  targetStartDate: string | null;
+  description: string;
+  status: "SUBMITTED" | "UNDER_REVIEW" | "PROPOSAL_SENT" | "ACCEPTED" | "DECLINED";
+  quotedPriceUsd: number | null;
+  adminNotes: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 function nowIso() {
@@ -535,6 +568,80 @@ export async function saveDemoEnquiry(input: {
   return record;
 }
 
+function parseConsultingRequest(raw: JsonRecord): DemoConsultingRequestRecord | null {
+  const id = stringOrEmpty(raw.id);
+  const email = stringOrEmpty(raw.email);
+  const orgName = stringOrEmpty(raw.orgName);
+  if (!id || !email || !orgName) return null;
+  return {
+    id,
+    userId: stringOrEmpty(raw.userId) || null,
+    name: stringOrEmpty(raw.name) || "Anonymous",
+    email,
+    orgName,
+    phone: stringOrEmpty(raw.phone) || null,
+    country: stringOrEmpty(raw.country) || null,
+    serviceTrackId: stringOrEmpty(raw.serviceTrackId) || "ESG_SUSTAINABILITY",
+    orgStageId: stringOrEmpty(raw.orgStageId) || "GROWTH_STAGE",
+    engagementTypeId: stringOrEmpty(raw.engagementTypeId) || "PROJECT_SPRINT",
+    selectedAddonIds: stringArray(raw.selectedAddonIds),
+    urgency: raw.urgency === "EXPEDITED" ? "EXPEDITED" : "STANDARD",
+    estimatedPriceMin: typeof raw.estimatedPriceMin === "number" ? raw.estimatedPriceMin : 2500,
+    estimatedPriceMax: typeof raw.estimatedPriceMax === "number" ? raw.estimatedPriceMax : 5000,
+    clientBudget: stringOrEmpty(raw.clientBudget) || null,
+    targetStartDate: stringOrEmpty(raw.targetStartDate) || null,
+    description: stringOrEmpty(raw.description),
+    status: ["SUBMITTED", "UNDER_REVIEW", "PROPOSAL_SENT", "ACCEPTED", "DECLINED"].includes(
+      raw.status as string,
+    )
+      ? (raw.status as DemoConsultingRequestRecord["status"])
+      : "SUBMITTED",
+    quotedPriceUsd: typeof raw.quotedPriceUsd === "number" ? raw.quotedPriceUsd : null,
+    adminNotes: stringOrEmpty(raw.adminNotes) || null,
+    createdAt: stringOrEmpty(raw.createdAt) || nowIso(),
+    updatedAt: stringOrEmpty(raw.updatedAt) || nowIso(),
+  };
+}
+
+export async function getAllDemoConsultingRequests(): Promise<DemoConsultingRequestRecord[]> {
+  return readCookieArray(DEMO_CONSULTING_COOKIE, parseConsultingRequest);
+}
+
+export async function saveDemoConsultingRequest(
+  input: Omit<DemoConsultingRequestRecord, "id" | "createdAt" | "updatedAt">,
+): Promise<DemoConsultingRequestRecord> {
+  const requests = await getAllDemoConsultingRequests();
+  const record: DemoConsultingRequestRecord = {
+    ...input,
+    id: `demo-consulting-${crypto.randomUUID()}`,
+    createdAt: nowIso(),
+    updatedAt: nowIso(),
+  };
+  await writeCookieArray(DEMO_CONSULTING_COOKIE, [record, ...requests].slice(0, 80));
+  return record;
+}
+
+export async function updateDemoConsultingRequestStatus(
+  id: string,
+  status: DemoConsultingRequestRecord["status"],
+  quotedPriceUsd?: number | null,
+  adminNotes?: string | null,
+): Promise<DemoConsultingRequestRecord | null> {
+  const requests = await getAllDemoConsultingRequests();
+  const index = requests.findIndex((r) => r.id === id);
+  if (index === -1) return null;
+  const updated: DemoConsultingRequestRecord = {
+    ...requests[index],
+    status,
+    quotedPriceUsd: quotedPriceUsd !== undefined ? quotedPriceUsd : requests[index].quotedPriceUsd,
+    adminNotes: adminNotes !== undefined ? adminNotes : requests[index].adminNotes,
+    updatedAt: nowIso(),
+  };
+  requests[index] = updated;
+  await writeCookieArray(DEMO_CONSULTING_COOKIE, requests);
+  return updated;
+}
+
 export async function deleteDemoUserState(userId: string): Promise<void> {
   const [profiles, funderProfiles, artefacts, listings, applications, enquiries] = await Promise.all([
     getAllDemoEntrepreneurProfiles(),
@@ -599,6 +706,7 @@ export async function clearAllDemoState(): Promise<void> {
   await deleteCookie(DEMO_LISTING_COOKIE);
   await deleteCookie(DEMO_APPLICATION_COOKIE);
   await deleteCookie(DEMO_ENQUIRY_COOKIE);
+  await deleteCookie(DEMO_CONSULTING_COOKIE);
 }
 
 export function mapDemoArtefactToUi(record: DemoArtefactRecord): Artefact {

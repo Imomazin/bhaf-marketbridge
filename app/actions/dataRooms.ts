@@ -5,6 +5,7 @@ import { auth } from "@/auth";
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { writeAudit } from "@/lib/audit";
 import { sendEmail } from "@/lib/email";
+import { checkLimitAndWarn } from "@/lib/limits";
 
 export type DataRoomResult = { ok: true; id: string; message: string } | { ok: false; message: string };
 
@@ -19,6 +20,15 @@ export async function createDataRoom(input: {
   if (!DB_ENABLED || !prisma) return { ok: false, message: "Database not configured." };
 
   if (!input.title || input.title.length < 3) return { ok: false, message: "Title required." };
+
+  const currentCount = await prisma.dataRoom.count({
+    where: { ownerId: session.user.id }
+  });
+
+  const limitCheck = await checkLimitAndWarn(session.user.id, "maxDataRooms", currentCount);
+  if (!limitCheck.ok) {
+    return { ok: false, message: limitCheck.message || "Upgrade required." };
+  }
 
   const room = await prisma.dataRoom.create({
     data: {

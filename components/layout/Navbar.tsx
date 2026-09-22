@@ -11,6 +11,7 @@ import { bhafLogo } from "@/data/photos";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
+  { href: "/services/consulting", label: "Consulting" },
   { href: "/directory", label: "Directory" },
   { href: "/marketplace", label: "Marketplace" },
   { href: "/opportunities", label: "Opportunities" },
@@ -21,6 +22,7 @@ const navLinks = [
 
 const accountLinks = [
   { href: "/settings", label: "Settings" },
+  { href: "/account/billing", label: "Billing & Plans" },
 ];
 
 export function Navbar() {

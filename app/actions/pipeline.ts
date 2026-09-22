@@ -3,6 +3,7 @@
 import { auth } from "@/auth";
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { revalidatePath } from "next/cache";
+import { checkLimitAndWarn } from "@/lib/limits";
 
 export async function updatePipelineStage(entrepreneurId: string, newStage: "SOURCING" | "DILIGENCE" | "TERM_SHEET" | "CLOSED") {
   if (!DB_ENABLED || !prisma) {
@@ -15,6 +16,26 @@ export async function updatePipelineStage(entrepreneurId: string, newStage: "SOU
   }
 
   const funderId = session.user.id;
+
+  const existingEntry = await prisma.pipelineEntry.findUnique({
+    where: {
+      funderId_entrepreneurId: {
+        funderId,
+        entrepreneurId,
+      },
+    },
+  });
+
+  if (!existingEntry) {
+    const currentCount = await prisma.pipelineEntry.count({
+      where: { funderId }
+    });
+
+    const limitCheck = await checkLimitAndWarn(funderId, "maxDeals", currentCount);
+    if (!limitCheck.ok) {
+      throw new Error(limitCheck.message || "Upgrade required to add more deals.");
+    }
+  }
 
   await prisma.pipelineEntry.upsert({
     where: {

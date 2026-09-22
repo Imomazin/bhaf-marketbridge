@@ -155,7 +155,7 @@ export async function loadOnboardingState(userId: string, role: string): Promise
       corporateProfile: { select: { industry: true } },
       _count: {
         select: {
-          artefacts: true,
+          artefacts: { where: { status: "VALIDATED" } },
           listings: true,
         },
       },

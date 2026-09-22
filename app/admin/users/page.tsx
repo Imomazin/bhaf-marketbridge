@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { DB_ENABLED } from "@/lib/db";
 import { listUsers } from "@/lib/queries/users";
-import { UserStatusActions } from "@/components/admin/UserStatusActions";
 import { cn } from "@/lib/utils";
 import type { Role, UserStatus } from "@prisma/client";
 
@@ -53,11 +52,29 @@ export default async function AdminUsersPage({
         <Link href="/admin" className="text-xs font-medium text-forest-700 hover:text-gold-700">
           ← Admin dashboard
         </Link>
-        <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-700">Admin</p>
-        <h1 className="mt-2 font-serif text-3xl text-forest-900 md:text-4xl">Users</h1>
-        <p className="mt-2 text-sm text-charcoal-500">
-          {result.total} account{result.total === 1 ? "" : "s"}. Deactivating blocks sign-in immediately.
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-700">Admin</p>
+            <h1 className="mt-2 font-serif text-3xl text-forest-900 md:text-4xl">Users</h1>
+            <p className="mt-2 text-sm text-charcoal-500">
+              {result.total} account{result.total === 1 ? "" : "s"}. Deactivating blocks sign-in immediately.
+            </p>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-2.5">
+            <Link
+              href="/admin/profiles/new-funder"
+              className="rounded-md bg-forest-800 px-3.5 py-2 text-xs font-semibold text-cream-50 hover:bg-forest-700 transition shadow-sm"
+            >
+              + Onboard Funder
+            </Link>
+            <Link
+              href="/admin/profiles/new-corporate"
+              className="rounded-md border border-forest-800 bg-white px-3.5 py-2 text-xs font-semibold text-forest-800 hover:bg-cream-100 transition shadow-sm"
+            >
+              + Onboard Corporate
+            </Link>
+          </div>
+        </div>
 
         <form method="get" className="card mt-8 flex flex-wrap items-center gap-2 p-3">
           <input type="hidden" name="role" value={role ?? ""} />
@@ -160,7 +177,12 @@ export default async function AdminUsersPage({
                     </td>
                     <td className="px-4 py-3 text-charcoal-400">{u.createdAt.toISOString().slice(0, 10)}</td>
                     <td className="px-4 py-3">
-                      <UserStatusActions userId={u.id} status={u.status} />
+                      <Link 
+                        href={`/admin/users/${u.id}`}
+                        className="rounded-md border border-cream-300 px-3 py-1.5 text-xs font-medium text-charcoal-600 hover:border-forest-700 hover:text-forest-900 inline-block"
+                      >
+                        View User
+                      </Link>
                     </td>
                   </tr>
                 ))}

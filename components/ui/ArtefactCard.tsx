@@ -164,9 +164,7 @@ export function ArtefactCard({ artefact: a }: ArtefactCardProps) {
                 View document
               </button>
             )}
-            <button className="rounded-md px-3 py-2 text-xs font-medium text-charcoal-500 hover:text-forest-900">
-              Replace
-            </button>
+            <ArtefactResubmit artefactId={a.id} variant="replace" />
           </>
         )}
       </div>

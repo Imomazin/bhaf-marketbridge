@@ -9,7 +9,7 @@ const statusCopy: Record<string, { label: string; tone: string; blurb: string }>
   PARTIALLY_APPROVED: {
     label: "AI-Verified (Partially Approved)",
     tone: "border-blue-200 bg-blue-50 text-blue-800",
-    blurb: "Your documents passed AI automated verification. Your profile is active with full platform access.",
+    blurb: "Your documents passed AI automated verification. Your profile is active with full platform access, however an admin will still conduct a final review.",
   },
   APPROVED: {
     label: "Approved",

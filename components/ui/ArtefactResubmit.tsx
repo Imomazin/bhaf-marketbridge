@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ARTEFACT_MAX_BYTES, ARTEFACT_MAX_MB, formatArtefactBytes } from "@/lib/artefactUpload";
 
-export function ArtefactResubmit({ artefactId }: { artefactId: string }) {
+export function ArtefactResubmit({ artefactId, variant = "resubmit" }: { artefactId: string; variant?: "resubmit" | "replace" }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -40,6 +40,13 @@ export function ArtefactResubmit({ artefactId }: { artefactId: string }) {
   }
 
   if (!open) {
+    if (variant === "replace") {
+      return (
+        <button type="button" onClick={() => setOpen(true)} className="rounded-md px-3 py-2 text-xs font-medium text-charcoal-500 hover:text-forest-900">
+          Replace
+        </button>
+      );
+    }
     return (
       <button type="button" onClick={() => setOpen(true)} className="btn-gold !py-2 !px-3 text-xs">
         Re-upload corrected version
@@ -56,7 +63,7 @@ export function ArtefactResubmit({ artefactId }: { artefactId: string }) {
           accept=".pdf,.jpg,.jpeg,.png,.webp,.zip,.docx,.xlsx"
           onChange={(e) => pickFile(e.target.files?.[0])}
         />
-        {file ? file.name : "Click to choose the corrected file"}
+        {file ? file.name : (variant === "replace" ? "Click to choose the replacement file" : "Click to choose the corrected file")}
       </label>
       <div className="mt-2 flex gap-2">
         <button
@@ -77,7 +84,7 @@ export function ArtefactResubmit({ artefactId }: { artefactId: string }) {
           disabled={!file || submitting}
           className="btn-primary !py-1.5 !px-3 text-xs disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {submitting ? "Submitting…" : "Submit for re-review"}
+          {submitting ? "Submitting…" : (variant === "replace" ? "Replace document" : "Submit for re-review")}
         </button>
       </div>
       {result && !result.ok && <p className="mt-2 text-[11px] text-red-700">{result.message}</p>}

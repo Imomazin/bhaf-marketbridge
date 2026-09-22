@@ -50,6 +50,7 @@ export async function seedDemoAccounts(prisma: PrismaClient): Promise<SeedResult
     },
     create: {
       email: adminAccount.email,
+      emailVerified: new Date(),
       name: adminAccount.name,
       passwordHash: adminPwd,
       role: adminAccount.role,
@@ -67,6 +68,7 @@ export async function seedDemoAccounts(prisma: PrismaClient): Promise<SeedResult
     },
     create: {
       email: entrepreneurAccount.email,
+      emailVerified: new Date(),
       name: entrepreneurAccount.name,
       passwordHash: founderPwd,
       role: entrepreneurAccount.role,
@@ -104,6 +106,7 @@ export async function seedDemoAccounts(prisma: PrismaClient): Promise<SeedResult
     },
     create: {
       email: funderAccount.email,
+      emailVerified: new Date(),
       name: funderAccount.name,
       passwordHash: funderPwd,
       role: funderAccount.role,
@@ -134,6 +137,7 @@ export async function seedDemoAccounts(prisma: PrismaClient): Promise<SeedResult
     },
     create: {
       email: corporateAccount.email,
+      emailVerified: new Date(),
       name: corporateAccount.name,
       passwordHash: corporatePwd,
       role: corporateAccount.role,
@@ -164,6 +168,7 @@ export async function seedDemoAccounts(prisma: PrismaClient): Promise<SeedResult
     },
     create: {
       email: auditorAccount.email,
+      emailVerified: new Date(),
       name: auditorAccount.name,
       passwordHash: auditorPwd,
       role: auditorAccount.role,
@@ -171,6 +176,83 @@ export async function seedDemoAccounts(prisma: PrismaClient): Promise<SeedResult
     },
     select: { id: true, createdAt: true, updatedAt: true },
   });
+
+  // --- EXTENDED SEED DATA FOR DEMO VIDEO ---
+
+  const founderProfile = await prisma.entrepreneurProfile.findUnique({
+    where: { userId: founder.id }
+  });
+
+  if (founderProfile) {
+    // 1. Products
+    await prisma.product.createMany({
+      data: [
+        {
+          profileId: founderProfile.id,
+          name: "Upcycled Cotton Tote Bag",
+          description: "Durable, stylish tote bags made from 100% post-consumer textile waste.",
+          category: "Accessories"
+        },
+        {
+          profileId: founderProfile.id,
+          name: "Recycled Denim Jacket",
+          description: "Vintage denim jackets, fully repaired and redesigned for modern wear.",
+          category: "Apparel"
+        }
+      ],
+      skipDuplicates: true
+    });
+  }
+
+  // 2. Opportunities (Grants)
+  await prisma.opportunity.upsert({
+    where: { id: "seed-grant-1" },
+    update: {},
+    create: {
+      id: "seed-grant-1",
+      title: "Women in Circular Economy Grant 2026",
+      organisation: "Global Climate Fund",
+      type: "GRANT",
+      region: "Sub-Saharan Africa",
+      amount: "$50,000",
+      description: "Non-dilutive grant for African women-led ventures innovating in the circular economy.",
+      eligibility: ["Women-led", "Circular Economy", "Revenue Generating"],
+      published: true
+    }
+  });
+
+  await prisma.opportunity.upsert({
+    where: { id: "seed-grant-2" },
+    update: {},
+    create: {
+      id: "seed-grant-2",
+      title: "Agri-Tech Scaling Facility",
+      organisation: "Mosaic Impact Partners",
+      type: "INVESTMENT",
+      region: "Pan-Africa",
+      amount: "$250,000 - $1M",
+      description: "Early-stage equity for ventures transforming food systems.",
+      eligibility: ["Agri-Tech", "Series A"],
+      published: true
+    }
+  });
+
+  // 3. Subscriptions
+  await prisma.subscriptionPlan.upsert({
+    where: { name: "BHAF Premium" },
+    update: {},
+    create: {
+      name: "BHAF Premium",
+      tier: "PREMIUM",
+      role: "ENTREPRENEUR",
+      monthlyPriceCents: 4900,
+      yearlyPriceCents: 49000,
+      isActive: true,
+      features: { "maxProducts": 50, "prioritySupport": true }
+    }
+  });
+
+  // --- END EXTENDED SEED DATA ---
 
   return {
     created: {

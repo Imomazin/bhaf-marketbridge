@@ -65,11 +65,29 @@ export default async function AdminProfileReviewPage(props: {
         <Link href="/admin" className="text-xs font-medium text-forest-700 hover:text-gold-700">
           ← Admin dashboard
         </Link>
-        <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-700">Admin</p>
-        <h1 className="mt-2 font-serif text-3xl text-forest-900 md:text-4xl">Profile Management & Reviews</h1>
-        <p className="mt-2 text-sm text-charcoal-500">
-          Review, approve, or inspect AI-verified and rejected submissions across the BHAF network.
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-700">Admin</p>
+            <h1 className="mt-2 font-serif text-3xl text-forest-900 md:text-4xl">Profile Management & Reviews</h1>
+            <p className="mt-2 text-sm text-charcoal-500">
+              Review, approve, or inspect AI-verified and rejected submissions across the BHAF network.
+            </p>
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-2.5">
+            <Link
+              href="/admin/profiles/new-funder"
+              className="rounded-md bg-forest-800 px-3.5 py-2 text-xs font-semibold text-cream-50 hover:bg-forest-700 transition shadow-sm"
+            >
+              + Onboard Funder
+            </Link>
+            <Link
+              href="/admin/profiles/new-corporate"
+              className="rounded-md border border-forest-800 bg-white px-3.5 py-2 text-xs font-semibold text-forest-800 hover:bg-cream-100 transition shadow-sm"
+            >
+              + Onboard Corporate
+            </Link>
+          </div>
+        </div>
 
         {/* Filter Tabs */}
         <div className="mt-6 flex flex-wrap items-center gap-2 border-b border-cream-200 pb-3">

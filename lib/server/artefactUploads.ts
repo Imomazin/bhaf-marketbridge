@@ -12,6 +12,7 @@ import { saveDemoArtefact } from "@/lib/demoState";
 import { syncEntrepreneurReadiness } from "@/lib/readinessSync";
 import { verifyDocumentWithAI } from "@/lib/ai/documentVerifier";
 import { sendEmail } from "@/lib/email";
+import { loadOnboardingState } from "@/lib/queries/onboarding";
 
 const uploadSchema = z.object({
   name: z.string().min(2).max(160),
@@ -110,7 +111,9 @@ export async function uploadArtefactForUser(
   });
 
   const isApprovedByAI = aiResult.decision === "APPROVE";
-  const artefactStatus = isApprovedByAI ? "VALIDATED" : "REJECTED";
+  const artefactStatus = isApprovedByAI 
+    ? "VALIDATED" 
+    : (aiResult.decision === "FLAG" ? "PENDING_REVIEW" : "REJECTED");
 
   const initialChecks = await buildInitialChecks(a.sha256);
   const aiChecksToCreate = [
@@ -143,43 +146,75 @@ export async function uploadArtefactForUser(
     },
   });
 
-  // Automatically update entrepreneur profile status
-  if (user?.entrepreneurProfile) {
+  // Automatically update profile status based on onboarding progress
+  if (user) {
+    const onboarding = await loadOnboardingState(user.id, user.role);
+    const isFullyOnboarded = onboarding.percent === 100;
+    
     if (isApprovedByAI) {
-      // Transition to PARTIALLY_APPROVED if currently PENDING or REJECTED
-      if (
-        user.entrepreneurProfile.status === "PENDING" ||
-        user.entrepreneurProfile.status === "REJECTED"
-      ) {
-        await prisma.entrepreneurProfile.update({
-          where: { userId: actor.id },
-          data: {
-            status: "PARTIALLY_APPROVED",
-            verified: true,
-            rejectionReason: null,
-          },
-        });
+      const newStatus = isFullyOnboarded ? "APPROVED" : "PARTIALLY_APPROVED";
+
+      if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile) {
+        if (user.entrepreneurProfile.status !== "APPROVED" || newStatus === "APPROVED") {
+          await prisma.entrepreneurProfile.update({
+            where: { userId: actor.id },
+            data: { status: newStatus, verified: true, rejectionReason: null },
+          });
+        }
+      } else if (user.role === "FUNDER" && user.funderProfile) {
+        if (user.funderProfile.status !== "APPROVED" || newStatus === "APPROVED") {
+          await prisma.funderProfile.update({
+            where: { userId: actor.id },
+            data: { status: newStatus, verified: true, rejectionReason: null },
+          });
+        }
+      } else if (user.role === "CORPORATE" && user.corporateProfile) {
+        if (user.corporateProfile.status !== "APPROVED" || newStatus === "APPROVED") {
+          await prisma.corporateProfile.update({
+            where: { userId: actor.id },
+            data: { status: newStatus, verified: true, rejectionReason: null },
+          });
+        }
       }
+
+      const titleMsg = isFullyOnboarded ? `Profile fully approved` : `Document AI-Verified: ${parsed.data.name}`;
+      const bodyMsg = isFullyOnboarded 
+        ? `Your onboarding is 100% complete. Your profile is fully approved by AI and active on the platform.`
+        : `Your document passed automated verification. Your profile is now partially approved with full platform access.`;
 
       await prisma.notification.create({
         data: {
           userId: actor.id,
           kind: "ARTEFACT_VALIDATED",
-          title: `Document AI-Verified: ${parsed.data.name}`,
-          body: `Your document passed automated verification. Your profile is now partially approved with full platform access.`,
-          link: "/portal/entrepreneur",
+          title: titleMsg,
+          body: bodyMsg,
+          link: `/portal/${user.role.toLowerCase()}`,
         },
       });
+
+      if (isFullyOnboarded && user.email) {
+        await sendEmail({
+          to: user.email,
+          subject: "Your BHAF MarketBridge Profile is Approved!",
+          body: `Hi there,\n\nGreat news! Your recent document upload was successfully verified by our AI system, and your onboarding is now 100% complete.\n\nYour profile is fully approved and active on the platform. You can now access all features.\n\nBest,\nBHAF MarketBridge Team`,
+        });
+      }
     } else {
-      // AI Flagged / Rejected: Update profile status if not fully approved
-      if (user.entrepreneurProfile.status !== "APPROVED") {
+      // AI Flagged / Rejected
+      if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile && user.entrepreneurProfile.status !== "APPROVED") {
         await prisma.entrepreneurProfile.update({
           where: { userId: actor.id },
-          data: {
-            status: "REJECTED",
-            rejectionReason: aiResult.reason,
-            verified: false,
-          },
+          data: { status: "REJECTED", rejectionReason: aiResult.reason, verified: false },
+        });
+      } else if (user.role === "FUNDER" && user.funderProfile && user.funderProfile.status !== "APPROVED") {
+        await prisma.funderProfile.update({
+          where: { userId: actor.id },
+          data: { status: "REJECTED", rejectionReason: aiResult.reason, verified: false },
+        });
+      } else if (user.role === "CORPORATE" && user.corporateProfile && user.corporateProfile.status !== "APPROVED") {
+        await prisma.corporateProfile.update({
+          where: { userId: actor.id },
+          data: { status: "REJECTED", rejectionReason: aiResult.reason, verified: false },
         });
       }
 
@@ -189,7 +224,7 @@ export async function uploadArtefactForUser(
           kind: "ARTEFACT_REJECTED",
           title: `Document rejected: ${parsed.data.name}`,
           body: `AI verification issue: ${aiResult.reason}`,
-          link: "/portal/entrepreneur",
+          link: `/portal/${user.role.toLowerCase()}`,
         },
       });
 
@@ -198,7 +233,7 @@ export async function uploadArtefactForUser(
         await sendEmail({
           to: user.email,
           subject: `Action Required: Document "${parsed.data.name}" could not be verified`,
-          body: `Hi ${user.name ?? "there"},\n\nOur automated verification system reviewed your uploaded document ("${parsed.data.name}") and could not accept it.\n\nReason:\n${aiResult.reason}\n\nPlease sign in to your dashboard and upload a clear, conforming copy to complete your profile verification:\n${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/portal/entrepreneur\n\n— BHAF MarketBridge Verification Team`,
+          body: `Hi there,\n\nWe couldn't verify your document "${parsed.data.name}".\n\nAI Reason: ${aiResult.reason}\n\nPlease check your compliance vault and try uploading a clearer version.`,
         });
       }
     }
@@ -242,8 +277,8 @@ export async function resubmitArtefactForUser(
   if (!existing || existing.userId !== actor.id) {
     return { ok: false, message: "Artefact not found." };
   }
-  if (existing.status !== "REJECTED" && existing.status !== "FLAGGED") {
-    return { ok: false, message: "Only rejected or flagged artefacts can be resubmitted." };
+  if (existing.status !== "REJECTED" && existing.status !== "FLAGGED" && existing.status !== "PENDING_REVIEW" && existing.status !== "VALIDATED") {
+    return { ok: false, message: "This artefact cannot be replaced in its current status." };
   }
 
   const file = formData.get("file");
@@ -320,30 +355,51 @@ export async function resubmitArtefactForUser(
     }),
   ]);
 
-  if (user?.entrepreneurProfile) {
+  if (user) {
+    const onboarding = await loadOnboardingState(user.id, user.role);
+    const isFullyOnboarded = onboarding.percent === 100;
+    
     if (isApprovedByAI) {
-      if (
-        user.entrepreneurProfile.status === "PENDING" ||
-        user.entrepreneurProfile.status === "REJECTED"
-      ) {
-        await prisma.entrepreneurProfile.update({
-          where: { userId: actor.id },
-          data: {
-            status: "PARTIALLY_APPROVED",
-            verified: true,
-            rejectionReason: null,
-          },
-        });
+      const newStatus = isFullyOnboarded ? "APPROVED" : "PARTIALLY_APPROVED";
+
+      if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile) {
+        if (user.entrepreneurProfile.status !== "APPROVED" || newStatus === "APPROVED") {
+          await prisma.entrepreneurProfile.update({
+            where: { userId: actor.id },
+            data: { status: newStatus, verified: true, rejectionReason: null },
+          });
+        }
+      } else if (user.role === "FUNDER" && user.funderProfile) {
+        if (user.funderProfile.status !== "APPROVED" || newStatus === "APPROVED") {
+          await prisma.funderProfile.update({
+            where: { userId: actor.id },
+            data: { status: newStatus, verified: true, rejectionReason: null },
+          });
+        }
+      } else if (user.role === "CORPORATE" && user.corporateProfile) {
+        if (user.corporateProfile.status !== "APPROVED" || newStatus === "APPROVED") {
+          await prisma.corporateProfile.update({
+            where: { userId: actor.id },
+            data: { status: newStatus, verified: true, rejectionReason: null },
+          });
+        }
       }
     } else {
-      if (user.entrepreneurProfile.status !== "APPROVED") {
+      // AI Flagged / Rejected
+      if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile && user.entrepreneurProfile.status !== "APPROVED") {
         await prisma.entrepreneurProfile.update({
           where: { userId: actor.id },
-          data: {
-            status: "REJECTED",
-            rejectionReason: aiResult.reason,
-            verified: false,
-          },
+          data: { status: "REJECTED", rejectionReason: aiResult.reason, verified: false },
+        });
+      } else if (user.role === "FUNDER" && user.funderProfile && user.funderProfile.status !== "APPROVED") {
+        await prisma.funderProfile.update({
+          where: { userId: actor.id },
+          data: { status: "REJECTED", rejectionReason: aiResult.reason, verified: false },
+        });
+      } else if (user.role === "CORPORATE" && user.corporateProfile && user.corporateProfile.status !== "APPROVED") {
+        await prisma.corporateProfile.update({
+          where: { userId: actor.id },
+          data: { status: "REJECTED", rejectionReason: aiResult.reason, verified: false },
         });
       }
     }
