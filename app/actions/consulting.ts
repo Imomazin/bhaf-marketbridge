@@ -66,8 +66,11 @@ export async function replyToConsultingRequest(id: string, message: string) {
     const req = await prisma.consultingRequest.findUnique({ where: { id } });
     if (!req) return { ok: false, message: "Not found" };
 
-    // In a real app, send the email here.
-    // await sendEmail({ to: req.email, subject: "Reply to your consulting inquiry", body: message });
+    await sendEmail({ 
+      to: req.email, 
+      subject: `Reply to your consulting inquiry regarding: ${req.serviceType}`, 
+      body: `Hi ${req.name},\n\nAn admin has reviewed your consulting request and left the following reply:\n\n${message}\n\nBest regards,\nThe BHAF MarketBridge Team` 
+    });
 
     await prisma.consultingRequest.update({
       where: { id },

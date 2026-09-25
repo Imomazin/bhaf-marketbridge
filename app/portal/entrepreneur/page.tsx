@@ -83,7 +83,7 @@ export default async function EntrepreneurPortalPage() {
   const sector = demoProfile?.sector ?? sample?.sector ?? "Add your sector";
   const esgActivity = reviewProfile?.esgActivity ?? demoProfile?.esgActivity ?? sample?.esgActivity ?? "";
   const hasProfileStarted = Boolean(demoProfile?.businessName || demoProfile?.country || demoProfile?.sector || sample);
-  const hasEsgActivity = esgActivity.trim().length > 20;
+  const hasEsgActivity = esgActivity.trim().length > 0;
   const readinessScore = [
     onboarding?.hasProfile ?? false,
     hasEsgActivity,

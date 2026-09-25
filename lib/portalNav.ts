@@ -33,6 +33,7 @@ export function getFunderNav(currentHref: string) {
 export function getCorporateNav(currentHref: string) {
   const items = [
     { label: "Procurement desk", href: "/portal/corporate" },
+    { label: "My profile", href: "/settings" },
     { label: "Shortlisted suppliers", href: "/portal/corporate/shortlists" },
     { label: "Active RFPs", href: "/portal/corporate/rfps" },
     { label: "Marketplace", href: "/marketplace" },

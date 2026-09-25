@@ -22,7 +22,7 @@ export interface FunderShortlist {
   owner: string;
   focus: string;
   updatedAt: string;
-  members: { id: string; name: string }[];
+  members: { id: string; name: string; email?: string }[];
 }
 
 export interface FunderReportTemplate {

@@ -10,9 +10,24 @@ export async function checkLimitAndWarn(userId: string, featureKey: FeatureLimit
     orderBy: { createdAt: "desc" }
   });
 
+  // If they have no active subscription, default to Freemium tier limits
   if (!activeSub || !activeSub.subscriptionPlan || !activeSub.user) {
-    // If they have no subscription at all, assume they have 0 limits.
-    return { ok: false, upgradeRequired: true, message: "No active subscription plan found." };
+    const freemiumLimits: Record<FeatureLimitKey, number> = {
+      maxDataRooms: 1,
+      maxDeals: 3,
+      maxRfPs: 1,
+      maxCohorts: 1,
+    };
+    
+    const limit = freemiumLimits[featureKey];
+    if (currentCount >= limit) {
+      return { 
+        ok: false, 
+        upgradeRequired: true, 
+        message: `You have reached the Freemium limit of ${limit} for this feature. Please upgrade your plan to unlock more.` 
+      };
+    }
+    return { ok: true };
   }
 
   const features = activeSub.subscriptionPlan.features as Record<string, string>;

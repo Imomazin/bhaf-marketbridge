@@ -192,12 +192,20 @@ export async function uploadArtefactForUser(
         },
       });
 
-      if (isFullyOnboarded && user.email) {
-        await sendEmail({
-          to: user.email,
-          subject: "Your BHAF MarketBridge Profile is Approved!",
-          body: `Hi there,\n\nGreat news! Your recent document upload was successfully verified by our AI system, and your onboarding is now 100% complete.\n\nYour profile is fully approved and active on the platform. You can now access all features.\n\nBest,\nBHAF MarketBridge Team`,
-        });
+      if (user.email) {
+        if (isFullyOnboarded) {
+          await sendEmail({
+            to: user.email,
+            subject: "Your BHAF MarketBridge Profile is Approved!",
+            body: `Hi there,\n\nGreat news! Your recent document upload was successfully verified by our AI system, and your onboarding is now 100% complete.\n\nYour profile is fully approved and active on the platform. You can now access all features.\n\nBest,\nBHAF MarketBridge Team`,
+          });
+        } else {
+          await sendEmail({
+            to: user.email,
+            subject: "Your Document is Verified!",
+            body: `Hi there,\n\nGreat news! Your document "${parsed.data.name}" passed our automated verification.\n\nYour profile is now partially approved and active on the platform. You have full platform access while our admins conduct a final review.\n\nBest,\nBHAF MarketBridge Team`,
+          });
+        }
       }
     } else {
       // AI Flagged / Rejected
@@ -384,6 +392,37 @@ export async function resubmitArtefactForUser(
           });
         }
       }
+
+      const titleMsg = isFullyOnboarded ? `Profile fully approved` : `Document AI-Verified: ${existing.name}`;
+      const bodyMsg = isFullyOnboarded 
+        ? `Your onboarding is 100% complete. Your profile is fully approved by AI and active on the platform.`
+        : `Your document passed automated verification. Your profile is now partially approved with full platform access.`;
+
+      await prisma.notification.create({
+        data: {
+          userId: actor.id,
+          kind: "ARTEFACT_VALIDATED",
+          title: titleMsg,
+          body: bodyMsg,
+          link: `/portal/${user.role.toLowerCase()}`,
+        },
+      });
+
+      if (user.email) {
+        if (isFullyOnboarded) {
+          await sendEmail({
+            to: user.email,
+            subject: "Your BHAF MarketBridge Profile is Approved!",
+            body: `Hi there,\n\nGreat news! Your resubmitted document was successfully verified by our AI system, and your onboarding is now 100% complete.\n\nYour profile is fully approved and active on the platform. You can now access all features.\n\nBest,\nBHAF MarketBridge Team`,
+          });
+        } else {
+          await sendEmail({
+            to: user.email,
+            subject: "Your Resubmitted Document is Verified!",
+            body: `Hi there,\n\nGreat news! Your resubmitted document "${existing.name}" passed our automated verification.\n\nYour profile is now partially approved and active on the platform. You have full platform access while our admins conduct a final review.\n\nBest,\nBHAF MarketBridge Team`,
+          });
+        }
+      }
     } else {
       // AI Flagged / Rejected
       if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile && user.entrepreneurProfile.status !== "APPROVED") {
@@ -400,6 +439,24 @@ export async function resubmitArtefactForUser(
         await prisma.corporateProfile.update({
           where: { userId: actor.id },
           data: { status: "REJECTED", rejectionReason: aiResult.reason, verified: false },
+        });
+      }
+
+      await prisma.notification.create({
+        data: {
+          userId: actor.id,
+          kind: "ARTEFACT_REJECTED",
+          title: `Document rejected: ${existing.name}`,
+          body: `AI verification issue: ${aiResult.reason}`,
+          link: `/portal/${user.role.toLowerCase()}`,
+        },
+      });
+
+      if (user.email) {
+        await sendEmail({
+          to: user.email,
+          subject: `Action Required: Resubmitted document "${existing.name}" could not be verified`,
+          body: `Hi there,\n\nWe couldn't verify your resubmitted document "${existing.name}".\n\nAI Reason: ${aiResult.reason}\n\nPlease check your compliance vault and try uploading a clearer version.`,
         });
       }
     }

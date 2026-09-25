@@ -114,7 +114,7 @@ export async function registerAction(raw: RegisterInput & { turnstileToken?: str
   });
 
   const freemiumPlan = await prisma.subscriptionPlan.findUnique({
-    where: { name: "Freemium" }
+    where: { name: "BHAF Freemium" }
   });
 
   if (freemiumPlan) {

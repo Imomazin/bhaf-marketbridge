@@ -59,8 +59,8 @@ export async function createFunderByAdmin(
     include: { funderProfile: true },
   });
 
-  if (existingUser?.funderProfile) {
-    return { ok: false, message: "A funder profile already exists for this email address." };
+  if (existingUser) {
+    return { ok: false, message: `A user with this email already exists (Role: ${existingUser.role}).` };
   }
 
   const rawPassword = parsed.data.password?.trim() || generateSecurePassword();
@@ -180,8 +180,8 @@ export async function createCorporateByAdmin(
     include: { corporateProfile: true },
   });
 
-  if (existingUser?.corporateProfile) {
-    return { ok: false, message: "A corporate partner profile already exists for this email address." };
+  if (existingUser) {
+    return { ok: false, message: `A user with this email already exists (Role: ${existingUser.role}).` };
   }
 
   const rawPassword = parsed.data.password?.trim() || generateSecurePassword();

@@ -20,6 +20,7 @@ export interface SavedFunderShortlistEntry {
   shortlistName: string;
   entrepreneurId: string;
   entrepreneurName: string;
+  entrepreneurEmail?: string;
   businessName: string;
   country: string;
   sector: string;
@@ -151,6 +152,7 @@ export async function getSavedFunderShortlistEntries(funderUserId: string): Prom
         shortlistName: entry.shortlist.name,
         entrepreneurId: entry.entrepreneurId,
         entrepreneurName: entry.entrepreneur.name || "Unknown",
+        entrepreneurEmail: entry.entrepreneur.email || "",
         businessName: p?.businessName || "Unknown",
         country: p?.country || "Unknown",
         sector: p?.sector || "Unknown",
@@ -228,9 +230,9 @@ export function buildFunderShortlistsFromEntries(entries: SavedFunderShortlistEn
 
   return Array.from(grouped.entries())
     .map(([shortlistName, rows]) => {
-      const uniqueMembersMap = new Map<string, { id: string; name: string }>();
+      const uniqueMembersMap = new Map<string, { id: string; name: string, email?: string }>();
       for (const row of rows) {
-        uniqueMembersMap.set(row.entrepreneurId, { id: row.entrepreneurId, name: row.entrepreneurName });
+        uniqueMembersMap.set(row.entrepreneurId, { id: row.entrepreneurId, name: row.entrepreneurName, email: row.entrepreneurEmail });
       }
       const uniqueMembers = Array.from(uniqueMembersMap.values());
       const updatedAt = rows.reduce(

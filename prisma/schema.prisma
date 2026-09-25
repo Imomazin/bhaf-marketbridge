@@ -66,6 +66,8 @@ model User {
   pipelineEntriesTargeted      PipelineEntry[]           @relation("EntrepreneurPipelineEntries")
   grantsReceived               Grant[]                   @relation("EntrepreneurGrants")
   grantsFunded                 Grant[]                   @relation("FunderGrants")
+  grantMessagesSent            GrantMessage[]            @relation("GrantMessageSender")
+  grantMessagesReceived        GrantMessage[]            @relation("GrantMessageReceiver")
 
   @@index([email])
   @@index([role])
@@ -888,6 +890,7 @@ model Grant {
   entrepreneur User @relation("EntrepreneurGrants", fields: [entrepreneurId], references: [id], onDelete: Cascade)
   funder       User? @relation("FunderGrants", fields: [funderId], references: [id], onDelete: SetNull)
   progressReports GrantProgressReport[]
+  messages        GrantMessage[]
   beneficiaries   Beneficiary[]
   financialMetrics FinancialMetric[]
 
@@ -950,4 +953,23 @@ model FinancialMetric {
   grant Grant @relation(fields: [grantId], references: [id], onDelete: Cascade)
 
   @@index([grantId])
+}
+
+model GrantMessage {
+  id             String   @id @default(cuid())
+  grantId        String
+  senderId       String
+  receiverId     String
+  subject        String
+  message        String   @db.Text
+  attachmentUrl  String?
+  createdAt      DateTime @default(now())
+
+  grant Grant @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  sender User @relation("GrantMessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("GrantMessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([grantId])
+  @@index([senderId])
+  @@index([receiverId])
 }

@@ -61,6 +61,11 @@ export default async function FunderShortlistsPage() {
                         <Link href={`/directory/${member.id}`} className="hover:text-gold-600 hover:underline">
                           {member.name}
                         </Link>
+                        {member.email && (
+                          <a href={`mailto:${member.email}`} className="text-xs text-charcoal-400 hover:text-gold-600 ml-2" title={`Email ${member.name}`}>
+                            ({member.email})
+                          </a>
+                        )}
                         <RemoveFromShortlistButton 
                           entrepreneurId={member.id} 
                           entrepreneurName={member.name}

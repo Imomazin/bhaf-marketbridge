@@ -11,7 +11,7 @@ export default function GrantDetailsPage() {
   const [loading, setLoading] = useState(true);
   
   // Tab State
-  const [activeTab, setActiveTab] = useState<"progress" | "beneficiaries" | "financials">("progress");
+  const [activeTab, setActiveTab] = useState<"progress" | "beneficiaries" | "financials" | "messages">("progress");
 
   // Form States
   const [narrative, setNarrative] = useState("");
@@ -102,7 +102,7 @@ export default function GrantDetailsPage() {
 
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
-          {["progress", "beneficiaries", "financials"].map((tab) => (
+          {["progress", "beneficiaries", "financials", "messages"].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab as any)}
@@ -229,6 +229,121 @@ export default function GrantDetailsPage() {
                 </tbody>
               </table>
               {grant.financialMetrics.length === 0 && <p className="text-sm text-gray-500 mt-4">No financial metrics logged yet.</p>}
+            </div>
+          </div>
+        )}
+
+        {activeTab === "messages" && (
+          <div className="space-y-8">
+            <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+              {(!grant.messages || grant.messages.length === 0) ? (
+                <p className="text-gray-500 text-sm">No messages yet. Start a conversation!</p>
+              ) : (
+                grant.messages.map((msg: any) => (
+                  <div key={msg.id} className="p-4 border rounded-xl bg-gray-50 shadow-sm">
+                    <div className="flex justify-between text-xs text-gray-500 font-medium mb-1">
+                      <span className="font-semibold text-gray-900">{msg.sender.name} ({msg.sender.role})</span>
+                      <span>{new Date(msg.createdAt).toLocaleString()}</span>
+                    </div>
+                    <p className="text-sm font-semibold text-forest-800 mb-2">{msg.subject}</p>
+                    <p className="text-sm text-gray-800 whitespace-pre-wrap">{msg.message}</p>
+                    {msg.attachmentUrl && (
+                      <div className="mt-3">
+                        <a href={msg.attachmentUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-forest-700 hover:text-forest-900 border bg-white px-2 py-1 rounded">
+                          🔗 View Attachment
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            <div className="border-t pt-8">
+              <h3 className="font-semibold text-lg mb-4">Send a Message</h3>
+              <form
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  const form = e.currentTarget;
+                  const subject = (form.elements.namedItem("subject") as HTMLInputElement).value;
+                  const message = (form.elements.namedItem("message") as HTMLTextAreaElement).value;
+                  const fileInput = form.elements.namedItem("attachment") as HTMLInputElement;
+                  const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+                  
+                  btn.disabled = true;
+                  btn.textContent = "Sending...";
+                  
+                  const { sendGrantMessage, uploadGrantDocument } = await import("@/app/actions/grants");
+                  
+                  let attachmentUrl = "";
+                  if (fileInput.files && fileInput.files.length > 0) {
+                    const fd = new FormData();
+                    fd.append("file", fileInput.files[0]);
+                    btn.textContent = "Uploading attachment...";
+                    const uploadRes = await uploadGrantDocument(fd);
+                    if (!uploadRes.ok) {
+                      alert("Attachment upload failed: " + uploadRes.message);
+                      btn.disabled = false;
+                      btn.textContent = "Send Message";
+                      return;
+                    }
+                    attachmentUrl = uploadRes.url || "";
+                  }
+
+                  btn.textContent = "Sending message...";
+                  const res = await sendGrantMessage(grant.id, grant.funderId, subject, message, attachmentUrl);
+                  
+                  if (res.ok) {
+                    form.reset();
+                    // trigger re-fetch to show new message
+                    const { getGrantById } = await import("@/app/actions/grants");
+                    const refreshRes = await getGrantById(grant.id);
+                    if (refreshRes.ok) setGrant(refreshRes.data);
+                  } else {
+                    alert(res.message);
+                  }
+                  
+                  btn.disabled = false;
+                  btn.textContent = "Send Message";
+                }}
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
+                  <input
+                    type="text"
+                    name="subject"
+                    required
+                    placeholder="e.g. Checking in on progress"
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-forest-500 outline-none text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Message</label>
+                  <textarea
+                    name="message"
+                    required
+                    rows={4}
+                    placeholder="Write your message here..."
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-forest-500 outline-none text-sm resize-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Attachment (Optional screenshot or doc)</label>
+                  <input
+                    type="file"
+                    name="attachment"
+                    accept="image/*,.pdf,.doc,.docx"
+                    className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-forest-500 outline-none text-sm bg-gray-50"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full md:w-auto btn-primary text-sm px-6 py-2"
+                >
+                  Send Message
+                </button>
+              </form>
             </div>
           </div>
         )}
