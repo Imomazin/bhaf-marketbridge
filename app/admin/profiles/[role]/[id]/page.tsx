@@ -129,7 +129,7 @@ export default async function AdminProfileReviewDetailPage({
                         <span className="text-[10px] uppercase tracking-wide text-charcoal-500">{a.status}</span>
                         <span className="text-charcoal-300">•</span>
                         <Link href={`/admin/artefacts/${a.id}`} className="text-[11px] font-medium text-forest-700 hover:text-gold-700">
-                          View Details & Document →
+                          View Details →
                         </Link>
                       </div>
                     </div>
