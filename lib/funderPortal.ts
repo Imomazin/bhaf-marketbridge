@@ -48,6 +48,7 @@ export function getDemoSeedFunderProfile(userId: string): DemoFunderProfile | nu
     sectorFocus: ["Circular Economy", "Clean Energy", "Agri-Processing"],
     ticketMin: 50000,
     ticketMax: 250000,
+    verified: true,
     updatedAt: "2026-06-18T09:30:00.000Z",
   };
 }
@@ -143,6 +144,7 @@ export const SEEDED_FUNDER_SHORTLISTS: FunderShortlist[] = [
     count: 3,
     owner: "Catalyst committee",
     focus: "Funding-ready women-led ventures for next investment committee",
+    updatedAt: "2026-08-01",
     members: [
       { id: "amara-okafor", name: "Amara Okafor" },
       { id: "fatou-diop", name: "Fatou Diop" },

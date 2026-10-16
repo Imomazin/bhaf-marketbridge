@@ -114,7 +114,7 @@ providers.push({
   from: process.env.EMAIL_FROM ?? "BHAF MarketBridge <noreply@bhaf.example>",
   maxAge: 24 * 60 * 60,
   options: {},
-  sendVerificationRequest: async ({ identifier: to, url }) => {
+  sendVerificationRequest: async ({ identifier: to, url }: { identifier: string; url: string }) => {
     await sendEmail({
       to,
       subject: "Sign in to BHAF MarketBridge",

@@ -29,8 +29,9 @@ export function getReadinessLevel(score: number): ReadinessLevel {
   return "Emerging";
 }
 
-export function formatIsoDate(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
+export function formatIsoDate(value?: string | Date | null): string {
+  if (!value) return "—";
+  const date = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) return String(value);
   return date.toISOString().slice(0, 10);
 }

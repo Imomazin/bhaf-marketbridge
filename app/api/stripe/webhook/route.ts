@@ -37,7 +37,7 @@ export async function POST(req: Request) {
           if (userId && planId) {
             const plan = await prisma.subscriptionPlan.findUnique({ where: { id: planId } });
             if (plan) {
-              const stripeSub = await stripe.subscriptions.retrieve(subscriptionId);
+              const stripeSub = (await stripe.subscriptions.retrieve(subscriptionId)) as any;
               
               await prisma.subscription.updateMany({
                 where: { userId },
@@ -179,7 +179,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
         data: {
           planId: plan.id,
           plan: plan.name,
-          amountUsdCents: subscription.plan?.amount || 0,
+          amountUsdCents: (subscription as any).plan?.amount || 0,
           cancelAtPeriodEnd: subscription.cancel_at_period_end,
           status: subscription.status === "active" || subscription.status === "trialing" ? "ACTIVE" : "CANCELED"
         }
@@ -198,9 +198,10 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 }
 
 async function handleUpcomingInvoice(invoice: Stripe.Invoice) {
-  if (invoice.subscription) {
+  const invSub = (invoice as any).subscription;
+  if (invSub) {
     const dbSub = await prisma.subscription.findFirst({
-      where: { providerSubscriptionId: invoice.subscription as string },
+      where: { providerSubscriptionId: invSub as string },
       include: { user: true }
     });
 

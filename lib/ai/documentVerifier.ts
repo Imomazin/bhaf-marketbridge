@@ -244,11 +244,19 @@ async function runHeuristicFallback(input: DocumentVerificationInput): Promise<D
       const parser = new PDFParse({ data: input.buffer });
       const data = await parser.getText();
       extractedText = data.text || "";
-    } else if (isImage) {
-      const Tesseract = (await import("tesseract.js")).default || (await import("tesseract.js"));
-      // @ts-ignore
-      const { data: { text } } = await Tesseract.recognize(input.buffer, "eng");
-      extractedText = text || "";
+    } else if (isImage && input.buffer.length > 100) {
+      const isJpeg = input.buffer[0] === 0xff && input.buffer[1] === 0xd8;
+      const isPng = input.buffer[0] === 0x89 && input.buffer[1] === 0x50;
+      if (isJpeg || isPng) {
+        try {
+          const Tesseract = (await import("tesseract.js")).default || (await import("tesseract.js"));
+          // @ts-ignore
+          const res = await Tesseract.recognize(input.buffer, "eng");
+          extractedText = res?.data?.text || "";
+        } catch (e) {
+          console.warn("[documentVerifier] Tesseract OCR error:", e);
+        }
+      }
     }
     
     const textLower = extractedText.toLowerCase();
