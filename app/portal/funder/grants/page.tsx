@@ -96,7 +96,9 @@ export default function FunderGrantsPage() {
                   <td className="p-4 font-medium text-forest-900">{grant.title}</td>
                   <td className="p-4">
                     <div className="font-medium">{grant.entrepreneur?.name || "Unknown"}</div>
-                    <div className="text-xs text-gray-500">{grant.entrepreneur?.email}</div>
+                    <a href={`mailto:${grant.entrepreneur?.email}`} className="text-xs text-forest-600 hover:underline">
+                      {grant.entrepreneur?.email}
+                    </a>
                   </td>
                   <td className="p-4 font-bold">₦{grant.amountUsd.toLocaleString()}</td>
                   <td className="p-4">

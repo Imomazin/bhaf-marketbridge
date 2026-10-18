@@ -92,6 +92,36 @@ export default async function AdminUserDetailsPage({
                   </dd>
                 </div>
               )}
+              {user.entrepreneurProfile && (
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-charcoal-400">Entrepreneur Profile</dt>
+                  <dd className="mt-1">
+                    <Link href={`/admin/profiles/entrepreneur/${user.entrepreneurProfile.id}`} className="text-[11px] font-semibold text-gold-700 hover:text-forest-700">
+                      View Profile →
+                    </Link>
+                  </dd>
+                </div>
+              )}
+              {user.funderProfile && (
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-charcoal-400">Funder Profile</dt>
+                  <dd className="mt-1">
+                    <Link href={`/admin/profiles/funder/${user.funderProfile.id}`} className="text-[11px] font-semibold text-gold-700 hover:text-forest-700">
+                      View Profile →
+                    </Link>
+                  </dd>
+                </div>
+              )}
+              {user.corporateProfile && (
+                <div>
+                  <dt className="text-xs font-semibold uppercase tracking-wide text-charcoal-400">Corporate Profile</dt>
+                  <dd className="mt-1">
+                    <Link href={`/admin/profiles/corporate/${user.corporateProfile.id}`} className="text-[11px] font-semibold text-gold-700 hover:text-forest-700">
+                      View Profile →
+                    </Link>
+                  </dd>
+                </div>
+              )}
             </dl>
           </div>
 
@@ -103,20 +133,23 @@ export default async function AdminUserDetailsPage({
             ) : (
               <ul className="grid gap-3">
                 {user.artefacts.map((doc) => (
-                  <li key={doc.id} className="flex items-center justify-between border border-cream-200 rounded-md p-3">
-                    <div>
-                      <p className="text-sm font-medium text-forest-900">{doc.name}</p>
-                      <p className="text-xs text-charcoal-500">{doc.category} · {doc.status}</p>
-                    </div>
-                    {doc.storageKey && (
-                      <a
-                        href={`/api/files/${doc.storageKey}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs font-semibold text-gold-700 hover:text-forest-700"
+                  <li key={doc.id} className="border border-cream-200 rounded-md p-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-sm font-medium text-forest-900">{doc.name}</p>
+                        <p className="text-xs text-charcoal-500">{doc.category} · {doc.status}</p>
+                      </div>
+                      <Link
+                        href={`/admin/artefacts/${doc.id}`}
+                        className="text-[11px] font-semibold text-gold-700 hover:text-forest-700"
                       >
-                        View
-                      </a>
+                        View Details
+                      </Link>
+                    </div>
+                    {doc.rejectionReason && (
+                      <div className="mt-2 rounded bg-red-50/50 p-2 text-[11px] text-red-700">
+                        <span className="font-semibold uppercase tracking-wider text-red-600">Rejection Reason / AI Note:</span> {doc.rejectionReason}
+                      </div>
                     )}
                   </li>
                 ))}

@@ -31,7 +31,7 @@ export function ConsultingRequestDetailModal({ request, isOpen, onClose }: Props
         onClose();
       }, 1500);
     } else {
-      setMsg({ ok: false, text: res.message });
+      setMsg({ ok: false, text: res.message || "Failed to send reply" });
     }
   }
 

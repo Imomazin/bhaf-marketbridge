@@ -37,6 +37,7 @@ export async function getGrantById(grantId: string) {
         progressReports: { orderBy: { createdAt: 'desc' } },
         beneficiaries: { orderBy: { createdAt: 'desc' } },
         financialMetrics: { orderBy: { dateRecorded: 'desc' } },
+        messages: { orderBy: { createdAt: 'asc' }, include: { sender: { select: { name: true, role: true } } } },
       },
     });
     return { ok: true, data: grant };
@@ -58,6 +59,7 @@ export async function getGrantByIdForManagement(grantId: string) {
         progressReports: { orderBy: { createdAt: 'desc' } },
         beneficiaries: { orderBy: { createdAt: 'desc' } },
         financialMetrics: { orderBy: { dateRecorded: 'desc' } },
+        messages: { orderBy: { createdAt: 'asc' }, include: { sender: { select: { name: true, role: true } } } },
       },
     });
 
@@ -292,5 +294,52 @@ export async function getEntrepreneurs() {
   } catch (error) {
     console.error("Error fetching entrepreneurs:", error);
     return { ok: false, data: [] };
+  }
+}
+
+export async function sendGrantMessage(grantId: string, receiverId: string, subject: string, message: string, attachmentUrl?: string) {
+  const session = await getUserSession();
+  if (!session?.user) return { ok: false, message: "Unauthorized" };
+
+  try {
+    const receiver = await prisma.user.findUnique({
+      where: { id: receiverId },
+      select: { email: true, name: true }
+    });
+
+    if (!receiver) {
+      return { ok: false, message: "Receiver not found" };
+    }
+
+    const grantMessage = await prisma.grantMessage.create({
+      data: {
+        grantId,
+        senderId: session.user.id,
+        receiverId,
+        subject,
+        message,
+        attachmentUrl
+      }
+    });
+
+    // Also send an email notification
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const absoluteAttachmentUrl = attachmentUrl ? (attachmentUrl.startsWith('http') ? attachmentUrl : `${appUrl}${attachmentUrl}`) : "";
+
+    await sendEmail({
+      to: receiver.email,
+      subject: `Direct Message via BHAF MarketBridge: ${subject}`,
+      body: `Hi ${receiver.name},\n\nYou have received a new message regarding your grant on BHAF MarketBridge from ${session.user.name || "a user"}.\n\n---\n${message}\n---\n\n${absoluteAttachmentUrl ? `Attachment: ${absoluteAttachmentUrl}\n\n` : ''}Log in to your portal to view this message and reply.`
+    });
+
+    // Revalidate paths so the UI updates
+    revalidatePath(`/portal/funder/grants/${grantId}`);
+    revalidatePath(`/portal/entrepreneur/grants/${grantId}`);
+    revalidatePath(`/admin/grants/${grantId}`);
+
+    return { ok: true, message: "Message sent successfully!" };
+  } catch (error) {
+    console.error("Error sending grant message:", error);
+    return { ok: false, message: "Failed to send message." };
   }
 }

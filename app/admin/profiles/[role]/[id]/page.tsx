@@ -45,7 +45,7 @@ export default async function AdminProfileReviewDetailPage({
 
   const artefacts = await prisma.artefact.findMany({
     where: { userId: profile.user.id },
-    select: { id: true, name: true, status: true, uploadedAt: true },
+    select: { id: true, name: true, status: true, uploadedAt: true, rejectionReason: true },
     orderBy: { uploadedAt: "desc" },
   });
 
@@ -121,9 +121,24 @@ export default async function AdminProfileReviewDetailPage({
           ) : (
             <ul className="mt-3 divide-y divide-cream-200">
               {artefacts.map((a) => (
-                <li key={a.id} className="flex items-center justify-between py-2 text-sm">
-                  <span className="text-forest-900">{a.name}</span>
-                  <span className="text-[11px] uppercase tracking-wide text-charcoal-400">{a.status}</span>
+                <li key={a.id} className="py-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="font-medium text-forest-900">{a.name}</span>
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className="text-[10px] uppercase tracking-wide text-charcoal-500">{a.status}</span>
+                        <span className="text-charcoal-300">•</span>
+                        <Link href={`/admin/artefacts/${a.id}`} className="text-[11px] font-medium text-forest-700 hover:text-gold-700">
+                          View Details →
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                  {a.rejectionReason && (
+                    <div className="mt-2 rounded bg-red-50/50 p-2 text-[11px] text-red-700">
+                      <span className="font-semibold uppercase tracking-wider text-red-600">Rejection Reason / AI Note:</span> {a.rejectionReason}
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>

@@ -69,7 +69,7 @@ export async function verifyDocumentWithAI(
 
   // If no API key is provided, execute safe heuristic fallback
   if (!apiKey || apiKey === "mock_key") {
-    return runHeuristicFallback(input);
+    return await runHeuristicFallback(input);
   }
 
   try {
@@ -196,11 +196,11 @@ Return ONLY a valid JSON object strictly matching this schema with no markdown f
 
     // If we exhausted all models (or broke out early for a hard error), fall back to heuristic
     console.warn("[documentVerifier] All Gemini models failed or returned invalid responses.");
-    return runHeuristicFallback(input);
+    return await runHeuristicFallback(input);
 
   } catch (error) {
     console.error("[documentVerifier] Error verifying document with AI:", error);
-    return runHeuristicFallback(input);
+    return await runHeuristicFallback(input);
   }
 }
 
@@ -208,11 +208,12 @@ Return ONLY a valid JSON object strictly matching this schema with no markdown f
 
 /**
  * Fallback heuristic verifier used when API key is not present or API is unreachable.
- * Ensures the system never crashes and handles basic safety rules.
+ * Ensures the system never crashes and handles basic safety rules via local OCR.
  */
-function runHeuristicFallback(input: DocumentVerificationInput): DocumentVerificationResult {
-  const isImageOrPdf =
-    input.mimeType.startsWith("image/") || input.mimeType === "application/pdf";
+async function runHeuristicFallback(input: DocumentVerificationInput): Promise<DocumentVerificationResult> {
+  const isImageOrPdf = input.mimeType.startsWith("image/") || input.mimeType === "application/pdf";
+  const isImage = input.mimeType.startsWith("image/");
+  const isPdf = input.mimeType === "application/pdf";
   const hasReasonableSize = input.buffer.length >= 1024 && input.buffer.length <= 15 * 1024 * 1024;
   const isSuspectName = /screenshot|test|untitled|meme|sample/i.test(input.fileName);
 
@@ -234,6 +235,65 @@ function runHeuristicFallback(input: DocumentVerificationInput): DocumentVerific
     };
   }
 
+  try {
+    let extractedText = "";
+    console.log("[documentVerifier] Running local backend OCR fallback...");
+    
+    if (isPdf) {
+      const { PDFParse } = require('pdf-parse');
+      const parser = new PDFParse({ data: input.buffer });
+      const data = await parser.getText();
+      extractedText = data.text || "";
+    } else if (isImage && input.buffer.length > 100) {
+      const isJpeg = input.buffer[0] === 0xff && input.buffer[1] === 0xd8;
+      const isPng = input.buffer[0] === 0x89 && input.buffer[1] === 0x50;
+      if (isJpeg || isPng) {
+        try {
+          const Tesseract = (await import("tesseract.js")).default || (await import("tesseract.js"));
+          // @ts-ignore
+          const res = await Tesseract.recognize(input.buffer, "eng");
+          extractedText = res?.data?.text || "";
+        } catch (e) {
+          console.warn("[documentVerifier] Tesseract OCR error:", e);
+        }
+      }
+    }
+    
+    const textLower = extractedText.toLowerCase();
+    const bName = input.profileContext?.businessName?.toLowerCase() || "";
+    const fName = input.profileContext?.founderName?.toLowerCase() || "";
+    
+    // Check if founder or business name exists in the parsed document text
+    const matchedBusiness = bName.length > 2 && textLower.includes(bName);
+    const matchedFounder = fName.length > 2 && textLower.includes(fName);
+    
+    if (matchedBusiness || matchedFounder) {
+      console.log("[documentVerifier] Local fallback matched names successfully!");
+      return {
+        decision: "APPROVE",
+        documentType: "OTHER_OFFICIAL_DOCUMENT",
+        confidence: 80,
+        extractedEntityName: input.profileContext?.businessName ?? undefined,
+        extractedPersonName: input.profileContext?.founderName ?? undefined,
+        isLegible: true,
+        isExpired: false,
+        nameMatchesProfile: true,
+        reason: "Document verified successfully by local backend text matching. (Fallback Mode)",
+        checks: [
+          { name: "Document Authenticity (Local)", status: "PASS", detail: "API unavailable, verified locally" },
+          { name: "Text Legibility", status: "PASS", detail: "Successfully parsed via local OCR" },
+          { name: "Name & Profile Consistency", status: "PASS", detail: "Name found securely in text" },
+          { name: "Validity", status: "PASS", detail: "Assumed valid in fallback" }
+        ]
+      };
+    } else if (extractedText.length > 50) {
+      console.log("[documentVerifier] Local OCR succeeded, but names didn't match.");
+    }
+  } catch (err) {
+    console.error("[documentVerifier] Local fallback extraction failed:", err);
+  }
+
+  // If parsing failed or no names matched, fallback to FLAG
   if (isSuspectName && input.buffer.length < 5000) {
     return {
       decision: "FLAG",

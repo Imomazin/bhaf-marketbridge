@@ -13,7 +13,7 @@ export function UserStatusActions({ userId, status }: { userId: string; status: 
   const [reason, setReason] = useState("");
 
   async function onToggle() {
-    if (status === "ACTIVE") {
+    if (status !== "SUSPENDED" && status !== "DELETED") {
       setShowModal(true);
       return;
     }

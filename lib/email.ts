@@ -59,7 +59,7 @@ export async function sendEmail({ to, subject, body, html, ctaLabel, ctaUrl }: E
         },
         body: JSON.stringify({
           from: getMailtrapFromAddress(),
-          to: [{ email: to }],
+          to: to.split(",").map(e => ({ email: e.trim() })),
           subject,
           text: body,
           html: renderedHtml,

@@ -24,6 +24,8 @@ const statusCopy: Record<string, { label: string; tone: string; blurb: string }>
 };
 
 export function ProfileStatusBanner({ status, rejectionReason }: { status: string; rejectionReason?: string | null }) {
+  if (status === "APPROVED" || status === "PARTIALLY_APPROVED") return null;
+  
   const copy = statusCopy[status] ?? statusCopy.PENDING;
   return (
     <div className={cn("mb-4 rounded-md border px-4 py-3 text-xs", copy.tone)}>

@@ -59,8 +59,8 @@ export async function createFunderByAdmin(
     include: { funderProfile: true },
   });
 
-  if (existingUser?.funderProfile) {
-    return { ok: false, message: "A funder profile already exists for this email address." };
+  if (existingUser) {
+    return { ok: false, message: `A user with this email already exists (Role: ${existingUser.role}).` };
   }
 
   const rawPassword = parsed.data.password?.trim() || generateSecurePassword();
@@ -69,33 +69,17 @@ export async function createFunderByAdmin(
   const sectorFocus = parseCommaList(parsed.data.sectorFocus);
   const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/auth/sign-in`;
 
-  let userId: string;
-
-  if (existingUser) {
-    userId = existingUser.id;
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        name: parsed.data.contactName.trim(),
-        role: "FUNDER",
-        status: "ACTIVE",
-        passwordHash,
-        emailVerified: existingUser.emailVerified ?? new Date(),
-      },
-    });
-  } else {
-    const newUser = await prisma.user.create({
-      data: {
-        name: parsed.data.contactName.trim(),
-        email,
-        passwordHash,
-        role: "FUNDER",
-        status: "ACTIVE",
-        emailVerified: new Date(),
-      },
-    });
-    userId = newUser.id;
-  }
+  const newUser = await prisma.user.create({
+    data: {
+      name: parsed.data.contactName.trim(),
+      email,
+      passwordHash,
+      role: "FUNDER",
+      status: "ACTIVE",
+      emailVerified: new Date(),
+    },
+  });
+  const userId = newUser.id;
 
   await prisma.funderProfile.create({
     data: {
@@ -180,8 +164,8 @@ export async function createCorporateByAdmin(
     include: { corporateProfile: true },
   });
 
-  if (existingUser?.corporateProfile) {
-    return { ok: false, message: "A corporate partner profile already exists for this email address." };
+  if (existingUser) {
+    return { ok: false, message: `A user with this email already exists (Role: ${existingUser.role}).` };
   }
 
   const rawPassword = parsed.data.password?.trim() || generateSecurePassword();
@@ -189,33 +173,17 @@ export async function createCorporateByAdmin(
   const procurementGeo = parseCommaList(parsed.data.procurementGeo);
   const loginUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/auth/sign-in`;
 
-  let userId: string;
-
-  if (existingUser) {
-    userId = existingUser.id;
-    await prisma.user.update({
-      where: { id: userId },
-      data: {
-        name: parsed.data.contactName.trim(),
-        role: "CORPORATE",
-        status: "ACTIVE",
-        passwordHash,
-        emailVerified: existingUser.emailVerified ?? new Date(),
-      },
-    });
-  } else {
-    const newUser = await prisma.user.create({
-      data: {
-        name: parsed.data.contactName.trim(),
-        email,
-        passwordHash,
-        role: "CORPORATE",
-        status: "ACTIVE",
-        emailVerified: new Date(),
-      },
-    });
-    userId = newUser.id;
-  }
+  const newUser = await prisma.user.create({
+    data: {
+      name: parsed.data.contactName.trim(),
+      email,
+      passwordHash,
+      role: "CORPORATE",
+      status: "ACTIVE",
+      emailVerified: new Date(),
+    },
+  });
+  const userId = newUser.id;
 
   await prisma.corporateProfile.create({
     data: {

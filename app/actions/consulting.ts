@@ -4,20 +4,51 @@ import { prisma } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 import { sendEmail } from "@/lib/email";
 
+import { calculateConsultingEstimate, type ConsultingPricingInput } from "@/lib/consultingPricing";
+
+export interface ConsultingSubmissionResult {
+  ok: boolean;
+  message?: string;
+  referenceId?: string;
+  estimate?: ReturnType<typeof calculateConsultingEstimate>;
+}
+
 export async function submitConsultingRequest(data: {
   name: string;
   email: string;
   orgName: string;
-  serviceType: string;
+  serviceType?: string;
   description: string;
-}) {
+  phone?: string;
+  country?: string;
+  serviceTrackId?: string;
+  orgStageId?: string;
+  engagementTypeId?: string;
+  selectedAddonIds?: string[];
+  urgency?: "STANDARD" | "EXPEDITED" | string;
+  clientBudget?: string;
+  targetStartDate?: string;
+}): Promise<ConsultingSubmissionResult> {
   try {
-    await prisma.consultingRequest.create({
+    let estimate: ReturnType<typeof calculateConsultingEstimate> | undefined;
+    if (data.serviceTrackId && data.orgStageId && data.engagementTypeId) {
+      estimate = calculateConsultingEstimate({
+        serviceTrackId: data.serviceTrackId,
+        orgStageId: data.orgStageId,
+        engagementTypeId: data.engagementTypeId,
+        selectedAddonIds: data.selectedAddonIds ?? [],
+        urgency: data.urgency === "EXPEDITED" ? "EXPEDITED" : "STANDARD",
+      });
+    }
+
+    const serviceType = data.serviceType || estimate?.track.title || "General Consulting";
+
+    const created = await prisma.consultingRequest.create({
       data: {
         name: data.name,
         email: data.email,
         orgName: data.orgName,
-        serviceType: data.serviceType,
+        serviceType,
         description: data.description,
         status: "SUBMITTED",
       },
@@ -36,11 +67,11 @@ export async function submitConsultingRequest(data: {
       await sendEmail({
         to: adminEmails.join(","),
         subject: `New Consulting Request from ${data.name}`,
-        body: `You have received a new consulting request from ${data.name} (${data.orgName}).\n\nService Type: ${data.serviceType}\nEmail: ${data.email}\n\nDescription:\n${data.description}\n\nPlease check the admin dashboard to reply.`
+        body: `You have received a new consulting request from ${data.name} (${data.orgName}).\n\nService Type: ${serviceType}\nEmail: ${data.email}\n\nDescription:\n${data.description}\n\nPlease check the admin dashboard to reply.`
       });
     }
 
-    return { ok: true };
+    return { ok: true, referenceId: created.id, estimate };
   } catch (error) {
     console.error("Error submitting consulting request:", error);
     return { ok: false, message: "Failed to submit request" };
@@ -66,8 +97,11 @@ export async function replyToConsultingRequest(id: string, message: string) {
     const req = await prisma.consultingRequest.findUnique({ where: { id } });
     if (!req) return { ok: false, message: "Not found" };
 
-    // In a real app, send the email here.
-    // await sendEmail({ to: req.email, subject: "Reply to your consulting inquiry", body: message });
+    await sendEmail({
+      to: req.email,
+      subject: `Reply to your consulting inquiry regarding: ${req.serviceType}`,
+      body: `Hi ${req.name},\n\nAn admin has reviewed your consulting request and left the following reply:\n\n${message}\n\nBest regards,\nThe BHAF MarketBridge Team`
+    });
 
     await prisma.consultingRequest.update({
       where: { id },

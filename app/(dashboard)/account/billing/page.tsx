@@ -26,7 +26,7 @@ export default async function BillingPage({
   let isCancelled = false;
 
   if (session?.user) {
-    const activeSub = await prisma.subscription.findFirst({
+    const activeSub = await prisma!.subscription.findFirst({
       where: { 
         userId: session.user.id, 
         status: { in: ["ACTIVE", "CANCELED"] } 

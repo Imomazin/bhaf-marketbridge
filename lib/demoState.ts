@@ -29,11 +29,11 @@ export interface DemoEntrepreneurProfile {
   fundingNeed: string;
   esgActivity: string;
   yearFounded: number | null;
-  readinessLevel: "EMERGING" | "DEVELOPING" | "MARKET_READY" | "FUNDING_READY";
+  readinessLevel?: "EMERGING" | "DEVELOPING" | "MARKET_READY" | "FUNDING_READY";
   womenSupported: number;
   jobsCreated: number;
-  verified: boolean;
-  publishedAt: string | null;
+  verified?: boolean;
+  publishedAt?: string | null;
   updatedAt: string;
 }
 
@@ -45,7 +45,7 @@ export interface DemoFunderProfile {
   sectorFocus: string[];
   ticketMin: number | null;
   ticketMax: number | null;
-  verified: boolean;
+  verified?: boolean;
   updatedAt: string;
 }
 
@@ -57,9 +57,9 @@ export interface DemoArtefactRecord {
   required: boolean;
   status: "PENDING_REVIEW";
   fileName: string;
-  fileSize: number;
-  mimeType: string;
-  storageKey: string;
+  fileSize: string;
+  mimeType?: string;
+  storageKey?: string;
   sha256: string;
   uploadedAt: string;
   checks: Array<{
@@ -185,7 +185,7 @@ function parseCheck(entry: JsonRecord): DemoArtefactRecord["checks"][number] | n
   return {
     name,
     status,
-    detail: typeof entry.detail === "string" ? entry.detail : undefined,
+    detail: typeof entry.detail === "string" ? entry.detail : null,
   };
 }
 
@@ -203,6 +203,9 @@ function parseProfile(entry: JsonRecord): DemoEntrepreneurProfile | null {
     yearFounded: numberOrNull(entry.yearFounded),
     womenSupported: numberOrZero(entry.womenSupported),
     jobsCreated: numberOrZero(entry.jobsCreated),
+    readinessLevel: (entry.readinessLevel as any) || "EMERGING",
+    verified: booleanOrFalse(entry.verified),
+    publishedAt: typeof entry.publishedAt === "string" ? entry.publishedAt : null,
     updatedAt: stringOrEmpty(entry.updatedAt) || nowIso(),
   };
 }
@@ -218,6 +221,7 @@ function parseFunderProfile(entry: JsonRecord): DemoFunderProfile | null {
     sectorFocus: stringArray(entry.sectorFocus),
     ticketMin: numberOrNull(entry.ticketMin),
     ticketMax: numberOrNull(entry.ticketMax),
+    verified: booleanOrFalse(entry.verified),
     updatedAt: stringOrEmpty(entry.updatedAt) || nowIso(),
   };
 }
@@ -278,6 +282,7 @@ function parseListing(entry: JsonRecord): DemoListingRecord | null {
     status,
     createdAt,
     publishedAt,
+    updatedAt: stringOrEmpty(entry.updatedAt) || createdAt,
   };
 }
 
@@ -432,10 +437,10 @@ export async function saveDemoArtefact(input: {
     uploadedAt: nowIso(),
     sha256: crypto.createHash("sha256").update(salt).digest("hex"),
     checks: [
-      { name: "File integrity (SHA-256)", status: "PASS" },
-      { name: "MIME & magic-byte match", status: "PASS" },
-      { name: "Size & format limits", status: "PASS" },
-      { name: "Cross-check against profile", status: "PENDING" },
+      { name: "File integrity (SHA-256)", status: "PASS", detail: null },
+      { name: "MIME & magic-byte match", status: "PASS", detail: null },
+      { name: "Size & format limits", status: "PASS", detail: null },
+      { name: "Cross-check against profile", status: "PENDING", detail: null },
     ],
   };
   await writeCookieArray(DEMO_ARTEFACT_COOKIE, [record, ...artefacts].slice(0, 60));
@@ -480,6 +485,7 @@ export async function saveDemoListing(
     status: "PUBLISHED",
     createdAt: timestamp,
     publishedAt: timestamp,
+    updatedAt: timestamp,
   };
   await writeCookieArray(DEMO_LISTING_COOKIE, [record, ...listings].slice(0, 60));
   return record;
@@ -734,7 +740,7 @@ export function mapDemoArtefactToUi(record: DemoArtefactRecord): Artefact {
     checks: record.checks.map((check) => ({
       name: check.name,
       status: checkStatusMap[check.status],
-      detail: check.detail,
+      detail: check.detail ?? undefined,
     })),
   };
 }
