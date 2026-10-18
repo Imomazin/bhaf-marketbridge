@@ -37,6 +37,12 @@ export function ProfileStatusBanner({ status, rejectionReason }: { status: strin
           {rejectionReason}
         </p>
       )}
+      {status === "PENDING" && rejectionReason && (
+        <p className="mt-2 rounded bg-white/60 px-2 py-1.5 text-charcoal-700">
+          <span className="font-semibold">Status Note: </span>
+          {rejectionReason}
+        </p>
+      )}
     </div>
   );
 }

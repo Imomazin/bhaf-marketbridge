@@ -4,7 +4,15 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { ARTEFACT_MAX_BYTES, ARTEFACT_MAX_MB, formatArtefactBytes } from "@/lib/artefactUpload";
 
-export function ArtefactResubmit({ artefactId, variant = "resubmit" }: { artefactId: string; variant?: "resubmit" | "replace" }) {
+export function ArtefactResubmit({
+  artefactId,
+  variant = "resubmit",
+  buttonLabel,
+}: {
+  artefactId: string;
+  variant?: "resubmit" | "replace";
+  buttonLabel?: string;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -49,7 +57,7 @@ export function ArtefactResubmit({ artefactId, variant = "resubmit" }: { artefac
     }
     return (
       <button type="button" onClick={() => setOpen(true)} className="btn-gold !py-2 !px-3 text-xs">
-        Re-upload corrected version
+        {buttonLabel ?? "Re-upload corrected version"}
       </button>
     );
   }

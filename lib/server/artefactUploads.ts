@@ -111,13 +111,37 @@ export async function uploadArtefactForUser(
   });
 
   const isApprovedByAI = aiResult.decision === "APPROVE";
-  const artefactStatus = isApprovedByAI 
-    ? "VALIDATED" 
-    : (aiResult.decision === "FLAG" ? "PENDING_REVIEW" : "REJECTED");
+  const isAiFailure = !isApprovedByAI && Boolean(
+    aiResult.isAiUnavailable ||
+    aiResult.decision === "FLAG" ||
+    aiResult.reason.toLowerCase().includes("unavailable") ||
+    aiResult.reason.toLowerCase().includes("retry")
+  );
 
+  let artefactStatus: "VALIDATED" | "REJECTED" | "PENDING_REVIEW" = "REJECTED";
+  let finalReason: string | null = null;
   const initialChecks = await buildInitialChecks(a.sha256);
+  const extraChecks: Array<{ name: string; status: "PASS" | "FAIL" | "WARN" | "PENDING"; detail?: string }> = [];
+
+  if (isApprovedByAI) {
+    artefactStatus = "VALIDATED";
+    finalReason = null;
+  } else if (isAiFailure) {
+    artefactStatus = "REJECTED";
+    finalReason = "Automated AI verification is temporarily unavailable. Please retry uploading your document (Attempt 1 of 3).";
+    extraChecks.push({
+      name: "AI Verification Attempts",
+      status: "WARN",
+      detail: "Attempt 1 of 3",
+    });
+  } else {
+    artefactStatus = "REJECTED";
+    finalReason = aiResult.reason;
+  }
+
   const aiChecksToCreate = [
     ...initialChecks,
+    ...extraChecks,
     ...aiResult.checks.map((c) => ({
       name: c.name,
       status: c.status,
@@ -139,7 +163,7 @@ export async function uploadArtefactForUser(
       sha256: a.sha256,
       uploadedAt: new Date(),
       validatedAt: isApprovedByAI ? new Date() : null,
-      rejectionReason: !isApprovedByAI ? aiResult.reason : null,
+      rejectionReason: !isApprovedByAI ? finalReason : null,
       checks: {
         create: aiChecksToCreate,
       },
@@ -207,22 +231,58 @@ export async function uploadArtefactForUser(
           });
         }
       }
-    } else {
-      // AI Flagged / Rejected
+    } else if (isAiFailure) {
+      // AI unavailable on attempt 1 — prompt retry cleanly without marking user permanently rejected
       if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile && user.entrepreneurProfile.status !== "APPROVED") {
         await prisma.entrepreneurProfile.update({
           where: { userId: actor.id },
-          data: { status: "REJECTED", rejectionReason: aiResult.reason, verified: false },
+          data: { status: "PENDING", rejectionReason: finalReason, verified: false },
         });
       } else if (user.role === "FUNDER" && user.funderProfile && user.funderProfile.status !== "APPROVED") {
         await prisma.funderProfile.update({
           where: { userId: actor.id },
-          data: { status: "REJECTED", rejectionReason: aiResult.reason, verified: false },
+          data: { status: "PENDING", rejectionReason: finalReason, verified: false },
         });
       } else if (user.role === "CORPORATE" && user.corporateProfile && user.corporateProfile.status !== "APPROVED") {
         await prisma.corporateProfile.update({
           where: { userId: actor.id },
-          data: { status: "REJECTED", rejectionReason: aiResult.reason, verified: false },
+          data: { status: "PENDING", rejectionReason: finalReason, verified: false },
+        });
+      }
+
+      await prisma.notification.create({
+        data: {
+          userId: actor.id,
+          kind: "ARTEFACT_REJECTED",
+          title: `Verification retry needed: ${parsed.data.name}`,
+          body: finalReason!,
+          link: `/portal/${user.role.toLowerCase()}`,
+        },
+      });
+
+      if (user.email) {
+        await sendEmail({
+          to: user.email,
+          subject: `Action Required: Verification retry needed for "${parsed.data.name}"`,
+          body: `Hi there,\n\n${finalReason}\n\nPlease check your compliance vault and try uploading your document again.\n\nBest,\nBHAF MarketBridge Team`,
+        });
+      }
+    } else {
+      // Actual document defect (not AI failure)
+      if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile && user.entrepreneurProfile.status !== "APPROVED") {
+        await prisma.entrepreneurProfile.update({
+          where: { userId: actor.id },
+          data: { status: "REJECTED", rejectionReason: finalReason, verified: false },
+        });
+      } else if (user.role === "FUNDER" && user.funderProfile && user.funderProfile.status !== "APPROVED") {
+        await prisma.funderProfile.update({
+          where: { userId: actor.id },
+          data: { status: "REJECTED", rejectionReason: finalReason, verified: false },
+        });
+      } else if (user.role === "CORPORATE" && user.corporateProfile && user.corporateProfile.status !== "APPROVED") {
+        await prisma.corporateProfile.update({
+          where: { userId: actor.id },
+          data: { status: "REJECTED", rejectionReason: finalReason, verified: false },
         });
       }
 
@@ -231,17 +291,16 @@ export async function uploadArtefactForUser(
           userId: actor.id,
           kind: "ARTEFACT_REJECTED",
           title: `Document rejected: ${parsed.data.name}`,
-          body: `AI verification issue: ${aiResult.reason}`,
+          body: `AI verification issue: ${finalReason}`,
           link: `/portal/${user.role.toLowerCase()}`,
         },
       });
 
-      // Send instant rejection email to the user
       if (user.email) {
         await sendEmail({
           to: user.email,
           subject: `Action Required: Document "${parsed.data.name}" could not be verified`,
-          body: `Hi there,\n\nWe couldn't verify your document "${parsed.data.name}".\n\nAI Reason: ${aiResult.reason}\n\nPlease check your compliance vault and try uploading a clearer version.`,
+          body: `Hi there,\n\nWe couldn't verify your document "${parsed.data.name}".\n\nAI Reason: ${finalReason}\n\nPlease check your compliance vault and try uploading a clearer version.`,
         });
       }
     }
@@ -281,7 +340,10 @@ export async function resubmitArtefactForUser(
     return { ok: false, message: "Database not configured." };
   }
 
-  const existing = await prisma.artefact.findUnique({ where: { id: artefactId } });
+  const existing = await prisma.artefact.findUnique({
+    where: { id: artefactId },
+    include: { checks: true },
+  });
   if (!existing || existing.userId !== actor.id) {
     return { ok: false, message: "Artefact not found." };
   }
@@ -317,6 +379,20 @@ export async function resubmitArtefactForUser(
     user?.funderProfile?.orgName ??
     null;
 
+  // Track retry attempt count
+  let attemptCount = 2;
+  const prevAttemptCheck = existing.checks?.find((c) => c.name === "AI Verification Attempts");
+  if (prevAttemptCheck?.detail) {
+    const match = prevAttemptCheck.detail.match(/Attempt (\d+)/i);
+    if (match) {
+      attemptCount = parseInt(match[1], 10) + 1;
+    }
+  } else if (existing.rejectionReason?.includes("Attempt 1 of 3")) {
+    attemptCount = 2;
+  } else if (existing.rejectionReason?.includes("Attempt 2 of 3")) {
+    attemptCount = 3;
+  }
+
   // Run AI automated verification on resubmission
   const aiResult = await verifyDocumentWithAI({
     buffer: fileBuffer,
@@ -332,11 +408,47 @@ export async function resubmitArtefactForUser(
   });
 
   const isApprovedByAI = aiResult.decision === "APPROVE";
-  const nextStatus = isApprovedByAI ? "VALIDATED" : "REJECTED";
+  const isAiFailure = !isApprovedByAI && Boolean(
+    aiResult.isAiUnavailable ||
+    aiResult.decision === "FLAG" ||
+    aiResult.reason.toLowerCase().includes("unavailable") ||
+    aiResult.reason.toLowerCase().includes("retry")
+  );
 
+  let nextStatus: "VALIDATED" | "REJECTED" | "PENDING_REVIEW" = "REJECTED";
+  let finalReason: string | null = null;
   const initialChecks = await buildInitialChecks(a.sha256);
+  const extraChecks: Array<{ name: string; status: "PASS" | "FAIL" | "WARN" | "PENDING"; detail?: string }> = [];
+
+  if (isApprovedByAI) {
+    nextStatus = "VALIDATED";
+    finalReason = null;
+  } else if (isAiFailure) {
+    if (attemptCount < 3) {
+      nextStatus = "REJECTED";
+      finalReason = `Automated AI verification is temporarily unavailable. Please retry uploading your document (Attempt ${attemptCount} of 3).`;
+      extraChecks.push({
+        name: "AI Verification Attempts",
+        status: "WARN",
+        detail: `Attempt ${attemptCount} of 3`,
+      });
+    } else {
+      nextStatus = "PENDING_REVIEW";
+      finalReason = "Your document has been submitted for manual admin review. Please be patient, our compliance team is reviewing your document and you will be notified via email once your account has been approved.";
+      extraChecks.push({
+        name: "AI Verification Attempts",
+        status: "WARN",
+        detail: "3 of 3 attempts completed — routed to manual admin review",
+      });
+    }
+  } else {
+    nextStatus = "REJECTED";
+    finalReason = aiResult.reason;
+  }
+
   const aiChecksToCreate = [
     ...initialChecks,
+    ...extraChecks,
     ...aiResult.checks.map((c) => ({
       name: c.name,
       status: c.status,
@@ -357,7 +469,7 @@ export async function resubmitArtefactForUser(
         sha256: a.sha256,
         uploadedAt: new Date(),
         validatedAt: isApprovedByAI ? new Date() : null,
-        rejectionReason: !isApprovedByAI ? aiResult.reason : null,
+        rejectionReason: !isApprovedByAI ? finalReason : null,
         checks: { create: aiChecksToCreate },
       },
     }),
@@ -423,22 +535,110 @@ export async function resubmitArtefactForUser(
           });
         }
       }
-    } else {
-      // AI Flagged / Rejected
+    } else if (isAiFailure && attemptCount < 3) {
+      // AI unavailable on attempt 1 or 2 — prompt retry cleanly without marking user permanently rejected
       if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile && user.entrepreneurProfile.status !== "APPROVED") {
         await prisma.entrepreneurProfile.update({
           where: { userId: actor.id },
-          data: { status: "REJECTED", rejectionReason: aiResult.reason, verified: false },
+          data: { status: "PENDING", rejectionReason: finalReason, verified: false },
         });
       } else if (user.role === "FUNDER" && user.funderProfile && user.funderProfile.status !== "APPROVED") {
         await prisma.funderProfile.update({
           where: { userId: actor.id },
-          data: { status: "REJECTED", rejectionReason: aiResult.reason, verified: false },
+          data: { status: "PENDING", rejectionReason: finalReason, verified: false },
         });
       } else if (user.role === "CORPORATE" && user.corporateProfile && user.corporateProfile.status !== "APPROVED") {
         await prisma.corporateProfile.update({
           where: { userId: actor.id },
-          data: { status: "REJECTED", rejectionReason: aiResult.reason, verified: false },
+          data: { status: "PENDING", rejectionReason: finalReason, verified: false },
+        });
+      }
+
+      await prisma.notification.create({
+        data: {
+          userId: actor.id,
+          kind: "ARTEFACT_REJECTED",
+          title: `Verification retry needed: ${existing.name}`,
+          body: finalReason!,
+          link: `/portal/${user.role.toLowerCase()}`,
+        },
+      });
+
+      if (user.email) {
+        await sendEmail({
+          to: user.email,
+          subject: `Action Required: Verification retry needed for "${existing.name}"`,
+          body: `Hi there,\n\n${finalReason}\n\nPlease check your compliance vault and try uploading your document again.\n\nBest,\nBHAF MarketBridge Team`,
+        });
+      }
+    } else if (isAiFailure && attemptCount >= 3) {
+      // Escalated to manual admin review after 3 failed AI attempts
+      if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile && user.entrepreneurProfile.status !== "APPROVED") {
+        await prisma.entrepreneurProfile.update({
+          where: { userId: actor.id },
+          data: { status: "PENDING", rejectionReason: finalReason, verified: false },
+        });
+      } else if (user.role === "FUNDER" && user.funderProfile && user.funderProfile.status !== "APPROVED") {
+        await prisma.funderProfile.update({
+          where: { userId: actor.id },
+          data: { status: "PENDING", rejectionReason: finalReason, verified: false },
+        });
+      } else if (user.role === "CORPORATE" && user.corporateProfile && user.corporateProfile.status !== "APPROVED") {
+        await prisma.corporateProfile.update({
+          where: { userId: actor.id },
+          data: { status: "PENDING", rejectionReason: finalReason, verified: false },
+        });
+      }
+
+      await prisma.notification.create({
+        data: {
+          userId: actor.id,
+          kind: "ARTEFACT_VALIDATED",
+          title: `Document submitted for manual review: ${existing.name}`,
+          body: finalReason!,
+          link: `/portal/${user.role.toLowerCase()}`,
+        },
+      });
+
+      if (user.email) {
+        await sendEmail({
+          to: user.email,
+          subject: `Your document "${existing.name}" has been submitted for manual admin review`,
+          body: `Hi ${user.name || "there"},\n\nYour document "${existing.name}" has been submitted for manual review by our administrative compliance team.\n\nPlease be patient — our team will review your document shortly and you will be notified via email once your account has been approved.\n\nBest regards,\nBHAF MarketBridge Team`,
+        });
+      }
+
+      // Notify platform admins of manual review queue
+      try {
+        const admins = await prisma.user.findMany({ where: { role: "ADMIN" } });
+        for (const admin of admins) {
+          if (admin.email) {
+            await sendEmail({
+              to: admin.email,
+              subject: `[Action Required] Document Pending Manual Review: ${existing.name}`,
+              body: `Document "${existing.name}" for user ${user.email} (${user.name}) has completed 3 automated verification attempts and is now queued for manual review.\n\nPlease review it in the Admin Portal.`,
+            });
+          }
+        }
+      } catch (adminErr) {
+        console.warn("[artefacts] Admin notification email error:", adminErr);
+      }
+    } else {
+      // Actual document defect (not AI failure)
+      if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile && user.entrepreneurProfile.status !== "APPROVED") {
+        await prisma.entrepreneurProfile.update({
+          where: { userId: actor.id },
+          data: { status: "REJECTED", rejectionReason: finalReason, verified: false },
+        });
+      } else if (user.role === "FUNDER" && user.funderProfile && user.funderProfile.status !== "APPROVED") {
+        await prisma.funderProfile.update({
+          where: { userId: actor.id },
+          data: { status: "REJECTED", rejectionReason: finalReason, verified: false },
+        });
+      } else if (user.role === "CORPORATE" && user.corporateProfile && user.corporateProfile.status !== "APPROVED") {
+        await prisma.corporateProfile.update({
+          where: { userId: actor.id },
+          data: { status: "REJECTED", rejectionReason: finalReason, verified: false },
         });
       }
 
@@ -447,7 +647,7 @@ export async function resubmitArtefactForUser(
           userId: actor.id,
           kind: "ARTEFACT_REJECTED",
           title: `Document rejected: ${existing.name}`,
-          body: `AI verification issue: ${aiResult.reason}`,
+          body: `AI verification issue: ${finalReason}`,
           link: `/portal/${user.role.toLowerCase()}`,
         },
       });
@@ -456,7 +656,7 @@ export async function resubmitArtefactForUser(
         await sendEmail({
           to: user.email,
           subject: `Action Required: Resubmitted document "${existing.name}" could not be verified`,
-          body: `Hi there,\n\nWe couldn't verify your resubmitted document "${existing.name}".\n\nAI Reason: ${aiResult.reason}\n\nPlease check your compliance vault and try uploading a clearer version.`,
+          body: `Hi there,\n\nWe couldn't verify your resubmitted document "${existing.name}".\n\nAI Reason: ${finalReason}\n\nPlease check your compliance vault and try uploading a clearer version.`,
         });
       }
     }

@@ -131,8 +131,23 @@ export function ArtefactCard({ artefact: a }: ArtefactCardProps) {
       )}
 
       {a.rejectionReason && (
-        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-[11px] text-red-800">
-          <p className="font-semibold uppercase tracking-wider">Rejection reason</p>
+        <div
+          className={cn(
+            "mt-4 rounded-lg border p-3 text-[11px]",
+            a.status === "pending_review" || a.rejectionReason.includes("manual admin review")
+              ? "border-blue-200 bg-blue-50 text-blue-900"
+              : a.rejectionReason.includes("temporarily unavailable") || a.rejectionReason.includes("retry")
+              ? "border-amber-200 bg-amber-50 text-amber-900"
+              : "border-red-200 bg-red-50 text-red-800",
+          )}
+        >
+          <p className="font-semibold uppercase tracking-wider">
+            {a.status === "pending_review" || a.rejectionReason.includes("manual admin review")
+              ? "Under Admin Review"
+              : a.rejectionReason.includes("temporarily unavailable") || a.rejectionReason.includes("retry")
+              ? "Verification Notice"
+              : "Rejection reason"}
+          </p>
           <p className="mt-1">{a.rejectionReason}</p>
         </div>
       )}
@@ -141,7 +156,14 @@ export function ArtefactCard({ artefact: a }: ArtefactCardProps) {
         {isPendingUpload ? (
           <button className="btn-primary !py-2 !px-3 text-xs">Upload document</button>
         ) : a.status === "rejected" ? (
-          <ArtefactResubmit artefactId={a.id} />
+          <ArtefactResubmit
+            artefactId={a.id}
+            buttonLabel={
+              a.rejectionReason?.includes("retry") || a.rejectionReason?.includes("temporarily unavailable")
+                ? "Retry verification"
+                : undefined
+            }
+          />
         ) : a.status === "expires_soon" || a.status === "expired" ? (
           <button className="btn-gold !py-2 !px-3 text-xs">Renew & re-upload</button>
         ) : (

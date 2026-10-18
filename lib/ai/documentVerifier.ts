@@ -38,6 +38,7 @@ export interface DocumentVerificationResult {
   nameMatchesProfile: boolean;
   reason: string;
   checks: VerificationCheckItem[];
+  isAiUnavailable?: boolean;
 }
 
 export async function verifyDocumentWithAI(
@@ -115,8 +116,8 @@ Return ONLY a valid JSON object strictly matching this schema with no markdown f
 }
 `;
 
-    // Try these models in order if one is experiencing high demand (503)
-    const models = ["gemini-3.6-flash", "gemini-3.6-flash", "gemini-1.5-flash"];
+    // Try active Gemini models in order of speed and stability
+    const models = ["gemini-3.8-flash", "gemini-flash-latest", "gemini-3.5-flash", "gemini-3.7-flash"];
     let lastErrorStatus = null;
     let lastErrorText = null;
 
@@ -157,14 +158,14 @@ Return ONLY a valid JSON object strictly matching this schema with no markdown f
           lastErrorStatus = response.status;
           lastErrorText = await response.text();
           console.warn(`[documentVerifier] Gemini API (${model}) returned status ${response.status}: ${lastErrorText}`);
-          // If it's a 503, 429, or 404 (model name deprecated), continue to the next model in the loop
+          // If it's a 503, 429, or 404 (model name deprecated or busy), continue to next model
           if (response.status === 503 || response.status === 429 || response.status === 404) {
-            if (response.status === 503) {
-              await new Promise(resolve => setTimeout(resolve, 1500)); // wait 1.5s before retry
+            if (response.status === 503 || response.status === 429) {
+              await new Promise(resolve => setTimeout(resolve, 800)); // wait before retry next model
             }
             continue;
           }
-          // For other errors (like 400 Bad Request, or 403 Invalid API Key), fail immediately
+          // For other errors (like 400 Bad Request, or 403 Invalid API Key), continue to fallback
           break;
         }
 
@@ -186,7 +187,7 @@ Return ONLY a valid JSON object strictly matching this schema with no markdown f
 
         // Successfully verified using this model
         console.log(`[documentVerifier] Successfully verified using model: ${model}`);
-        return parsed;
+        return { ...parsed, isAiUnavailable: false };
 
       } catch (err) {
         console.error(`[documentVerifier] Network or parse error with model ${model}:`, err);
@@ -196,11 +197,19 @@ Return ONLY a valid JSON object strictly matching this schema with no markdown f
 
     // If we exhausted all models (or broke out early for a hard error), fall back to heuristic
     console.warn("[documentVerifier] All Gemini models failed or returned invalid responses.");
-    return await runHeuristicFallback(input);
+    const fallback = await runHeuristicFallback(input);
+    return {
+      ...fallback,
+      isAiUnavailable: fallback.decision !== "APPROVE",
+    };
 
   } catch (error) {
     console.error("[documentVerifier] Error verifying document with AI:", error);
-    return await runHeuristicFallback(input);
+    const fallback = await runHeuristicFallback(input);
+    return {
+      ...fallback,
+      isAiUnavailable: true,
+    };
   }
 }
 
@@ -321,7 +330,8 @@ async function runHeuristicFallback(input: DocumentVerificationInput): Promise<D
     isLegible: true,
     isExpired: false,
     nameMatchesProfile: true,
-    reason: "Automated AI verification is currently unavailable. Flagged for manual admin verification.",
+    reason: "Automated AI verification is temporarily unavailable. Please retry uploading your document.",
+    isAiUnavailable: true,
     checks: [
       { name: "AI Document Type & Authenticity", status: "WARN", detail: "API Unavailable - Unverified" },
       { name: "AI Text Legibility & Quality", status: "WARN", detail: "API Unavailable - Unverified" },
