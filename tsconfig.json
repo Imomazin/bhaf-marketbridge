@@ -39,6 +39,8 @@
     "node_modules",
     "scratch",
     "scratch/**/*",
-    "scratch-test.ts"
+    "scratch-test.ts",
+    "remotion-demo",
+    "remotion-demo/**/*"
   ]
 }
