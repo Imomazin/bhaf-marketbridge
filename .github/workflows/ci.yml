@@ -13,9 +13,10 @@ jobs:
     timeout-minutes: 15
     env:
       # Placeholder values so prisma generate + next build succeed
-      # without real secrets. Production env vars live on Vercel.
+      # without real secrets in CI runner.
       DATABASE_URL: postgresql://placeholder:placeholder@localhost:5432/placeholder
-      AUTH_SECRET: ci-secret-only
+      AUTH_SECRET: ci-secret-placeholder-for-build-minimum-32-chars
+      STRIPE_SECRET_KEY: sk_test_placeholder_for_ci_build
     steps:
       - uses: actions/checkout@v6
 
