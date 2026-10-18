@@ -17,6 +17,19 @@ export function EntrepreneurCarousel({
   const [page, setPage] = useState(0);
   const [paused, setPaused] = useState(false);
   
+  const totalPages = entrepreneurs?.length || 0;
+
+  useEffect(() => {
+    if (!totalPages || paused) return;
+    const prefersReduced =
+      typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReduced) return;
+    const id = window.setInterval(() => {
+      setPage((p) => (p + 1) % totalPages);
+    }, autoAdvanceMs);
+    return () => window.clearInterval(id);
+  }, [paused, totalPages, autoAdvanceMs]);
+
   if (!entrepreneurs?.length) {
     return (
       <div className="rounded-2xl border border-dashed border-cream-200 bg-white p-10 text-center">
@@ -26,20 +39,6 @@ export function EntrepreneurCarousel({
       </div>
     );
   }
-  // 3 per page on desktop, 1 on mobile. We use CSS to display 3 at a time
-  // and advance one card per tick so it feels like a smooth rotation.
-  const totalPages = entrepreneurs.length;
-
-  useEffect(() => {
-    if (paused) return;
-    const prefersReduced =
-      typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReduced) return;
-    const id = window.setInterval(() => {
-      setPage((p) => (p + 1) % totalPages);
-    }, autoAdvanceMs);
-    return () => window.clearInterval(id);
-  }, [paused, totalPages, autoAdvanceMs]);
 
   // Build the visible window: 3 cards starting from `page`, wrapping around
   const visible = [0, 1, 2].map((offset) => entrepreneurs[(page + offset) % totalPages]);
