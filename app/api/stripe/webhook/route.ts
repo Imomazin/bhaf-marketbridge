@@ -5,7 +5,10 @@ import { prisma } from "@/lib/db";
 import Stripe from "stripe";
 import { sendEmail } from "@/lib/email";
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(req: Request) {
   const body = await req.text();
