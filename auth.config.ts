@@ -20,11 +20,19 @@ export const authConfig: NextAuthConfig = {
   secret: process.env.AUTH_SECRET ?? "dev-only-fallback-secret-rotate-me",
   trustHost: true,
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = (user as { role?: string }).role ?? "ENTREPRENEUR";
         token.id = (user as { id?: string }).id ?? token.sub;
+        token.status = (user as { status?: string }).status ?? "ACTIVE";
       }
+
+      if (trigger === "update" && session?.user) {
+        if (session.user.role) token.role = session.user.role;
+        if (session.user.id) token.id = session.user.id;
+        if (session.user.status) token.status = session.user.status;
+      }
+
       return token;
     },
     async session({ session, token }) {
@@ -38,6 +46,13 @@ export const authConfig: NextAuthConfig = {
           | "AUDITOR"
           | undefined;
         session.user.role = role ?? "ENTREPRENEUR";
+        const status = token.status as
+          | "ACTIVE"
+          | "SUSPENDED"
+          | "PENDING_VERIFICATION"
+          | "DELETED"
+          | undefined;
+        session.user.status = status ?? "ACTIVE";
       }
       return session;
     },

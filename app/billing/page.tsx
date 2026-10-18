@@ -46,11 +46,34 @@ export default async function BillingPage() {
           </div>
         )}
 
-        <div className="mt-16 rounded-2xl border border-gold-200 bg-gold-50 p-5 text-xs text-gold-900">
+        {/* Bespoke Consulting & Advisory Services */}
+        <div className="mt-14 rounded-2xl border border-forest-300 bg-forest-900 p-8 text-cream-50 shadow-soft">
+          <div className="flex flex-wrap items-center justify-between gap-6">
+            <div className="max-w-2xl">
+              <span className="rounded-full bg-gold-500/20 border border-gold-400/40 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-gold-300">
+                BHAF Advisory Practice
+              </span>
+              <h3 className="mt-3 font-serif text-2xl text-cream-50 md:text-3xl">
+                Need Bespoke Consulting or Tailored Advisory?
+              </h3>
+              <p className="mt-2 text-sm text-cream-200">
+                We offer personalized technical advisory, ESG compliance audits, data room structuring, and inclusive supply chain transformation with transparent, variable pricing.
+              </p>
+            </div>
+            <Link
+              href="/services/consulting"
+              className="rounded-lg bg-gold-500 px-6 py-3 text-xs font-bold uppercase tracking-wider text-forest-950 hover:bg-gold-400 transition shadow-md"
+            >
+              Explore Bespoke Consulting →
+            </Link>
+          </div>
+        </div>
+
+        <div className="mt-10 rounded-2xl border border-gold-200 bg-gold-50 p-5 text-xs text-gold-900">
           <p className="font-semibold uppercase tracking-wide">Entrepreneurs always free</p>
           <p className="mt-1">
             Women entrepreneurs never pay to publish profiles, list products, upload artefacts or apply to
-            opportunities. BHAF MarketBridge stays viable through corporate, funder and grant revenue.
+            opportunities. BHAF MarketBridge stays viable through corporate, funder, and grant revenue.
           </p>
         </div>
 

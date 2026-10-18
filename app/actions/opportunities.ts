@@ -7,16 +7,31 @@ import { prisma, DB_ENABLED } from "@/lib/db";
 import { writeAudit } from "@/lib/audit";
 import { sendEmail } from "@/lib/email";
 import { opportunitySchema, type OpportunityInput } from "@/lib/schemas/opportunity";
+import { opportunities as mockOpportunities } from "@/data/opportunities";
+import { findDemoApplication, saveDemoApplication } from "@/lib/demoState";
 
 export type OpportunityResult = { ok: true; id: string; message: string } | { ok: false; message: string };
 
-export async function createOpportunity(input: OpportunityInput): Promise<OpportunityResult> {
+async function requireAdmin() {
   const session = await auth();
-  if (!session?.user) return { ok: false, message: "Sign-in required." };
-  if (!DB_ENABLED || !prisma) return { ok: false, message: "Database not configured." };
+  if (!session?.user) return { ok: false as const, message: "Sign-in required." };
   if (session.user.role !== "ADMIN" && session.user.role !== "AUDITOR") {
-    return { ok: false, message: "Only BHAF admins can publish opportunities." };
+    return { ok: false as const, message: "Admin only." };
   }
+  return { ok: true as const, session };
+}
+
+function revalidateOpportunityViews() {
+  revalidatePath("/opportunities");
+  revalidatePath("/portal/entrepreneur/opportunities");
+  revalidatePath("/admin");
+  revalidatePath("/admin/opportunities");
+}
+
+export async function createOpportunity(input: OpportunityInput, publish: boolean): Promise<OpportunityResult> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate;
+  if (!DB_ENABLED || !prisma) return { ok: false, message: "Database not configured." };
 
   const parsed = opportunitySchema.safeParse(input);
   if (!parsed.success) {
@@ -39,27 +54,151 @@ export async function createOpportunity(input: OpportunityInput): Promise<Opport
       deadline,
       description: parsed.data.description,
       eligibility,
-      published: true,
+      published: publish,
     },
   });
 
   await writeAudit({
-    actorId: session.user.id,
-    actorLabel: session.user.email ?? "Admin",
-    action: `Opportunity published · ${opp.title}`,
+    actorId: gate.session.user.id,
+    actorLabel: gate.session.user.email ?? "Admin",
+    action: publish ? `Opportunity published · ${opp.title}` : `Opportunity saved as draft · ${opp.title}`,
     entityType: "Opportunity",
     entityId: opp.id,
   });
 
-  revalidatePath("/opportunities");
-  revalidatePath("/admin");
-  return { ok: true, id: opp.id, message: "Opportunity published." };
+  revalidateOpportunityViews();
+  return { ok: true, id: opp.id, message: publish ? "Opportunity published." : "Saved as draft." };
+}
+
+export async function updateOpportunity(id: string, input: OpportunityInput): Promise<OpportunityResult> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate;
+  if (!DB_ENABLED || !prisma) return { ok: false, message: "Database not configured." };
+
+  const parsed = opportunitySchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? "Invalid input." };
+  }
+
+  const existing = await prisma.opportunity.findUnique({ where: { id } });
+  if (!existing) return { ok: false, message: "Opportunity not found." };
+
+  const eligibility = parsed.data.eligibility
+    ? parsed.data.eligibility.split("\n").map((l) => l.trim()).filter(Boolean).slice(0, 12)
+    : [];
+  const deadline = parsed.data.deadline ? new Date(parsed.data.deadline) : null;
+
+  await prisma.opportunity.update({
+    where: { id },
+    data: {
+      title: parsed.data.title,
+      organisation: parsed.data.organisation,
+      type: parsed.data.type,
+      region: parsed.data.region || null,
+      amount: parsed.data.amount || null,
+      deadline,
+      description: parsed.data.description,
+      eligibility,
+    },
+  });
+
+  await writeAudit({
+    actorId: gate.session.user.id,
+    actorLabel: gate.session.user.email ?? "Admin",
+    action: `Opportunity updated · ${parsed.data.title}`,
+    entityType: "Opportunity",
+    entityId: id,
+  });
+
+  revalidateOpportunityViews();
+  revalidatePath(`/admin/opportunities/${id}`);
+  return { ok: true, id, message: "Opportunity updated." };
+}
+
+export async function publishOpportunity(id: string): Promise<OpportunityResult> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate;
+  if (!DB_ENABLED || !prisma) return { ok: false, message: "Database not configured." };
+
+  const opp = await prisma.opportunity.update({ where: { id }, data: { published: true } });
+
+  await writeAudit({
+    actorId: gate.session.user.id,
+    actorLabel: gate.session.user.email ?? "Admin",
+    action: `Opportunity published · ${opp.title}`,
+    entityType: "Opportunity",
+    entityId: id,
+  });
+
+  revalidateOpportunityViews();
+  return { ok: true, id, message: "Opportunity published." };
+}
+
+export async function unpublishOpportunity(id: string): Promise<OpportunityResult> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate;
+  if (!DB_ENABLED || !prisma) return { ok: false, message: "Database not configured." };
+
+  const opp = await prisma.opportunity.update({ where: { id }, data: { published: false } });
+
+  await writeAudit({
+    actorId: gate.session.user.id,
+    actorLabel: gate.session.user.email ?? "Admin",
+    action: `Opportunity unpublished · ${opp.title}`,
+    entityType: "Opportunity",
+    entityId: id,
+  });
+
+  revalidateOpportunityViews();
+  return { ok: true, id, message: "Opportunity unpublished." };
+}
+
+export async function deleteOpportunity(id: string): Promise<OpportunityResult> {
+  const gate = await requireAdmin();
+  if (!gate.ok) return gate;
+  if (!DB_ENABLED || !prisma) return { ok: false, message: "Database not configured." };
+
+  const existing = await prisma.opportunity.findUnique({
+    where: { id },
+    select: { title: true, _count: { select: { applications: true } } },
+  });
+  if (!existing) return { ok: false, message: "Opportunity not found." };
+
+  await writeAudit({
+    actorId: gate.session.user.id,
+    actorLabel: gate.session.user.email ?? "Admin",
+    action: `Opportunity deleted · ${existing.title}`,
+    entityType: "Opportunity",
+    entityId: id,
+    metadata: { applicantsRemoved: existing._count.applications },
+  });
+
+  await prisma.opportunity.delete({ where: { id } });
+
+  revalidateOpportunityViews();
+  return { ok: true, id, message: "Opportunity deleted." };
 }
 
 export async function applyToOpportunity(opportunityId: string, note?: string): Promise<OpportunityResult> {
   const session = await auth();
   if (!session?.user) return { ok: false, message: "Sign-in required." };
-  if (!DB_ENABLED || !prisma) return { ok: false, message: "Database not configured." };
+
+  if (!DB_ENABLED || !prisma) {
+    const opp = mockOpportunities.find((entry) => entry.id === opportunityId);
+    if (!opp) return { ok: false, message: "Opportunity not found." };
+
+    const existing = await findDemoApplication(session.user.id, opportunityId);
+    if (existing) {
+      return { ok: false, message: "You've already applied to this opportunity." };
+    }
+
+    await saveDemoApplication(session.user.id, opportunityId, note);
+    revalidatePath("/opportunities");
+    revalidatePath("/portal/entrepreneur");
+    revalidatePath("/portal/entrepreneur/applications");
+    revalidatePath("/admin/applications");
+    return { ok: true, id: opportunityId, message: "Application sent." };
+  }
 
   const opp = await prisma.opportunity.findUnique({ where: { id: opportunityId } });
   if (!opp || !opp.published) return { ok: false, message: "Opportunity not found." };

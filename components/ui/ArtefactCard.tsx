@@ -1,5 +1,6 @@
 import type { Artefact, ArtefactCheck } from "@/data/artefacts";
 import { ArtefactStatusBadge } from "./ArtefactStatusBadge";
+import { ArtefactResubmit } from "./ArtefactResubmit";
 import { cn } from "@/lib/utils";
 
 const checkTone: Record<ArtefactCheck["status"], { dot: string; mark: string; text: string }> = {
@@ -140,15 +141,30 @@ export function ArtefactCard({ artefact: a }: ArtefactCardProps) {
         {isPendingUpload ? (
           <button className="btn-primary !py-2 !px-3 text-xs">Upload document</button>
         ) : a.status === "rejected" ? (
-          <button className="btn-gold !py-2 !px-3 text-xs">Re-upload corrected version</button>
+          <ArtefactResubmit artefactId={a.id} />
         ) : a.status === "expires_soon" || a.status === "expired" ? (
           <button className="btn-gold !py-2 !px-3 text-xs">Renew & re-upload</button>
         ) : (
           <>
-            <button className="btn-secondary !py-2 !px-3 text-xs">View document</button>
-            <button className="rounded-md px-3 py-2 text-xs font-medium text-charcoal-500 hover:text-forest-900">
-              Replace
-            </button>
+            {a.downloadHref ? (
+              <a
+                href={a.downloadHref}
+                target="_blank"
+                rel="noreferrer"
+                className="btn-secondary !py-2 !px-3 text-xs"
+              >
+                View document
+              </a>
+            ) : (
+              <button
+                type="button"
+                disabled
+                className="btn-secondary !py-2 !px-3 text-xs opacity-60"
+              >
+                View document
+              </button>
+            )}
+            <ArtefactResubmit artefactId={a.id} variant="replace" />
           </>
         )}
       </div>

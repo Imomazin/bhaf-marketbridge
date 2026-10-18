@@ -14,15 +14,15 @@ export default async function PublishOpportunityPage() {
   return (
     <section className="bg-cream-50 py-12 md:py-16">
       <div className="container-edge max-w-3xl">
-        <Link href="/admin" className="text-xs font-medium text-forest-700 hover:text-gold-700">
-          ← Back to admin dashboard
+        <Link href="/admin/opportunities" className="text-xs font-medium text-forest-700 hover:text-gold-700">
+          ← Opportunities
         </Link>
         <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.18em] text-gold-700">
           Admin
         </p>
-        <h1 className="mt-2 font-serif text-3xl text-forest-900 md:text-4xl">Publish an opportunity</h1>
+        <h1 className="mt-2 font-serif text-3xl text-forest-900 md:text-4xl">New opportunity</h1>
         <p className="mt-2 text-sm text-charcoal-500">
-          New opportunities go live immediately on /opportunities and are matched to eligible entrepreneurs.
+          Save as a draft to keep working on it, or publish now to make it visible on /opportunities immediately.
         </p>
 
         <div className="card mt-8 p-6">

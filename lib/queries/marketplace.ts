@@ -1,5 +1,7 @@
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { marketplaceListings as mockListings, type MarketplaceListing } from "@/data/marketplace";
+import { getAllDemoEntrepreneurProfiles, getAllDemoListings } from "@/lib/demoState";
+import { getAllDemoUsers } from "@/lib/demoUsers";
 
 export interface MarketplaceFilters {
   q?: string;
@@ -11,7 +13,7 @@ function applyMockFilters(rows: MarketplaceListing[], f: MarketplaceFilters): Ma
   return rows.filter((r) => {
     if (f.category && f.category !== "All categories" && r.category !== f.category) return false;
     if (q) {
-      const hay = `${r.title} ${r.business} ${r.description} ${r.tags.join(" ")}`.toLowerCase();
+      const hay = `${r.title} ${r.business} ${r.entrepreneur} ${r.country} ${r.description} ${r.esgHighlight} ${r.tags.join(" ")}`.toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -20,16 +22,45 @@ function applyMockFilters(rows: MarketplaceListing[], f: MarketplaceFilters): Ma
 
 export async function loadMarketplace(filters: MarketplaceFilters = {}): Promise<{ listings: MarketplaceListing[]; isReal: boolean }> {
   if (!DB_ENABLED || !prisma) {
-    return { listings: applyMockFilters(mockListings, filters), isReal: false };
+    const [demoListings, demoProfiles, demoUsers] = await Promise.all([
+      getAllDemoListings(),
+      getAllDemoEntrepreneurProfiles(),
+      getAllDemoUsers(),
+    ]);
+
+    const demoRows: MarketplaceListing[] = demoListings.map((listing) => {
+      const owner = demoUsers.find((user) => user.id === listing.ownerId);
+      const profile = demoProfiles.find((entry) => entry.userId === listing.ownerId);
+      return {
+        id: listing.id,
+        title: listing.title,
+        category: listing.category,
+        business: profile?.businessName || owner?.name || "Demo business",
+        entrepreneur: owner?.name ?? "Demo entrepreneur",
+        country: profile?.country || "—",
+        priceRange: listing.priceRange || "On request",
+        minOrder: listing.minOrder || "On request",
+        description: listing.description,
+        tags: listing.tags,
+        esgHighlight: listing.esgHighlight || "ESG activity documented on MarketBridge",
+      };
+    });
+
+    return { listings: applyMockFilters([...demoRows, ...mockListings], filters), isReal: false };
   }
 
   try {
-    const where: Record<string, unknown> = { status: "PUBLISHED" };
+    const where: Record<string, unknown> = { 
+      status: "PUBLISHED",
+      owner: { status: "ACTIVE" } 
+    };
     if (filters.category && filters.category !== "All categories") where.category = filters.category;
     if (filters.q) {
       where.OR = [
         { title: { contains: filters.q, mode: "insensitive" } },
         { description: { contains: filters.q, mode: "insensitive" } },
+        { esgHighlight: { contains: filters.q, mode: "insensitive" } },
+        { owner: { name: { contains: filters.q, mode: "insensitive" } } },
       ];
     }
     const rows = await prisma.listing.findMany({
@@ -70,4 +101,72 @@ export async function loadMarketplace(filters: MarketplaceFilters = {}): Promise
     console.error("[marketplace] DB load failed", err);
     return { listings: mockListings, isReal: false };
   }
+}
+
+export async function getUserSentEnquiries(userId: string) {
+  if (!DB_ENABLED || !prisma) return [];
+
+  const rows = await prisma.enquiry.findMany({
+    where: { senderId: userId },
+    include: {
+      listing: true,
+      targetUser: {
+        select: {
+          name: true,
+          entrepreneurProfile: { select: { businessName: true } },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return rows.map((e) => ({
+    id: e.id,
+    listingTitle: e.listing.title,
+    listingId: e.listing.id,
+    targetBusiness: e.targetUser.entrepreneurProfile?.businessName ?? e.targetUser.name ?? "—",
+    note: e.note,
+    status: e.status,
+    createdAt: e.createdAt,
+  }));
+}
+
+export async function getUserReceivedEnquiries(userId: string) {
+  if (!DB_ENABLED || !prisma) return [];
+
+  const rows = await prisma.enquiry.findMany({
+    where: { targetUserId: userId },
+    include: {
+      listing: true,
+      sender: {
+        select: {
+          name: true,
+          email: true,
+          entrepreneurProfile: { select: { businessName: true } },
+          corporateProfile: { select: { orgName: true } },
+          funderProfile: { select: { orgName: true } },
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+
+  return rows.map((e) => {
+    let senderBusiness = e.sender.name ?? "Unknown user";
+    if (e.sender.funderProfile?.orgName) senderBusiness = e.sender.funderProfile.orgName;
+    else if (e.sender.corporateProfile?.orgName) senderBusiness = e.sender.corporateProfile.orgName;
+    else if (e.sender.entrepreneurProfile?.businessName) senderBusiness = e.sender.entrepreneurProfile.businessName;
+
+    return {
+      id: e.id,
+      listingTitle: e.listing.title,
+      listingId: e.listing.id,
+      senderName: e.sender.name,
+      senderEmail: e.sender.email,
+      senderBusiness,
+      note: e.note,
+      status: e.status,
+      createdAt: e.createdAt,
+    };
+  });
 }

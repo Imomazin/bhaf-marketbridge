@@ -5,96 +5,17 @@ import { z } from "zod";
 
 import { auth } from "@/auth";
 import { prisma, DB_ENABLED } from "@/lib/db";
-import { uploadFileToStorage } from "@/lib/storage";
 import { writeAudit } from "@/lib/audit";
 import { sendEmail } from "@/lib/email";
-import { rateLimit } from "@/lib/ratelimit";
-import { checkBySha256 } from "@/lib/integrations/virusTotal";
-
-const uploadSchema = z.object({
-  name: z.string().min(2).max(160),
-  category: z.string().min(2).max(60),
-  required: z.coerce.boolean().default(false),
-});
-
-export type ArtefactActionResult =
-  | { ok: true; id: string; sha256: string; status: string }
-  | { ok: false; message: string };
+import { uploadArtefactForUser, type ArtefactActionResult } from "@/lib/server/artefactUploads";
 
 export async function uploadArtefact(formData: FormData): Promise<ArtefactActionResult> {
   const session = await auth();
   if (!session?.user) return { ok: false, message: "You must be signed in to upload." };
-  if (!DB_ENABLED || !prisma) {
-    return { ok: false, message: "Database not configured — cannot persist uploads yet." };
-  }
-
-  const rl = await rateLimit("upload", session.user.id);
-  if (!rl.success) {
-    return { ok: false, message: "Too many uploads. Slow down and try again in a minute." };
-  }
-
-  const parsed = uploadSchema.safeParse({
-    name: formData.get("name"),
-    category: formData.get("category"),
-    required: formData.get("required") === "true",
-  });
-  if (!parsed.success) {
-    return { ok: false, message: "Please fill in name and category." };
-  }
-
-  const file = formData.get("file");
-  if (!(file instanceof File)) {
-    return { ok: false, message: "No file received." };
-  }
-
-  const result = await uploadFileToStorage(file, session.user.id);
-  if (!result.ok) {
-    // Audit the rejected upload attempt so anti-fraud monitoring sees it.
-    await writeAudit({
-      actorId: session.user.id,
-      actorLabel: session.user.email ?? session.user.id,
-      action: `Upload rejected · ${parsed.data.name} · ${result.reason}`,
-      entityType: "Artefact",
-    });
-    return { ok: false, message: result.reason };
-  }
-
-  const a = result.artefact;
-
-  const artefact = await prisma.artefact.create({
-    data: {
-      userId: session.user.id,
-      name: parsed.data.name,
-      category: parsed.data.category,
-      required: parsed.data.required,
-      status: "PENDING_REVIEW",
-      fileName: a.fileName,
-      fileSize: a.size,
-      mimeType: a.mimeType,
-      storageKey: a.storageKey,
-      sha256: a.sha256,
-      uploadedAt: new Date(),
-      checks: {
-        create: await buildInitialChecks(a.sha256),
-      },
-    },
-  });
-
-  await writeAudit({
-    actorId: session.user.id,
-    actorLabel: session.user.email ?? session.user.id,
-    action: `Uploaded · ${parsed.data.name}`,
-    entityType: "Artefact",
-    entityId: artefact.id,
-    metadata: { sha256: a.sha256, size: a.size, mime: a.mimeType },
-  });
-
-  revalidatePath("/portal/entrepreneur");
-  revalidatePath("/portal/funder");
-  revalidatePath("/portal/corporate");
-  revalidatePath("/admin");
-
-  return { ok: true, id: artefact.id, sha256: a.sha256, status: artefact.status };
+  return uploadArtefactForUser(
+    { id: session.user.id, email: session.user.email ?? null },
+    formData,
+  );
 }
 
 const reviewSchema = z.object({
@@ -170,8 +91,8 @@ export async function reviewArtefact(input: z.infer<typeof reviewSchema>): Promi
         parsed.data.decision === "APPROVE"
           ? `Your "${artefact.name}" has been validated. It now counts toward your readiness status.`
           : parsed.data.decision === "REJECT"
-          ? `Your "${artefact.name}" was rejected.\n\nReason: ${parsed.data.comment ?? "See your dashboard."}\n\nPlease re-upload a corrected version.`
-          : `Your "${artefact.name}" needs changes.\n\n${parsed.data.comment ?? "Check your dashboard for details."}`,
+          ? `Hi ${artefact.user.name ?? "there"},\n\nWe're sorry to let you know that your "${artefact.name}" couldn't be accepted at this time.\n\nHere is the reason provided by our review team:\n${parsed.data.comment ?? "Please check your dashboard for more details."}\n\nWe know this can be frustrating, but we'd love for you to upload a corrected version whenever you're ready!\n\nBest,\nThe Review Team`
+          : `Hi ${artefact.user.name ?? "there"},\n\nYour "${artefact.name}" needs a few changes before we can validate it.\n\nHere's what our review team noted:\n${parsed.data.comment ?? "Please check your dashboard for details."}\n\nWe look forward to seeing your updated version!\n\nBest,\nThe Review Team`,
     });
   }
 
@@ -179,38 +100,4 @@ export async function reviewArtefact(input: z.infer<typeof reviewSchema>): Promi
   revalidatePath("/admin");
 
   return { ok: true, id: artefact.id, sha256: artefact.sha256 ?? "", status: nextStatus };
-}
-
-/**
- * Returns the initial set of automated check rows for a new artefact.
- * The first three are synchronous (we already verified them at upload
- * time). The AV check actually queries VirusTotal when configured —
- * if not, it stays PENDING and a human reviewer can re-trigger later.
- */
-async function buildInitialChecks(sha256: string) {
-  const base = [
-    { name: "File integrity (SHA-256)", status: "PASS" as const },
-    { name: "MIME & magic-byte match", status: "PASS" as const },
-    { name: "Size & format limits", status: "PASS" as const },
-  ];
-
-  let avRow:
-    | { name: string; status: "PASS" | "FAIL" | "WARN" | "PENDING"; detail?: string };
-  try {
-    const av = await checkBySha256(sha256);
-    avRow =
-      av.status === "CLEAN"
-        ? { name: "Antivirus scan (VirusTotal)", status: "PASS", detail: `${av.total ?? 0} engines · ${av.message}` }
-        : av.status === "INFECTED"
-        ? { name: "Antivirus scan (VirusTotal)", status: "FAIL", detail: av.message }
-        : av.status === "PENDING"
-        ? { name: "Antivirus scan (VirusTotal)", status: "PENDING", detail: av.message }
-        : av.status === "NOT_CONFIGURED"
-        ? { name: "Antivirus scan", status: "PENDING", detail: "VirusTotal not configured — manual review" }
-        : { name: "Antivirus scan", status: "WARN", detail: av.message };
-  } catch {
-    avRow = { name: "Antivirus scan", status: "PENDING" };
-  }
-
-  return [...base, avRow, { name: "Cross-check against profile", status: "PENDING" as const }];
 }

@@ -4,6 +4,7 @@ import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
 import { Reveal } from "@/components/ui/Reveal";
 import { loadMarketplace } from "@/lib/queries/marketplace";
 import { photos } from "@/data/photos";
+import { normalizeSearchParam } from "@/lib/searchParams";
 
 export const dynamic = "force-dynamic";
 
@@ -15,14 +16,22 @@ const categories = [
   "Beauty & Wellness",
   "Technology Services",
   "Training",
+  "Crafts & Lifestyle",
+  "Health",
+  "Other",
 ];
 
 export default async function MarketplacePage({
   searchParams,
 }: {
-  searchParams: { q?: string; category?: string };
+  searchParams: Promise<{ q?: string | string[]; category?: string | string[] }>;
 }) {
-  const { listings: marketplaceListings, isReal } = await loadMarketplace(searchParams);
+  const resolved = await searchParams;
+  const filters = {
+    q: normalizeSearchParam(resolved.q),
+    category: normalizeSearchParam(resolved.category),
+  };
+  const { listings: marketplaceListings, isReal } = await loadMarketplace(filters);
 
   return (
     <>
@@ -36,17 +45,17 @@ export default async function MarketplacePage({
 
       <section className="bg-cream-50 py-16">
         <div className="container-edge">
-          <form className="card mb-10 flex flex-wrap items-center gap-3 p-4">
+          <form action="/marketplace" method="GET" className="card mb-10 flex flex-wrap items-center gap-3 p-4">
             <input
               type="text"
               name="q"
-              defaultValue={searchParams.q ?? ""}
+              defaultValue={filters.q ?? ""}
               placeholder="Search products and services"
               className="flex-1 min-w-[200px] rounded-md border border-cream-300 bg-cream-50 px-3 py-2 text-sm text-forest-900 placeholder:text-charcoal-300 focus:border-forest-700 focus:outline-none"
             />
             <select
               name="category"
-              defaultValue={searchParams.category ?? "All categories"}
+              defaultValue={filters.category ?? "All categories"}
               className="rounded-md border border-cream-300 bg-cream-50 px-3 py-2 text-sm text-forest-900 focus:border-forest-700 focus:outline-none"
             >
               {categories.map((c) => (
@@ -61,7 +70,7 @@ export default async function MarketplacePage({
             <span>
               <strong className="text-forest-900">{marketplaceListings.length}</strong> listings · all entrepreneurs
               verified by BHAF
-              {!isReal && (
+              {!isReal && marketplaceListings.length > 0 && (
                 <span className="ml-2 rounded-full bg-cream-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-charcoal-500">
                   Sample data
                 </span>
@@ -70,13 +79,19 @@ export default async function MarketplacePage({
             <span>Sorted by relevance</span>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {marketplaceListings.map((l, idx) => (
-              <Reveal key={l.id} delayMs={idx * 80}>
-                <MarketplaceCard listing={l} />
-              </Reveal>
-            ))}
-          </div>
+          {marketplaceListings.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-cream-300 bg-white p-10 text-center text-sm text-charcoal-500">
+              No products or services match this filter yet. Check back soon.
+            </div>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {marketplaceListings.map((l, idx) => (
+                <Reveal key={l.id} delayMs={idx * 80}>
+                  <MarketplaceCard listing={l} />
+                </Reveal>
+              ))}
+            </div>
+          )}
 
           <div className="mt-16 overflow-hidden rounded-2xl">
             <AnnotatedPhoto

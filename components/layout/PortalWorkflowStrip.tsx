@@ -12,6 +12,8 @@ export function PortalWorkflowStrip({ roleId, currentStep = 1 }: PortalWorkflowS
   const flow = roleFlows[roleId];
   const role = roles.find((r) => r.id === roleId)!;
   const accent = accentClasses[role.accent];
+  
+  if (currentStep > flow.steps.length) return null;
 
   return (
     <section className="border-b border-cream-200 bg-cream-100/60">
@@ -44,10 +46,10 @@ export function PortalWorkflowStrip({ roleId, currentStep = 1 }: PortalWorkflowS
                     : "border-cream-200 bg-white",
                 )}
               >
-                <div className="flex items-center gap-2">
+                <div className="flex items-start gap-2">
                   <span
                     className={cn(
-                      "flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-semibold",
+                      "mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-semibold",
                       isCurrent
                         ? accent.bg + " text-cream-50"
                         : isComplete
@@ -59,7 +61,7 @@ export function PortalWorkflowStrip({ roleId, currentStep = 1 }: PortalWorkflowS
                   </span>
                   <span
                     className={cn(
-                      "truncate text-[11px] font-medium",
+                      "text-[11px] font-medium leading-tight",
                       isCurrent ? "text-forest-900" : isComplete ? "text-forest-700" : "text-charcoal-500",
                     )}
                   >

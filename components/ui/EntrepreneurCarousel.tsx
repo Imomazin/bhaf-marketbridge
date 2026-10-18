@@ -16,6 +16,16 @@ export function EntrepreneurCarousel({
 }: EntrepreneurCarouselProps) {
   const [page, setPage] = useState(0);
   const [paused, setPaused] = useState(false);
+  
+  if (!entrepreneurs?.length) {
+    return (
+      <div className="rounded-2xl border border-dashed border-cream-200 bg-white p-10 text-center">
+        <p className="text-sm text-charcoal-400">
+          No verified entrepreneur profiles are currently available. New profiles will appear here once approved.
+        </p>
+      </div>
+    );
+  }
   // 3 per page on desktop, 1 on mobile. We use CSS to display 3 at a time
   // and advance one card per tick so it feels like a smooth rotation.
   const totalPages = entrepreneurs.length;

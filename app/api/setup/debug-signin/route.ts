@@ -1,13 +1,9 @@
 import bcrypt from "bcryptjs";
+import { DEMO_PASSWORDS_BY_EMAIL, validateDemoCredentials } from "@/lib/demoAccounts";
+import { getDemoRegisteredUsersFromCookieHeader } from "@/lib/demoRegistrations";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const DEMO_PASSWORDS: Record<string, string> = {
-  "admin@bhaf.example": "ChangeMe!123",
-  "amara@greenweave.example": "Founder!123",
-  "fund@mosaic.example": "Funder!123",
-};
 
 /**
  * Bulletproof diagnostic — catches every conceivable error and reports
@@ -53,7 +49,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
 
   const emailParam = (url.searchParams.get("email") ?? "admin@bhaf.example").trim().toLowerCase();
-  const passwordParam = url.searchParams.get("password") ?? DEMO_PASSWORDS[emailParam] ?? "ChangeMe!123";
+  const passwordParam = url.searchParams.get("password") ?? DEMO_PASSWORDS_BY_EMAIL[emailParam] ?? "Test1234@@";
 
   const envSummary = {
     NODE_ENV: process.env.NODE_ENV,
@@ -73,12 +69,53 @@ export async function GET(req: Request) {
     return jsonResponse({ ok: false, env: envSummary, failed_at: dbModule.label, error: dbModule.error });
   }
   const { prisma, DB_ENABLED } = dbModule.data;
-  if (!DB_ENABLED || !prisma) {
+  if (!DB_ENABLED) {
+    const demo = validateDemoCredentials(emailParam, passwordParam);
+    const registered = getDemoRegisteredUsersFromCookieHeader(req.headers.get("cookie")).find(
+      (user) => user.email === emailParam,
+    );
+    const registeredOk = registered
+      ? await bcrypt.compare(passwordParam, registered.passwordHash)
+      : false;
+    const matched = demo
+      ? {
+          id: demo.id,
+          email: demo.email,
+          role: demo.role,
+          status: "ACTIVE",
+          source: "seeded_demo_account",
+        }
+      : registered && registeredOk
+      ? {
+          id: registered.id,
+          email: registered.email,
+          role: registered.role,
+          status: "ACTIVE",
+          source: "browser_demo_registration",
+        }
+      : null;
+
+    return jsonResponse({
+      ok: Boolean(matched),
+      env: envSummary,
+      stage: matched ? "demo_match" : "demo_password_mismatch",
+      user: matched,
+      diagnostics: {
+        mode: "demo_auth_without_database",
+        registeredAccountsInBrowser: getDemoRegisteredUsersFromCookieHeader(req.headers.get("cookie")).length,
+        hint: matched
+          ? "Sign-in WILL succeed with these exact credentials in demo mode."
+          : "DATABASE_URL is not configured. Use either the published demo accounts or a demo account registered in this browser.",
+      },
+    });
+  }
+
+  if (!prisma) {
     return jsonResponse({
       ok: false,
       env: envSummary,
-      failed_at: "DB_ENABLED check",
-      error: "DATABASE_URL is unset or matches the placeholder string.",
+      failed_at: "prisma client init",
+      error: "DATABASE_URL is configured but the Prisma client could not be initialised.",
     });
   }
 

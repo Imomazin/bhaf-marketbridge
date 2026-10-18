@@ -1,37 +1,94 @@
 import { DashboardCard } from "@/components/cards/DashboardCard";
 import { ReadinessBadge } from "@/components/ui/ReadinessBadge";
 import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
-import { PortalWorkflowStrip } from "@/components/layout/PortalWorkflowStrip";
 import { VerificationQueue } from "@/components/sections/VerificationQueue";
 import { AuditLog } from "@/components/sections/AuditLog";
 import { entrepreneurs } from "@/data/entrepreneurs";
 import { opportunities } from "@/data/opportunities";
 import { photos } from "@/data/photos";
 import { loadAdminData } from "@/lib/queries/admin";
+import { listPendingProfiles, countPendingProfiles } from "@/lib/queries/profileReview";
+import { getReadinessPipeline } from "@/lib/queries/readiness";
+import { loadOpportunities } from "@/lib/queries/opportunities";
+import { DB_ENABLED, prisma } from "@/lib/db";
+import { getAllDemoApplications, getAllDemoEnquiries, getAllDemoEntrepreneurProfiles } from "@/lib/demoState";
+import { getDemoUsersByRole } from "@/lib/demoUsers";
+import { buildInitials, getReadinessLevel } from "@/lib/demoPresentation";
 
-export const dynamic = "force-dynamic";
-
-const overviewStats = [
-  { label: "Pending approvals", value: "12", trend: "+3 this week", tone: "gold" as const },
-  { label: "Verified entrepreneurs", value: "165", trend: "+8 this month", tone: "forest" as const },
-  { label: "Active opportunities", value: "24", trend: "6 closing this week", tone: "neutral" as const },
-  { label: "Marketplace enquiries", value: "318", trend: "+42 last 7 days", tone: "neutral" as const },
-];
-
-const pendingProfiles = entrepreneurs.slice(0, 4);
-const activity = [
-  { time: "08:42", actor: "Amara Okafor", action: "Uploaded ESG documentation pack" },
-  { time: "Yesterday", actor: "Mosaic Impact Partners", action: "Shortlisted 6 entrepreneurs for review" },
-  { time: "Yesterday", actor: "Lumina Skill Studios", action: "Submitted certification application" },
-  { time: "2 days ago", actor: "BHAF Admin", action: "Published Green Trade Accelerator Grant 2026" },
-  { time: "3 days ago", actor: "Khaya Harvest", action: "Marketplace listing approved" },
-];
+// Removed hardcoded activity array
 
 export default async function AdminPage() {
   const adminData = await loadAdminData();
+  const [demoEntrepreneurs, demoProfiles, demoApplications, demoEnquiries] =
+    !DB_ENABLED
+      ? await Promise.all([
+          getDemoUsersByRole("ENTREPRENEUR"),
+          getAllDemoEntrepreneurProfiles(),
+          getAllDemoApplications(),
+          getAllDemoEnquiries(),
+        ])
+      : [[], [], [], []];
+
+  const pendingProfileRows = DB_ENABLED ? await listPendingProfiles() : [];
+  const pendingProfilesCount = DB_ENABLED ? await countPendingProfiles() : 0;
+  const readinessPipeline = await getReadinessPipeline();
+  const publishedOpportunitiesCount = DB_ENABLED && prisma ? await prisma.opportunity.count({ where: { published: true } }) : 0;
+  const verifiedEntrepreneursCount = DB_ENABLED && prisma ? await prisma.entrepreneurProfile.count({ where: { verified: true } }) : 0;
+  const enquiriesCount = DB_ENABLED && prisma ? await prisma.enquiry.count() : 0;
+  const publishedListingsCount = DB_ENABLED && prisma ? await prisma.listing.count({ where: { status: "PUBLISHED" } }) : 0;
+  const dashboardOpportunities = DB_ENABLED ? (await loadOpportunities()).opportunities : [];
+
+  const pendingProfiles =
+    !DB_ENABLED
+      ? demoEntrepreneurs.map((user) => {
+          const profile = demoProfiles.find((entry) => entry.userId === user.id);
+          const sample = user.id === "demo-entrepreneur" ? entrepreneurs[0] : null;
+          const score = [
+            Boolean(profile?.description?.trim() || sample?.description),
+            Boolean(profile?.esgActivity?.trim() || sample?.esgActivity),
+            Boolean(profile?.businessName || sample?.businessName),
+          ].filter(Boolean).length;
+          return {
+            id: user.id,
+            initials: buildInitials(user.name),
+            name: user.name,
+            businessName: profile?.businessName || sample?.businessName || "Business registration started",
+            country: profile?.country || sample?.country || "Pending country",
+            sector: profile?.sector || sample?.sector || "Pending sector",
+            readinessLevel: getReadinessLevel(score),
+          };
+        })
+      : [];
+
+  const overviewStats = [
+    {
+      label: "Pending approvals",
+      value: String(DB_ENABLED ? adminData.pendingCount : pendingProfiles.length),
+      trend: DB_ENABLED ? `${adminData.pendingCount} in verification queue` : "Demo registrations awaiting review",
+      tone: "gold" as const,
+    },
+    {
+      label: "Verified entrepreneurs",
+      value: String(DB_ENABLED ? verifiedEntrepreneursCount : demoEntrepreneurs.length),
+      trend: DB_ENABLED ? "Active profiles" : "Visible in this demo browser session",
+      tone: "forest" as const,
+    },
+    {
+      label: "Active opportunities",
+      value: String(DB_ENABLED ? publishedOpportunitiesCount : opportunities.length),
+      trend: "Curated opportunity board",
+      tone: "neutral" as const,
+    },
+    {
+      label: "Marketplace enquiries",
+      value: String(DB_ENABLED ? enquiriesCount : demoEnquiries.length),
+      trend: DB_ENABLED ? "Total leads generated" : `${demoApplications.length} demo applications submitted`,
+      tone: "neutral" as const,
+    },
+  ];
+
   return (
     <>
-      <PortalWorkflowStrip roleId="admin" currentStep={2} />
       <section className="bg-cream-50 py-12 md:py-16">
         <div className="container-edge">
         <div className="flex flex-wrap items-end justify-between gap-6">
@@ -44,14 +101,35 @@ export default async function AdminPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <a href="/admin/users" className="btn-secondary !py-2 !px-3 text-xs">
+              Users
+            </a>
+            <a href="/admin/listings" className="btn-secondary !py-2 !px-3 text-xs">
+              Listings
+            </a>
+            <a href="/admin/artefacts" className="btn-secondary !py-2 !px-3 text-xs">
+              Artefacts
+            </a>
             <a href="/admin/applications" className="btn-secondary !py-2 !px-3 text-xs">
               Applications
             </a>
             <a href="/admin/cohorts" className="btn-secondary !py-2 !px-3 text-xs">
               Cohorts
             </a>
+            <a href="/admin/opportunities" className="btn-secondary !py-2 !px-3 text-xs">
+              Opportunities
+            </a>
+            <a href="/admin/consulting" className="btn-secondary !py-2 !px-3 text-xs">
+              Consulting Inquiries
+            </a>
+            <a href="/admin/subscriptions" className="btn-secondary !py-2 !px-3 text-xs">
+              Subscriptions
+            </a>
+            <a href="/admin/grants" className="btn-secondary !py-2 !px-3 text-xs">
+              Grants
+            </a>
             <a href="/admin/opportunities/new" className="btn-primary !py-2 !px-3 text-xs">
-              Publish opportunity
+              New opportunity
             </a>
           </div>
         </div>
@@ -82,48 +160,73 @@ export default async function AdminPage() {
             title="Pending profile approvals"
             description="Profiles awaiting verification before listing publishes."
             action="View all"
+            actionHref="/admin/profiles"
             className="lg:col-span-2"
           >
-            <ul className="divide-y divide-cream-200">
-              {pendingProfiles.map((p) => (
-                <li key={p.id} className="flex flex-wrap items-center gap-4 py-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-forest-800 text-cream-50">
-                    <span className="font-serif text-sm">{p.initials}</span>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-forest-900">{p.name}</p>
-                    <p className="text-xs text-charcoal-400">
-                      {p.businessName} · {p.country} · {p.sector}
-                    </p>
-                  </div>
-                  <ReadinessBadge level={p.readinessLevel} />
-                  <div className="flex gap-2">
-                    <button className="rounded-md border border-cream-300 px-3 py-1.5 text-xs font-medium text-charcoal-600 hover:border-forest-700 hover:text-forest-900">
-                      Review
-                    </button>
-                    <button className="rounded-md bg-forest-800 px-3 py-1.5 text-xs font-medium text-cream-50 hover:bg-forest-700">
-                      Approve
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            {DB_ENABLED ? (
+              pendingProfileRows.length === 0 ? (
+                <p className="py-6 text-center text-sm text-charcoal-500">Nothing waiting on review right now.</p>
+              ) : (
+                <ul className="divide-y divide-cream-200">
+                  {pendingProfileRows.slice(0, 5).map((p) => (
+                    <li key={`${p.role}-${p.profileId}`} className="flex flex-wrap items-center gap-4 py-4">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-forest-800 text-cream-50">
+                        <span className="font-serif text-sm">{buildInitials(p.name)}</span>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-forest-900">{p.name}</p>
+                        <p className="text-xs text-charcoal-400">
+                          {p.orgLabel} · {p.role}
+                        </p>
+                      </div>
+                      <a
+                        href={`/admin/profiles/${p.role}/${p.profileId}`}
+                        className="rounded-md border border-cream-300 px-3 py-1.5 text-xs font-medium text-charcoal-600 hover:border-forest-700 hover:text-forest-900"
+                      >
+                        Review
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              )
+            ) : (
+              <ul className="divide-y divide-cream-200">
+                {pendingProfiles.map((p) => (
+                  <li key={p.id} className="flex flex-wrap items-center gap-4 py-4">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-forest-800 text-cream-50">
+                      <span className="font-serif text-sm">{p.initials}</span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-forest-900">{p.name}</p>
+                      <p className="text-xs text-charcoal-400">
+                        {p.businessName} · {p.country} · {p.sector}
+                      </p>
+                    </div>
+                    <ReadinessBadge level={p.readinessLevel} />
+                  </li>
+                ))}
+              </ul>
+            )}
           </DashboardCard>
 
           {/* Activity */}
           <DashboardCard title="Recent activity" description="Live across the platform">
             <ul className="space-y-4">
-              {activity.map((a, idx) => (
-                <li key={idx} className="flex gap-3">
-                  <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-gold-500" />
-                  <div className="flex-1">
-                    <p className="text-sm text-forest-900">
-                      <span className="font-medium">{a.actor}</span> {a.action.toLowerCase()}
-                    </p>
-                    <p className="text-[11px] text-charcoal-400">{a.time}</p>
-                  </div>
-                </li>
-              ))}
+              {adminData.audit.length === 0 ? (
+                <li className="text-sm text-charcoal-500 py-2">No recent activity</li>
+              ) : (
+                adminData.audit.slice(0, 5).map((a, idx) => (
+                  <li key={idx} className="flex gap-3">
+                    <span className="mt-1.5 h-2 w-2 flex-shrink-0 rounded-full bg-gold-500" />
+                    <div className="flex-1">
+                      <p className="text-sm text-forest-900">
+                        <span className="font-medium">{a.actor}</span> {a.action.toLowerCase()}
+                      </p>
+                      <p className="text-[11px] text-charcoal-400">{a.ts}</p>
+                    </div>
+                  </li>
+                ))
+              )}
             </ul>
           </DashboardCard>
         </div>
@@ -135,41 +238,44 @@ export default async function AdminPage() {
             description="Entrepreneurs progressing toward funding and market readiness"
             className="lg:col-span-2"
           >
-            <div className="space-y-4">
-              {[
-                { label: "Emerging", count: 38, pct: 22 },
-                { label: "Developing", count: 47, pct: 36 },
-                { label: "Market-Ready", count: 41, pct: 58 },
-                { label: "Funding-Ready", count: 39, pct: 81 },
-              ].map((row) => (
-                <div key={row.label}>
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-medium text-forest-900">{row.label}</span>
-                    <span className="text-charcoal-400">{row.count} entrepreneurs</span>
+            {readinessPipeline.every((row) => row.count === 0) ? (
+              <p className="py-6 text-center text-sm text-charcoal-500">No entrepreneur profiles yet.</p>
+            ) : (
+              <div className="space-y-4">
+                {readinessPipeline.map((row) => (
+                  <div key={row.label}>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium text-forest-900">{row.label}</span>
+                      <span className="text-charcoal-400">{row.count} entrepreneurs</span>
+                    </div>
+                    <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-cream-200">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-forest-700 to-gold-400"
+                        style={{ width: `${row.pct}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-cream-200">
-                    <div
-                      className="h-full rounded-full bg-gradient-to-r from-forest-700 to-gold-400"
-                      style={{ width: `${row.pct}%` }}
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </DashboardCard>
 
-          <DashboardCard title="Opportunities" description="Currently published" action="Manage">
-            <ul className="space-y-3">
-              {opportunities.slice(0, 4).map((o) => (
-                <li key={o.id} className="rounded-lg border border-cream-200 p-3">
-                  <p className="text-sm font-medium text-forest-900">{o.title}</p>
-                  <div className="mt-1 flex items-center justify-between text-[11px] text-charcoal-400">
-                    <span>{o.type}</span>
-                    <span>{o.deadline}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
+          <DashboardCard title="Opportunities" description="Currently published" action="Manage" actionHref="/admin/opportunities">
+            {DB_ENABLED && dashboardOpportunities.length === 0 ? (
+              <p className="py-6 text-center text-sm text-charcoal-500">Nothing published yet.</p>
+            ) : (
+              <ul className="space-y-3">
+                {(DB_ENABLED ? dashboardOpportunities : opportunities).slice(0, 4).map((o) => (
+                  <li key={o.id} className="rounded-lg border border-cream-200 p-3">
+                    <p className="text-sm font-medium text-forest-900">{o.title}</p>
+                    <div className="mt-1 flex items-center justify-between text-[11px] text-charcoal-400">
+                      <span>{o.type}</span>
+                      <span>{o.deadline}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
           </DashboardCard>
         </div>
 

@@ -8,6 +8,13 @@ import { EntrepreneurProfileForm } from "@/components/settings/EntrepreneurProfi
 import { FunderProfileForm } from "@/components/settings/FunderProfileForm";
 import { CorporateProfileForm } from "@/components/settings/CorporateProfileForm";
 import { KycSection } from "@/components/settings/KycSection";
+import { ProfileStatusBanner } from "@/components/settings/ProfileStatusBanner";
+import { EmailVerificationOtpForm } from "@/components/auth/EmailVerificationOtpForm";
+import { getDemoCorporateProfile, getDemoSeedCorporateProfile } from "@/lib/demoCorporate";
+import { getDemoEntrepreneurProfile, getDemoFunderProfile } from "@/lib/demoState";
+import { getDemoUserById } from "@/lib/demoUsers";
+import { getDemoSeedFunderProfile } from "@/lib/funderPortal";
+import { entrepreneurs } from "@/data/entrepreneurs";
 
 export const metadata = { title: "Account settings · BHAF MarketBridge" };
 export const dynamic = "force-dynamic";
@@ -16,14 +23,64 @@ export default async function SettingsPage() {
   const session = await auth();
   if (!session?.user) redirect("/auth/sign-in?next=/settings");
 
-  let user = null;
-  let entrepreneurProfile = null;
-  let funderProfile = null;
-  let corporateProfile = null;
+  let user: {
+    id: string;
+    email: string;
+    name: string | null;
+    role: string;
+    createdAt: Date;
+    emailVerified: Date | null;
+    kycFullName: string | null;
+    kycCountry: string | null;
+    kycIdType: string | null;
+    kycIdNumber: string | null;
+  } | null = null;
+  let entrepreneurProfile: {
+    businessName: string;
+    country: string;
+    sector: string;
+    description: string;
+    fundingNeed: string | null;
+    esgActivity: string | null;
+    yearFounded: number | null;
+    womenSupported: number;
+    jobsCreated: number;
+    status: string;
+    rejectionReason: string | null;
+  } | null = null;
+  let funderProfile: {
+    orgName: string;
+    mandate: string;
+    geoFocus: string[];
+    sectorFocus: string[];
+    ticketMin: number | null;
+    ticketMax: number | null;
+    status: string;
+    rejectionReason: string | null;
+  } | null = null;
+  let corporateProfile: {
+    orgName: string;
+    industry: string;
+    procurementGeo: string[];
+    esgFramework: string | null;
+    status: string;
+    rejectionReason: string | null;
+  } | null = null;
   if (DB_ENABLED && prisma) {
     user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { id: true, email: true, name: true, role: true, createdAt: true, emailVerified: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        createdAt: true,
+        emailVerified: true,
+        kycFullName: true,
+        kycCountry: true,
+        kycIdType: true,
+        kycIdNumber: true,
+      },
     });
     if (session.user.role === "ENTREPRENEUR") {
       entrepreneurProfile = await prisma.entrepreneurProfile.findUnique({
@@ -39,6 +96,71 @@ export default async function SettingsPage() {
       corporateProfile = await prisma.corporateProfile.findUnique({
         where: { userId: session.user.id },
       });
+    }
+  }
+  if (!DB_ENABLED || !prisma) {
+    const demoUser = await getDemoUserById(session.user.id);
+    const showcase = session.user.id === "demo-entrepreneur" ? entrepreneurs[0] : null;
+    const [profile, demoFunderProfile, demoCorporateProfile] = await Promise.all([
+      session.user.role === "ENTREPRENEUR" ? getDemoEntrepreneurProfile(session.user.id) : Promise.resolve(null),
+      session.user.role === "FUNDER" ? getDemoFunderProfile(session.user.id) : Promise.resolve(null),
+      session.user.role === "CORPORATE" ? getDemoCorporateProfile(session.user.id) : Promise.resolve(null),
+    ]);
+    const seededFunderProfile = session.user.role === "FUNDER" ? getDemoSeedFunderProfile(session.user.id) : null;
+    const seededCorporateProfile =
+      session.user.role === "CORPORATE" ? getDemoSeedCorporateProfile(session.user.id) : null;
+
+    user = {
+      id: session.user.id,
+      email: demoUser?.email ?? session.user.email ?? "",
+      name: demoUser?.name ?? session.user.name ?? null,
+      role: demoUser?.role ?? session.user.role,
+      createdAt: demoUser?.createdAt ? new Date(demoUser.createdAt) : new Date(),
+      emailVerified: new Date(),
+      kycFullName: null,
+      kycCountry: null,
+      kycIdType: null,
+      kycIdNumber: null,
+    };
+
+    if (session.user.role === "ENTREPRENEUR") {
+      entrepreneurProfile = {
+        businessName: profile?.businessName ?? showcase?.businessName ?? "",
+        country: profile?.country ?? showcase?.country ?? "",
+        sector: profile?.sector ?? showcase?.sector ?? "",
+        description: profile?.description ?? showcase?.description ?? "",
+        fundingNeed: profile?.fundingNeed ?? showcase?.fundingNeed ?? "",
+        esgActivity: profile?.esgActivity ?? showcase?.esgActivity ?? "",
+        yearFounded: profile?.yearFounded ?? showcase?.yearFounded ?? null,
+        womenSupported: profile?.womenSupported ?? showcase?.womenSupported ?? 0,
+        jobsCreated: profile?.jobsCreated ?? showcase?.jobsCreated ?? 0,
+        status: "APPROVED",
+        rejectionReason: null,
+      };
+    }
+    if (session.user.role === "FUNDER") {
+      const activeProfile = demoFunderProfile ?? seededFunderProfile;
+      funderProfile = {
+        orgName: activeProfile?.orgName ?? demoUser?.name ?? "",
+        mandate: activeProfile?.mandate ?? "",
+        geoFocus: activeProfile?.geoFocus ?? [],
+        sectorFocus: activeProfile?.sectorFocus ?? [],
+        ticketMin: activeProfile?.ticketMin ?? null,
+        ticketMax: activeProfile?.ticketMax ?? null,
+        status: "APPROVED",
+        rejectionReason: null,
+      };
+    }
+    if (session.user.role === "CORPORATE") {
+      const activeProfile = demoCorporateProfile ?? seededCorporateProfile;
+      corporateProfile = {
+        orgName: activeProfile?.orgName ?? demoUser?.name ?? "",
+        industry: activeProfile?.industry ?? "",
+        procurementGeo: activeProfile?.procurementGeo ?? [],
+        esgFramework: activeProfile?.esgFramework ?? "",
+        status: "APPROVED",
+        rejectionReason: null,
+      };
     }
   }
 
@@ -58,6 +180,21 @@ export default async function SettingsPage() {
 
         <div className="mt-10 space-y-6">
           <section className="card p-6">
+            <h2 className="font-serif text-lg text-forest-900">Email verification</h2>
+            <p className="mt-1 text-xs text-charcoal-500">
+              {user?.emailVerified
+                ? "Your sign-in email is confirmed."
+                : "Your email is still unverified. Enter the 6-digit code from your inbox or resend a new one."}
+            </p>
+            <div className="mt-5">
+              <EmailVerificationOtpForm
+                email={user?.email ?? session.user.email ?? ""}
+                verified={Boolean(user?.emailVerified)}
+              />
+            </div>
+          </section>
+
+          <section className="card p-6">
             <h2 className="font-serif text-lg text-forest-900">Display name</h2>
             <div className="mt-5">
               <UpdateProfileForm initialName={user?.name ?? ""} />
@@ -71,6 +208,9 @@ export default async function SettingsPage() {
                 These details appear on your public verified profile in the directory.
               </p>
               <div className="mt-5">
+                {entrepreneurProfile && (
+                  <ProfileStatusBanner status={entrepreneurProfile.status} rejectionReason={entrepreneurProfile.rejectionReason} />
+                )}
                 <EntrepreneurProfileForm
                   initial={{
                     businessName: entrepreneurProfile?.businessName ?? "",
@@ -92,6 +232,9 @@ export default async function SettingsPage() {
             <section className="card p-6">
               <h2 className="font-serif text-lg text-forest-900">Fund profile</h2>
               <div className="mt-5">
+                {funderProfile && (
+                  <ProfileStatusBanner status={funderProfile.status} rejectionReason={funderProfile.rejectionReason} />
+                )}
                 <FunderProfileForm
                   initial={{
                     orgName: funderProfile?.orgName ?? "",
@@ -110,6 +253,9 @@ export default async function SettingsPage() {
             <section className="card p-6">
               <h2 className="font-serif text-lg text-forest-900">Corporate profile</h2>
               <div className="mt-5">
+                {corporateProfile && (
+                  <ProfileStatusBanner status={corporateProfile.status} rejectionReason={corporateProfile.rejectionReason} />
+                )}
                 <CorporateProfileForm
                   initial={{
                     orgName: corporateProfile?.orgName ?? "",
@@ -122,7 +268,12 @@ export default async function SettingsPage() {
             </section>
           )}
 
-          <KycSection initialFullName={user?.name ?? ""} />
+          <KycSection
+            initialFullName={user?.kycFullName ?? user?.name ?? ""}
+            initialCountry={user?.kycCountry ?? entrepreneurProfile?.country ?? "Nigeria"}
+            initialIdType={user?.kycIdType ?? "National ID"}
+            initialIdNumber={user?.kycIdNumber ?? ""}
+          />
 
           <section className="card p-6">
             <h2 className="font-serif text-lg text-forest-900">Change password</h2>

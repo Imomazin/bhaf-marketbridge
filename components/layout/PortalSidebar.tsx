@@ -14,12 +14,21 @@ export function PortalSidebar({ currentRole, nav }: PortalSidebarProps) {
   return (
     <aside className="border-b border-cream-200 bg-white lg:sticky lg:top-16 lg:h-[calc(100vh-4rem)] lg:w-72 lg:border-b-0 lg:border-r">
       <div className="container-edge py-4 lg:px-6 lg:py-6">
-        <div className={cn("rounded-2xl bg-gradient-to-br p-4 text-cream-50 lg:p-5", accent.gradient)}>
+        <div
+          className={cn(
+            "rounded-2xl bg-gradient-to-br p-4 text-cream-50 lg:p-5",
+            accent.gradient,
+          )}
+        >
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-cream-100/80">
             Logged in as
           </p>
-          <p className="mt-1 font-serif text-base lg:text-lg">{role.shortLabel}</p>
-          <p className="mt-1 hidden text-[11px] text-cream-100/75 lg:block">{role.tagline}</p>
+          <p className="mt-1 font-serif text-base lg:text-lg">
+            {role.shortLabel}
+          </p>
+          <p className="mt-1 hidden text-[11px] text-cream-100/75 lg:block">
+            {role.tagline}
+          </p>
         </div>
 
         {/* On mobile this is collapsible; on desktop it's always open */}
@@ -45,7 +54,7 @@ export function PortalSidebar({ currentRole, nav }: PortalSidebarProps) {
             ))}
           </nav>
 
-          <div className="mt-6 hidden border-t border-cream-200 pt-4 lg:block">
+          {/* <div className="mt-6 hidden border-t border-cream-200 pt-4 lg:block">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-charcoal-400">
               Switch role
             </p>
@@ -63,11 +72,7 @@ export function PortalSidebar({ currentRole, nav }: PortalSidebarProps) {
                   </li>
                 ))}
             </ul>
-          </div>
-
-          <p className="mt-6 hidden text-[10px] text-charcoal-400 lg:block">
-            Demo portal · mock data only · no auth wired
-          </p>
+          </div> */}
         </details>
       </div>
     </aside>

@@ -15,13 +15,14 @@ const statusTone: Record<string, string> = {
   WITHDRAWN: "bg-cream-100 text-charcoal-500 border-cream-300",
 };
 
-export default async function CorporateRfpDetailPage({ params }: { params: { id: string } }) {
+export default async function CorporateRfpDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
   const session = await auth();
-  if (!session?.user) redirect(`/auth/sign-in?next=/portal/corporate/rfps/${params.id}`);
+  if (!session?.user) redirect(`/auth/sign-in?next=/portal/corporate/rfps/${id}`);
   if (!DB_ENABLED || !prisma) notFound();
 
   const rfp = await prisma.rfp.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: {
       responses: {
         include: {
@@ -80,11 +81,7 @@ export default async function CorporateRfpDetailPage({ params }: { params: { id:
               <p className="mt-3 whitespace-pre-wrap rounded-md bg-cream-50 px-3 py-2 text-xs text-charcoal-700">
                 {r.body}
               </p>
-              {r.pricingNote && (
-                <p className="mt-2 rounded-md bg-gold-50 px-3 py-2 text-xs text-gold-900">
-                  <span className="font-semibold">Pricing:</span> {r.pricingNote}
-                </p>
-              )}
+
               <div className="mt-3">
                 <RfpResponseActions responseId={r.id} currentStatus={r.status} />
               </div>

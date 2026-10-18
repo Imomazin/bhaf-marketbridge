@@ -7,18 +7,35 @@ import { auth } from "@/auth";
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { writeAudit } from "@/lib/audit";
 import { changePasswordSchema, updateProfileSchema, type ChangePasswordInput, type UpdateProfileInput } from "@/lib/schemas/account";
+import { getDemoRegisteredUsers, updateDemoRegisteredUser } from "@/lib/demoRegistrations";
 
 export type ActionResult = { ok: true; message: string } | { ok: false; message: string; field?: string };
 
 export async function changePassword(input: ChangePasswordInput): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user) return { ok: false, message: "Sign-in required." };
-  if (!DB_ENABLED || !prisma) return { ok: false, message: "Database not configured." };
 
   const parsed = changePasswordSchema.safeParse(input);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     return { ok: false, message: issue?.message ?? "Invalid input.", field: issue?.path.join(".") };
+  }
+
+  if (!DB_ENABLED || !prisma) {
+    const user = (await getDemoRegisteredUsers()).find((entry) => entry.id === session.user.id);
+    if (!user) {
+      return { ok: false, message: "Password changes are only available for accounts created in this demo." };
+    }
+
+    const ok = await bcrypt.compare(parsed.data.currentPassword, user.passwordHash);
+    if (!ok) {
+      return { ok: false, message: "Current password is wrong.", field: "currentPassword" };
+    }
+
+    const newHash = await bcrypt.hash(parsed.data.newPassword, 12);
+    await updateDemoRegisteredUser({ id: user.id, passwordHash: newHash });
+    revalidatePath("/settings");
+    return { ok: true, message: "Password updated." };
   }
 
   const user = await prisma.user.findUnique({
@@ -55,12 +72,24 @@ export async function changePassword(input: ChangePasswordInput): Promise<Action
 export async function updateProfile(input: UpdateProfileInput): Promise<ActionResult> {
   const session = await auth();
   if (!session?.user) return { ok: false, message: "Sign-in required." };
-  if (!DB_ENABLED || !prisma) return { ok: false, message: "Database not configured." };
 
   const parsed = updateProfileSchema.safeParse(input);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     return { ok: false, message: issue?.message ?? "Invalid input.", field: issue?.path.join(".") };
+  }
+
+  if (!DB_ENABLED || !prisma) {
+    const updated = await updateDemoRegisteredUser({
+      id: session.user.id,
+      name: parsed.data.name.trim(),
+    });
+    if (!updated) {
+      return { ok: true, message: "Seeded demo account names stay fixed in demo mode." };
+    }
+    revalidatePath("/settings");
+    revalidatePath("/portal/entrepreneur");
+    return { ok: true, message: "Profile updated." };
   }
 
   await prisma.user.update({

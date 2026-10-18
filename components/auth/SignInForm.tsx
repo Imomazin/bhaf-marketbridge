@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
+import { normalizeAppRedirectTarget } from "@/lib/searchParams";
+import { PasswordField } from "@/components/ui/PasswordField";
 
 interface SignInFormProps {
   next?: string;
@@ -10,6 +12,7 @@ interface SignInFormProps {
 
 export function SignInForm({ next }: SignInFormProps) {
   const router = useRouter();
+  const target = normalizeAppRedirectTarget(next, "/portal");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -26,10 +29,20 @@ export function SignInForm({ next }: SignInFormProps) {
     });
     setSubmitting(false);
     if (res?.error) {
-      setErr("Those credentials didn't match. Try again.");
+      if (res.code === "account_deactivated") {
+        setErr("Account deactivated. Please contact support.");
+      } else {
+        setErr("Those credentials didn't match. Try again.");
+      }
       return;
     }
-    router.push(next || "/portal");
+    let finalTarget = target;
+    const baseRoutes = ["/portal/entrepreneur", "/portal/funder", "/portal/corporate", "/admin"];
+    if (baseRoutes.includes(target)) {
+      finalTarget = "/portal";
+    }
+
+    router.push(finalTarget);
     router.refresh();
   }
 
@@ -43,12 +56,11 @@ export function SignInForm({ next }: SignInFormProps) {
         onChange={setEmail}
         required
       />
-      <Field
+      <PasswordField
         label="Password"
-        type="password"
         autoComplete="current-password"
         value={password}
-        onChange={setPassword}
+        onChange={(e) => setPassword(e.target.value)}
         required
       />
       {err && <p className="rounded-md bg-red-50 px-3 py-2 text-xs text-red-700">{err}</p>}

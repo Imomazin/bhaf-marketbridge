@@ -22,8 +22,8 @@ function makeClient(): PrismaClient | null {
   }
 }
 
-export const prisma: PrismaClient | null =
-  globalThis.__prisma ?? makeClient();
+export const prisma: PrismaClient =
+  (globalThis.__prisma ?? makeClient()) as PrismaClient;
 
 if (process.env.NODE_ENV !== "production" && prisma) {
   globalThis.__prisma = prisma;

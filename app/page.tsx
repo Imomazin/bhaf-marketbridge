@@ -462,10 +462,7 @@ export default function HomePage() {
           <Reveal delayMs={150} className="mt-12">
             <EntrepreneurCarousel entrepreneurs={entrepreneurs} />
           </Reveal>
-          <p className="mt-6 text-center text-xs text-charcoal-400">
-            Sample profiles used to illustrate the MVP. Real entrepreneur profiles will surface here once the
-            directory is live.
-          </p>
+
         </div>
       </section>
 

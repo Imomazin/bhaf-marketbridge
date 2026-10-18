@@ -9,10 +9,15 @@ export const dynamic = "force-dynamic";
  * "Save as PDF" produces a donor-grade document. No headless-Chrome
  * dependency needed and works offline.
  */
-export default async function ImpactReportPage({ searchParams }: { searchParams: { from?: string; to?: string } }) {
+export default async function ImpactReportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from?: string; to?: string }>;
+}) {
+  const query = await searchParams;
   const now = new Date();
-  const from = searchParams.from ? new Date(searchParams.from) : new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-  const to = searchParams.to ? new Date(searchParams.to) : now;
+  const from = query.from ? new Date(query.from) : new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+  const to = query.to ? new Date(query.to) : now;
 
   let totals = {
     entrepreneurs: 0,

@@ -1,5 +1,6 @@
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { auditTrail as mockAudit, verificationQueue as mockQueue, type QueueItem, type AuditEntry } from "@/data/artefacts";
+import { getAllDemoUsers } from "@/lib/demoUsers";
 
 export async function loadAdminData(): Promise<{
   queue: QueueItem[];
@@ -9,12 +10,13 @@ export async function loadAdminData(): Promise<{
   totalUsers: number;
 }> {
   if (!DB_ENABLED || !prisma) {
+    const demoUsers = await getAllDemoUsers();
     return {
       queue: mockQueue,
       audit: mockAudit,
       isReal: false,
       pendingCount: mockQueue.length,
-      totalUsers: 0,
+      totalUsers: demoUsers.length,
     };
   }
 
@@ -36,16 +38,6 @@ export async function loadAdminData(): Promise<{
       }),
       prisma.user.count(),
     ]);
-
-    if (pendingArtefacts.length === 0 && recentAudit.length === 0) {
-      return {
-        queue: mockQueue,
-        audit: mockAudit,
-        isReal: false,
-        pendingCount: 0,
-        totalUsers,
-      };
-    }
 
     const queue: QueueItem[] = pendingArtefacts.map((a) => {
       const passed = a.checks.filter((c) => c.status === "PASS").length;
@@ -78,8 +70,8 @@ export async function loadAdminData(): Promise<{
     }));
 
     return {
-      queue: queue.length > 0 ? queue : mockQueue,
-      audit: audit.length > 0 ? audit : mockAudit,
+      queue,
+      audit,
       isReal: true,
       pendingCount: queue.length,
       totalUsers,

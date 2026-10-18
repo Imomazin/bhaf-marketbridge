@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: bhaf-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bhaf
+      POSTGRES_PASSWORD: password123!
+      POSTGRES_DB: bhaf_marketbridge
+    ports:
+      - "5400:5432"
+    volumes:
+      - bhaf_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  bhaf_postgres_data:
