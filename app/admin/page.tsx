@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { DashboardCard } from "@/components/cards/DashboardCard";
 import { ReadinessBadge } from "@/components/ui/ReadinessBadge";
 import { AnnotatedPhoto } from "@/components/ui/AnnotatedPhoto";
@@ -101,36 +102,36 @@ export default async function AdminPage() {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <a href="/admin/users" className="btn-secondary !py-2 !px-3 text-xs">
+            <Link href="/admin/users" className="btn-secondary !py-2 !px-3 text-xs">
               Users
-            </a>
-            <a href="/admin/listings" className="btn-secondary !py-2 !px-3 text-xs">
+            </Link>
+            <Link href="/admin/listings" className="btn-secondary !py-2 !px-3 text-xs">
               Listings
-            </a>
-            <a href="/admin/artefacts" className="btn-secondary !py-2 !px-3 text-xs">
+            </Link>
+            <Link href="/admin/artefacts" className="btn-secondary !py-2 !px-3 text-xs">
               Artefacts
-            </a>
-            <a href="/admin/applications" className="btn-secondary !py-2 !px-3 text-xs">
+            </Link>
+            <Link href="/admin/applications" className="btn-secondary !py-2 !px-3 text-xs">
               Applications
-            </a>
-            <a href="/admin/cohorts" className="btn-secondary !py-2 !px-3 text-xs">
+            </Link>
+            <Link href="/admin/cohorts" className="btn-secondary !py-2 !px-3 text-xs">
               Cohorts
-            </a>
-            <a href="/admin/opportunities" className="btn-secondary !py-2 !px-3 text-xs">
+            </Link>
+            <Link href="/admin/opportunities" className="btn-secondary !py-2 !px-3 text-xs">
               Opportunities
-            </a>
-            <a href="/admin/consulting" className="btn-secondary !py-2 !px-3 text-xs">
+            </Link>
+            <Link href="/admin/consulting" className="btn-secondary !py-2 !px-3 text-xs">
               Consulting Inquiries
-            </a>
-            <a href="/admin/subscriptions" className="btn-secondary !py-2 !px-3 text-xs">
+            </Link>
+            <Link href="/admin/subscriptions" className="btn-secondary !py-2 !px-3 text-xs">
               Subscriptions
-            </a>
-            <a href="/admin/grants" className="btn-secondary !py-2 !px-3 text-xs">
+            </Link>
+            <Link href="/admin/grants" className="btn-secondary !py-2 !px-3 text-xs">
               Grants
-            </a>
-            <a href="/admin/opportunities/new" className="btn-primary !py-2 !px-3 text-xs">
+            </Link>
+            <Link href="/admin/opportunities/new" className="btn-primary !py-2 !px-3 text-xs">
               New opportunity
-            </a>
+            </Link>
           </div>
         </div>
 

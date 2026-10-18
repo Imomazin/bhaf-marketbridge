@@ -15,6 +15,13 @@ export default [
     ],
   },
   {
+    files: ["**/*.ts", "**/*.tsx"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+    },
+  },
+  {
     // Soften React 19's stricter rules to warnings so existing code
     // compiled fine with React 18 still passes CI. Fix opportunistically.
     rules: {
@@ -27,8 +34,6 @@ export default [
       // Existing lint warnings — keep visible but non-blocking
       "react/no-unescaped-entities": "warn",
       "@next/next/no-img-element": "warn",
-      "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
       "prefer-const": "warn",
       "no-empty": "warn",
     },
