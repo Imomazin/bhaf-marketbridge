@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { prisma, DB_ENABLED } from "@/lib/db";
 import { DeactivateListingButton } from "@/components/admin/DeactivateListingButton";
 import { UnarchiveListingButton } from "@/components/admin/UnarchiveListingButton";
+import { ApproveListingButton } from "@/components/admin/ApproveListingButton";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Marketplace Listings · BHAF Admin" };
@@ -88,11 +89,16 @@ export default async function AdminListingsPage() {
                       {o.createdAt.toISOString().slice(0, 10)}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      {o.status === "ARCHIVED" ? (
-                        <UnarchiveListingButton id={o.id} title={o.title} />
-                      ) : (
-                        <DeactivateListingButton id={o.id} title={o.title} />
-                      )}
+                      <div className="flex items-center justify-end gap-2">
+                        {o.status === "PENDING_REVIEW" && (
+                          <ApproveListingButton id={o.id} title={o.title} />
+                        )}
+                        {o.status === "ARCHIVED" ? (
+                          <UnarchiveListingButton id={o.id} title={o.title} />
+                        ) : (
+                          <DeactivateListingButton id={o.id} title={o.title} />
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

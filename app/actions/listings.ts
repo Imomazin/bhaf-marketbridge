@@ -167,6 +167,9 @@ export async function reviewListing(
 
   revalidatePath("/marketplace");
   revalidatePath("/admin");
+  revalidatePath("/admin/listings");
+  revalidatePath("/portal/entrepreneur");
+  revalidatePath("/portal/entrepreneur/listings");
   return {
     ok: true,
     id,
@@ -204,6 +207,9 @@ export async function unarchiveListing(id: string): Promise<ListingResult> {
 
   revalidatePath("/marketplace");
   revalidatePath("/admin");
+  revalidatePath("/admin/listings");
+  revalidatePath("/portal/entrepreneur");
+  revalidatePath("/portal/entrepreneur/listings");
   return { ok: true, id, message: "Listing unarchived and published." };
 }
 
