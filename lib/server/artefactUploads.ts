@@ -233,21 +233,27 @@ export async function uploadArtefactForUser(
       }
     } else if (isAiFailure) {
       // AI unavailable on attempt 1 — prompt retry cleanly without marking user permanently rejected
-      if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile && user.entrepreneurProfile.status !== "APPROVED") {
-        await prisma.entrepreneurProfile.update({
-          where: { userId: actor.id },
-          data: { status: "PENDING", rejectionReason: finalReason, verified: false },
-        });
-      } else if (user.role === "FUNDER" && user.funderProfile && user.funderProfile.status !== "APPROVED") {
-        await prisma.funderProfile.update({
-          where: { userId: actor.id },
-          data: { status: "PENDING", rejectionReason: finalReason, verified: false },
-        });
-      } else if (user.role === "CORPORATE" && user.corporateProfile && user.corporateProfile.status !== "APPROVED") {
-        await prisma.corporateProfile.update({
-          where: { userId: actor.id },
-          data: { status: "PENDING", rejectionReason: finalReason, verified: false },
-        });
+      const hasOtherValidated = (await prisma.artefact.count({
+        where: { userId: actor.id, status: "VALIDATED" },
+      })) > 0;
+
+      if (!hasOtherValidated) {
+        if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile && user.entrepreneurProfile.status !== "APPROVED") {
+          await prisma.entrepreneurProfile.update({
+            where: { userId: actor.id },
+            data: { status: "PENDING", rejectionReason: finalReason, verified: false },
+          });
+        } else if (user.role === "FUNDER" && user.funderProfile && user.funderProfile.status !== "APPROVED") {
+          await prisma.funderProfile.update({
+            where: { userId: actor.id },
+            data: { status: "PENDING", rejectionReason: finalReason, verified: false },
+          });
+        } else if (user.role === "CORPORATE" && user.corporateProfile && user.corporateProfile.status !== "APPROVED") {
+          await prisma.corporateProfile.update({
+            where: { userId: actor.id },
+            data: { status: "PENDING", rejectionReason: finalReason, verified: false },
+          });
+        }
       }
 
       await prisma.notification.create({
@@ -269,21 +275,27 @@ export async function uploadArtefactForUser(
       }
     } else {
       // Actual document defect (not AI failure)
-      if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile && user.entrepreneurProfile.status !== "APPROVED") {
-        await prisma.entrepreneurProfile.update({
-          where: { userId: actor.id },
-          data: { status: "REJECTED", rejectionReason: finalReason, verified: false },
-        });
-      } else if (user.role === "FUNDER" && user.funderProfile && user.funderProfile.status !== "APPROVED") {
-        await prisma.funderProfile.update({
-          where: { userId: actor.id },
-          data: { status: "REJECTED", rejectionReason: finalReason, verified: false },
-        });
-      } else if (user.role === "CORPORATE" && user.corporateProfile && user.corporateProfile.status !== "APPROVED") {
-        await prisma.corporateProfile.update({
-          where: { userId: actor.id },
-          data: { status: "REJECTED", rejectionReason: finalReason, verified: false },
-        });
+      const hasOtherValidated = (await prisma.artefact.count({
+        where: { userId: actor.id, status: "VALIDATED" },
+      })) > 0;
+
+      if (!hasOtherValidated) {
+        if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile && user.entrepreneurProfile.status !== "APPROVED") {
+          await prisma.entrepreneurProfile.update({
+            where: { userId: actor.id },
+            data: { status: "REJECTED", rejectionReason: finalReason, verified: false },
+          });
+        } else if (user.role === "FUNDER" && user.funderProfile && user.funderProfile.status !== "APPROVED") {
+          await prisma.funderProfile.update({
+            where: { userId: actor.id },
+            data: { status: "REJECTED", rejectionReason: finalReason, verified: false },
+          });
+        } else if (user.role === "CORPORATE" && user.corporateProfile && user.corporateProfile.status !== "APPROVED") {
+          await prisma.corporateProfile.update({
+            where: { userId: actor.id },
+            data: { status: "REJECTED", rejectionReason: finalReason, verified: false },
+          });
+        }
       }
 
       await prisma.notification.create({
@@ -537,21 +549,27 @@ export async function resubmitArtefactForUser(
       }
     } else if (isAiFailure && attemptCount < 3) {
       // AI unavailable on attempt 1 or 2 — prompt retry cleanly without marking user permanently rejected
-      if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile && user.entrepreneurProfile.status !== "APPROVED") {
-        await prisma.entrepreneurProfile.update({
-          where: { userId: actor.id },
-          data: { status: "PENDING", rejectionReason: finalReason, verified: false },
-        });
-      } else if (user.role === "FUNDER" && user.funderProfile && user.funderProfile.status !== "APPROVED") {
-        await prisma.funderProfile.update({
-          where: { userId: actor.id },
-          data: { status: "PENDING", rejectionReason: finalReason, verified: false },
-        });
-      } else if (user.role === "CORPORATE" && user.corporateProfile && user.corporateProfile.status !== "APPROVED") {
-        await prisma.corporateProfile.update({
-          where: { userId: actor.id },
-          data: { status: "PENDING", rejectionReason: finalReason, verified: false },
-        });
+      const hasOtherValidated = (await prisma.artefact.count({
+        where: { userId: actor.id, status: "VALIDATED", NOT: { id: artefactId } },
+      })) > 0;
+
+      if (!hasOtherValidated) {
+        if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile && user.entrepreneurProfile.status !== "APPROVED") {
+          await prisma.entrepreneurProfile.update({
+            where: { userId: actor.id },
+            data: { status: "PENDING", rejectionReason: finalReason, verified: false },
+          });
+        } else if (user.role === "FUNDER" && user.funderProfile && user.funderProfile.status !== "APPROVED") {
+          await prisma.funderProfile.update({
+            where: { userId: actor.id },
+            data: { status: "PENDING", rejectionReason: finalReason, verified: false },
+          });
+        } else if (user.role === "CORPORATE" && user.corporateProfile && user.corporateProfile.status !== "APPROVED") {
+          await prisma.corporateProfile.update({
+            where: { userId: actor.id },
+            data: { status: "PENDING", rejectionReason: finalReason, verified: false },
+          });
+        }
       }
 
       await prisma.notification.create({
@@ -573,21 +591,27 @@ export async function resubmitArtefactForUser(
       }
     } else if (isAiFailure && attemptCount >= 3) {
       // Escalated to manual admin review after 3 failed AI attempts
-      if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile && user.entrepreneurProfile.status !== "APPROVED") {
-        await prisma.entrepreneurProfile.update({
-          where: { userId: actor.id },
-          data: { status: "PENDING", rejectionReason: finalReason, verified: false },
-        });
-      } else if (user.role === "FUNDER" && user.funderProfile && user.funderProfile.status !== "APPROVED") {
-        await prisma.funderProfile.update({
-          where: { userId: actor.id },
-          data: { status: "PENDING", rejectionReason: finalReason, verified: false },
-        });
-      } else if (user.role === "CORPORATE" && user.corporateProfile && user.corporateProfile.status !== "APPROVED") {
-        await prisma.corporateProfile.update({
-          where: { userId: actor.id },
-          data: { status: "PENDING", rejectionReason: finalReason, verified: false },
-        });
+      const hasOtherValidated = (await prisma.artefact.count({
+        where: { userId: actor.id, status: "VALIDATED", NOT: { id: artefactId } },
+      })) > 0;
+
+      if (!hasOtherValidated) {
+        if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile && user.entrepreneurProfile.status !== "APPROVED") {
+          await prisma.entrepreneurProfile.update({
+            where: { userId: actor.id },
+            data: { status: "PENDING", rejectionReason: finalReason, verified: false },
+          });
+        } else if (user.role === "FUNDER" && user.funderProfile && user.funderProfile.status !== "APPROVED") {
+          await prisma.funderProfile.update({
+            where: { userId: actor.id },
+            data: { status: "PENDING", rejectionReason: finalReason, verified: false },
+          });
+        } else if (user.role === "CORPORATE" && user.corporateProfile && user.corporateProfile.status !== "APPROVED") {
+          await prisma.corporateProfile.update({
+            where: { userId: actor.id },
+            data: { status: "PENDING", rejectionReason: finalReason, verified: false },
+          });
+        }
       }
 
       await prisma.notification.create({
@@ -625,21 +649,27 @@ export async function resubmitArtefactForUser(
       }
     } else {
       // Actual document defect (not AI failure)
-      if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile && user.entrepreneurProfile.status !== "APPROVED") {
-        await prisma.entrepreneurProfile.update({
-          where: { userId: actor.id },
-          data: { status: "REJECTED", rejectionReason: finalReason, verified: false },
-        });
-      } else if (user.role === "FUNDER" && user.funderProfile && user.funderProfile.status !== "APPROVED") {
-        await prisma.funderProfile.update({
-          where: { userId: actor.id },
-          data: { status: "REJECTED", rejectionReason: finalReason, verified: false },
-        });
-      } else if (user.role === "CORPORATE" && user.corporateProfile && user.corporateProfile.status !== "APPROVED") {
-        await prisma.corporateProfile.update({
-          where: { userId: actor.id },
-          data: { status: "REJECTED", rejectionReason: finalReason, verified: false },
-        });
+      const hasOtherValidated = (await prisma.artefact.count({
+        where: { userId: actor.id, status: "VALIDATED", NOT: { id: artefactId } },
+      })) > 0;
+
+      if (!hasOtherValidated) {
+        if (user.role === "ENTREPRENEUR" && user.entrepreneurProfile && user.entrepreneurProfile.status !== "APPROVED") {
+          await prisma.entrepreneurProfile.update({
+            where: { userId: actor.id },
+            data: { status: "REJECTED", rejectionReason: finalReason, verified: false },
+          });
+        } else if (user.role === "FUNDER" && user.funderProfile && user.funderProfile.status !== "APPROVED") {
+          await prisma.funderProfile.update({
+            where: { userId: actor.id },
+            data: { status: "REJECTED", rejectionReason: finalReason, verified: false },
+          });
+        } else if (user.role === "CORPORATE" && user.corporateProfile && user.corporateProfile.status !== "APPROVED") {
+          await prisma.corporateProfile.update({
+            where: { userId: actor.id },
+            data: { status: "REJECTED", rejectionReason: finalReason, verified: false },
+          });
+        }
       }
 
       await prisma.notification.create({
