@@ -9,6 +9,7 @@ async function main() {
   console.log("Seed complete:", result.created);
   console.log("Demo credentials (rotate immediately after first sign-in):");
   console.log(`  admin@bhaf.example          / ${result.passwords.admin}`);
+  console.log(`  fullstack@ambidexters.com   / ${result.passwords.admin}`);
   console.log(`  amara@greenweave.example    / ${result.passwords.entrepreneur}`);
   console.log(`  fund@mosaic.example         / ${result.passwords.funder}`);
   console.log(`  procurement@allied.example  / ${result.passwords.corporate}`);

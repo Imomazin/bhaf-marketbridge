@@ -59,6 +59,24 @@ export async function seedDemoAccounts(prisma: PrismaClient): Promise<SeedResult
     select: { id: true, createdAt: true, updatedAt: true },
   });
 
+  await prisma.user.upsert({
+    where: { email: "fullstack@ambidexters.com" },
+    update: {
+      passwordHash: adminPwd,
+      role: "ADMIN",
+      status: "ACTIVE",
+      emailVerified: new Date(),
+    },
+    create: {
+      email: "fullstack@ambidexters.com",
+      emailVerified: new Date(),
+      name: "Fullstack Admin",
+      passwordHash: adminPwd,
+      role: "ADMIN",
+      status: "ACTIVE",
+    },
+  });
+
   const founder = await prisma.user.upsert({
     where: { email: entrepreneurAccount.email },
     update: {
@@ -238,19 +256,67 @@ export async function seedDemoAccounts(prisma: PrismaClient): Promise<SeedResult
   });
 
   // 3. Subscriptions
-  await prisma.subscriptionPlan.upsert({
-    where: { name: "BHAF Premium" },
-    update: {},
-    create: {
-      name: "BHAF Premium",
-      tier: "PREMIUM",
-      role: "ENTREPRENEUR",
-      monthlyPriceCents: 4900,
-      yearlyPriceCents: 49000,
+  const plans = [
+    {
+      name: "BHAF Freemium",
+      tier: "FREE" as const,
+      role: "ALL" as const,
+      monthlyPriceCents: 0,
+      yearlyPriceCents: null,
+      stripePriceId: null,
+      stripeYearlyPriceId: null,
+      features: {
+        maxRfPs: "1",
+        maxDeals: "1",
+        maxGrants: "1",
+        maxCohorts: "1",
+        maxDataRooms: "5",
+        prioritySupport: ""
+      },
       isActive: true,
-      features: { "maxProducts": 50, "prioritySupport": true }
-    }
-  });
+    },
+    {
+      name: "BHAF STARTER",
+      tier: "STANDARD" as const,
+      role: "ALL" as const,
+      monthlyPriceCents: 1000000,
+      yearlyPriceCents: null,
+      stripePriceId: "price_1UI8pBJ219zcXOtjwFTtIX7d",
+      stripeYearlyPriceId: null,
+      features: {
+        maxDeals: 100,
+        maxProducts: 50,
+        maxDataRooms: 50,
+        prioritySupport: true
+      },
+      isActive: true,
+    },
+    {
+      name: "BHAF Premium",
+      tier: "PREMIUM" as const,
+      role: "ALL" as const,
+      monthlyPriceCents: 4000000,
+      yearlyPriceCents: 49000,
+      stripePriceId: "price_1UIG8GJ219zcXOtjoNpm0Emp",
+      stripeYearlyPriceId: "price_1UIG8GJ219zcXOtjWlIwgarb",
+      features: {
+        maxRfPs: "20",
+        maxDeals: "50",
+        maxGrants: "20",
+        maxCohorts: "30",
+        maxDataRooms: "50"
+      },
+      isActive: true,
+    },
+  ];
+
+  for (const plan of plans) {
+    await prisma.subscriptionPlan.upsert({
+      where: { name: plan.name },
+      update: plan,
+      create: plan,
+    });
+  }
 
   // --- END EXTENDED SEED DATA ---
 
